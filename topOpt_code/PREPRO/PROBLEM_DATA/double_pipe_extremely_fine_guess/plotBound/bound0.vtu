@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
+ <UnstructuredGrid>
+		<Piece NumberOfPoints="10" NumberOfCells="9">
+			<Points>
+				<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">
+					-0.5 0.314815 0
+					-0.5 0.333333 0
+					-0.5 0.296296 0
+					-0.5 0.277778 0
+					-0.5 0.259259 0
+					-0.5 0.240741 0
+					-0.5 0.222222 0
+					-0.5 0.203704 0
+					-0.5 0.185185 0
+					-0.5 0.166667 0
+				</DataArray>
+			</Points>
+			<Cells>
+				<DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="9">
+					0 1
+					2 0
+					3 2
+					4 3
+					5 4
+					6 5
+					7 6
+					8 7
+					9 8
+				</DataArray>
+				<DataArray type="Int64" Name="offsets" format="ascii" RangeMin="2" RangeMax="18">
+					2
+					4
+					6
+					8
+					10
+					12
+					14
+					16
+					18
+				</DataArray>
+				<DataArray type="UInt8" Name="types" format="ascii" RangeMin="3" RangeMax="3">
+3
+3
+3
+3
+3
+3
+3
+3
+3
+				</DataArray>
+			</Cells>
+		</Piece>
+  </UnstructuredGrid>
+</VTKFile>
