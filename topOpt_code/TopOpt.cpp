@@ -36,6 +36,9 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getValue(ParameterFile, line, iss, name);
     //
     STREAM::getLines(ParameterFile, line, 2);
+    STREAM::getValue(ParameterFile, line, iss, optimization_scheme);
+    //
+    STREAM::getLines(ParameterFile, line, 2);
     bool isStat;
     STREAM::getValue(ParameterFile, line, iss, isStat);
     physics.isStationary = isStat;
@@ -309,6 +312,15 @@ void TOP_OPT::solve()
     save_gammaOpt_in_gammaFull(gammaOpt, gamma);
     gammaNew = gamma;
 
+    // VECTOR tempGamma = (gamma-1)*(-1);
+    // VECTOR alpha(tempGamma.length);
+    // for (int inod = 0; inod < tempGamma.length; inod++)
+    // {
+    //     alpha[inod] = alpha_min + (alpha_max - alpha_min) * q * tempGamma[inod] / ( q + 1 - tempGamma[inod]);
+    // }
+    // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
+
+
     
     //---------------------
     int loop  = 0;
@@ -336,7 +348,7 @@ void TOP_OPT::solve()
     temp_fluid_energy.setZeros(2);
 
     //UNTILL GAMMA CONVERGENCE DO:
-    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
+    while (((change > change_toll || !(feasible)) && loop <= maxIt) || loop < minIt)
     {
         loop++;
         //-------------------------------
@@ -365,10 +377,22 @@ void TOP_OPT::solve()
 
         printf("\n-------\n-| OPTIMIZER SOLVER |--\n-------\n");
 
-        Optimizer.solveMMA(gammaOpt, Vol, obj);// the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-        //gammaOpt = Optimizer.gamma_acc; 
+        switch (optimization_scheme)
+        {
+            case 0: // MMA
+            {
+                Optimizer.solveMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+            case 1: // GOC
+            {
+                Optimizer.solveGOC(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+        }
+        
        
-        //Optimizer.solveGOC(gammaOpt, Vol, obj);
+        Optimizer.solveGOC(gammaOpt, Vol, obj);
         //pause();
         save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
 
@@ -789,6 +813,8 @@ void TOP_OPT::handle_optimization_domain()
     for (int iel = 0; iel < nElem_v; iel++)
     {
         int temp_elem_geo_id = physics.elem_geo_entities_ids_v[iel];
+        int temp_elem_id_relevance;
+        opt_subdomains.hasIn(temp_elem_geo_id, temp_elem_id_relevance);
         if (is_elem_in_dom[iel] == 0)
         {
             for (int iloc = 0; iloc < nodes_per_el; iloc++)
@@ -802,9 +828,19 @@ void TOP_OPT::handle_optimization_domain()
             for (int iloc = 0; iloc < nodes_per_el; iloc++)
             {
                 int iglob = physics.elem_v[iel][iloc];
-                if (is_node_in_dom[iglob] == -2) //not yet passed node
+                int temp_node_geo_id = is_node_in_dom[iglob];
+                if (temp_node_geo_id == -2)
                 {
                     is_node_in_dom[iglob] = temp_elem_geo_id;
+                }
+                else if (temp_node_geo_id != -1) //not yet passed node
+                {
+                    int temp_node_id_relevance;
+                    opt_subdomains.hasIn(temp_node_geo_id, temp_node_id_relevance);
+                    if (temp_elem_id_relevance < temp_node_id_relevance) // in this way yhe order of relevance of the subdomains belonging is the one inserted by the user
+                    {
+                        is_node_in_dom[iglob] = temp_elem_geo_id;
+                    }
                 }
             }
         } 

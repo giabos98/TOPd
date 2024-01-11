@@ -1,6 +1,9 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
-Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.0125_D0.75
+Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.005_D0.75
+
+// optimization scheme (0:MMA, 1:GOC)
+0
 
 // stationary flag : (1 stationary,  0 time dependent)
 0
@@ -8,10 +11,14 @@ Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.0125_D0.75
 // DEFINE OPTIMIZATION REGIONS (0: whole domain, 1: specify subdomains)
 1
 // n opt subdomains
-3
+7
 // subdomains
-2 3 4
+5 4 6 3 7 2 8
 // initial gamma values (0.0:erode, 1.0: add)
+0.9
+1.0
+1.0
+1.0
 1.0
 1.0
 1.0
@@ -20,7 +27,7 @@ Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.0125_D0.75
 1
 
 // V_r (desired maximum fraction of fluid volume)
-0.2
+0.32
 
 // αmin
 0
@@ -38,7 +45,7 @@ Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.0125_D0.75
 10
 
 // maxIter
-1500
+100
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -70,7 +77,7 @@ Vr[0.2]_mma_a1e5_b[1_1_2_0]_r0.0125_D0.75
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.0125
+0.005
 // DIFFUSION FILTER WEIGHT
 0.75
 

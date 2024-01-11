@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-stenosis0.1
+stenosis0.5_guess
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -10,7 +10,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // time
 // final time
-1
+1.0
 // time step
 0.1
 // minimum time step
@@ -45,9 +45,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-2
+4
 // geomID
-6 14
+6 8 15 16
 
 // SYMMETRY WALLS
 //--------
@@ -70,7 +70,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-17
+20
 // functions
 0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 

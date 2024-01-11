@@ -15,6 +15,7 @@ public:
     //-----------------
     //----------------------------
     std::string name;
+    int optimization_scheme;
     std::string inputFile;
 
     int funcId = 1;
