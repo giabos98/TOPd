@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
+ <UnstructuredGrid>
+		<Piece NumberOfPoints="23" NumberOfCells="22">
+			<Points>
+				<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">
+					1.04698 0.282899 0
+					1.05011 0.291492 0
+					1.0536 0.301074 0
+					1.05755 0.311934 0
+					1.06203 0.324242 0
+					1.06711 0.338193 0
+					1.07286 0.354004 0
+					1.18067 0.650183 0
+					1.18379 0.658776 0
+					1.17718 0.640601 0
+					1.17322 0.629741 0
+					1.16874 0.617433 0
+					1.07939 0.371923 0
+					1.08678 0.392233 0
+					1.16367 0.603482 0
+					1.15791 0.587671 0
+					1.09516 0.415252 0
+					1.15139 0.569752 0
+					1.144 0.549442 0
+					1.10465 0.441341 0
+					1.11539 0.470838 0
+					1.12612 0.500334 0
+					1.13562 0.526423 0
+				</DataArray>
+			</Points>
+			<Cells>
+				<DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="22">
+					0 1
+					1 2
+					2 3
+					3 4
+					4 5
+					5 6
+					7 8
+					9 7
+					10 9
+					11 10
+					6 12
+					12 13
+					14 11
+					15 14
+					13 16
+					17 15
+					18 17
+					16 19
+					19 20
+					20 21
+					21 22
+					22 18
+				</DataArray>
+				<DataArray type="Int64" Name="offsets" format="ascii" RangeMin="2" RangeMax="44">
+					2
+					4
+					6
+					8
+					10
+					12
+					14
+					16
+					18
+					20
+					22
+					24
+					26
+					28
+					30
+					32
+					34
+					36
+					38
+					40
+					42
+					44
+				</DataArray>
+				<DataArray type="UInt8" Name="types" format="ascii" RangeMin="3" RangeMax="3">
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+				</DataArray>
+			</Cells>
+		</Piece>
+  </UnstructuredGrid>
+</VTKFile>

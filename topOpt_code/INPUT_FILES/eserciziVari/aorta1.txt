@@ -1,0 +1,93 @@
+// PROBLEM NAME and DIMENSION (2 or 3)
+aortaCoarse1
+3
+
+CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
+1
+
+// time
+// final time
+10000000
+// time step
+10000000
+// minimum time step
+0.01
+
+// FLUID PROPERTIES
+1.0         //  rho
+1.0         //  mu
+
+//FORCING FUNCTIONS
+// flag Forcing: 0 constant, 1 time dependent
+1
+// FORCING:
+0
+0
+0
+// FORCING - TIME DEPENDENT:
+0
+0
+0
+
+// G: COMPRESSIBILITY
+// flag G: 0 constant, 1 time dependent
+0
+// G:
+0
+// G - TIME DEPENDENT:
+0
+
+// BOUNDARY CONDITIONS
+// flagBC: 0 penalty, 1 lifting functions
+1
+
+// INNER WALLS
+//--------
+// # INNER
+0
+// geomID
+**
+
+// SYMMETRY WALLS
+//--------
+// # SYMMETRY PLANES
+2
+// geomID
+0 1
+
+// flagWall: 0 insert all boundID, 1 set to Wall boundIDs not inserted in any BC
+1
+
+// WALL
+//--------
+// # WALL
+0
+// geomID
+**
+
+// DIRICHLET
+// # DIRICHLET
+1
+//geomID
+2
+// functions
+0 0 1/0.0115/0.0115*[0.0115*0.0115-x*x-y*y]
+
+// NEUMANN
+//--------
+// # NEUMANN
+1
+// geomID
+3
+// functions 
+0
+
+// DIRICHLET - TIME DEPENDENT
+//--------
+// # DIRICHLET - TIME DEPENDENT
+0
+
+// NEUMANN - TIME DEPENDENT
+//--------
+// # NEUMANN - TIME DEPENDENT
+0

@@ -1,0 +1,75 @@
+// OPTIMIZATION PARAMETERS
+// TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
+chi[1]_Vr[0.143]_mma_a1e6_q1_b[1_1_2_0]
+
+// stationary flag : (1 stationary,  0 time dependent)
+0
+
+// DEFINE OPTIMIZATION BOX:
+                            | 0: whole domain
+                            | 1: specify coordinates range of the OPTIMIZATION BOX
+// flag
+1
+
+// x/y/z-range (two numbers space separated for each row)
+0   0.049   x range
+0   0.0245 y range
+0   0   z range
+
+// q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
+1
+
+// V_r (desired maximum fraction of fluid volume)
+0.143
+
+// αmin
+0
+
+// αmax
+1e6
+
+// BASE FUNCTIONALS:
+            | 0: alpha*||U||^2
+            | 1: alpha*||U||^2 + 1/2*mu ||grad(u) + grad(u)^T||^2
+// onlygrad
+0
+
+// maxIter
+200
+
+// custom functional: 0 use funcID; 1 use following formulation
+1
+// FUNCTIONAL: 
+// INT_OMEGA{ beta1*alpha*||u||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  beta4 * INT_GAMMA_in{p} +  // INT__OMEGA { beta5 * 1/2*rho * ||u||^2}
+// beta1    beta2    beta3    beta4 
+1 1 2 0
+
+// USE GAMMA ACCELERATION (0: no acceleration; 1: gamma_acc = -2gamma^3 + 3*gamma^2)
+0
+
+// USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER
+0
+// DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
+0.05
+// DIFFUSION FILTER WEIGHT
+0.6
+
+// START GAMMA VALUE (0.0 erode, 1.0: add)
+1.0
+
+//--------------------------------- PRINT ---------------------------------------------------------------------
+// BINARY PRINT (1: true)
+0
+
+// FLAG PRINT: 
+            | 0: print only gamma solution at the final geometry
+            | 1: print gamma solution every "deltaPrint" iteration and velocity/pressure at the final geometry
+            | 2: print gamma and velocity/pressure solution every "deltaPrint" iteration
+// flag_print
+2
+
+// deltaPrint
+1
+
+// write on finer mesh/ If 1: no pressure will be printed in optimzation results! (0: pressure mesh, 1: velocity mesh)
+1

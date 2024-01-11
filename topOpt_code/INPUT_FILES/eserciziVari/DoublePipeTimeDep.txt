@@ -1,0 +1,94 @@
+// PROBLEM NAME and DIMENSION (2 or 3)
+doublePipeExtraFine
+2
+
+CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
+2
+
+// time
+// final time
+6.28
+// time step
+1.57
+// minimum time step
+0.01
+
+// FLUID PROPERTIES
+1.0         //  rho
+0.1         //  mu
+
+//FORCING FUNCTIONS
+// flag Forcing: 0 constant, 1 time dependent
+1
+// FORCING:
+0
+0
+// FORCING - TIME DEPENDENT:
+0
+0
+
+// G: COMPRESSIBILITY
+// flag G: 0 constant, 1 time dependent
+0
+// G:
+0
+// G - TIME DEPENDENT:
+0
+
+// BOUNDARY CONDITIONS
+// flagBC: 0 penalty, 1 lifting functions
+1
+
+// flagWall: 0 insert all boundID, 1 set to Wall boundIDs not inserted in any BC
+1
+
+// WALL
+//--------
+// # WALL
+0
+// geomID
+** 
+
+// DIRICHLET
+// # DIRICHLET
+0
+//geomID
+**
+
+// NEUMANN
+//--------
+// # NEUMANN
+2
+// geomID
+8 10
+// functions 
+0
+0
+
+// DIRICHLET - TIME DEPENDENT
+//--------
+// # DIRICHLET - TIME DEPENDENT
+2
+
+// geomID
+2
+//#time cases
+1
+// t stationary
+0
+// functions
+-144*[y-1/6]*[2/6-y]*cos(t)    0
+
+// geomID
+4
+//#time cases
+1
+// t stationary
+0
+// functions
+-144*[y-4/6]*[5/6-y]*sin(t)    0
+
+// NEUMANN - TIME DEPENDENT
+//--------
+// # NEUMANN - TIME DEPENDENT
+0

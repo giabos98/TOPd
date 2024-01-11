@@ -1,0 +1,66 @@
+// OPTIMIZATION PARAMETERS
+// TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
+chi[1]_Vr[1]_mma_a1e4_q1
+
+// stationary flag : (1 stationary,  0 time dependent)
+0
+
+// DEFINE OPTIMIZATION BOX:
+                            | 0: whole domain
+                            | 1: specify coordinates range of the OPTIMIZATION BOX
+// flag
+1
+
+// x/y/z-range (two numbers space separated for each row)
+0   0.05   x range
+0.0000001   0.0246 y range
+0   0   z range
+
+// q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
+1
+
+// V_r (desired maximum fraction of fluid volume)
+1
+
+// αmin
+0
+
+// αmax
+1e4
+
+// BASE FUNCTIONALS:
+            | 0: alpha*||U||^2
+            | 1: alpha*||U||^2 + 1/2*mu ||grad(u) + grad(u)^T||^2
+// onlygrad
+0
+
+// maxIter
+500
+
+// custom functional: 0 use funcID; 1 use following formulation
+1
+// FUNCTIONAL: 
+// INT_OMEGA{ beta1*alpha*||U||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  INT_DOMEGA{ beta4 * p }
+// beta1    beta2    beta3    beta4
+0 1 0 0
+
+// USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER
+0
+// DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
+0.07
+// DIFFUSION FILTER WEIGHT
+0.5
+
+//--------------------------------- PRINT ---------------------------------------------------------------------
+// BINARY PRINT (1: true)
+0
+
+// FLAG PRINT: 
+            | 0: print only gamma solution at the final geometry
+            | 1: print gamma solution every "deltaPrint" iteration and velocity/pressure at the final geometry
+            | 2: print gamma and velocity/pressure solution every "deltaPrint" iteration
+// flag_print
+2
+
+// deltaPrint
+1

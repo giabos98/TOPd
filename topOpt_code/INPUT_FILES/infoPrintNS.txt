@@ -1,0 +1,17 @@
+// BINARY PRINT (1: true)
+0
+
+// MAX NUMBER OF RESULTS PRINT IN TIME (not including inital condition)
+250
+// FLAG PRINT: 
+            | 0: specify initial time and a constant time step
+            | 1: specify exact print times
+// flag_print
+0
+
+// t_start 
+0
+// time step
+0.01
+
+// specify exact times
