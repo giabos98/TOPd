@@ -41,10 +41,13 @@ public:
     //--- PHYSICS PARAMETERS ---
     PHYSICS physics;
     int n_subdomains;
+    int n_opt_subdomains;
+    VECTOR_INT subdomains;
     VECTOR_INT opt_subdomains;
+    VECTOR_INT not_opt_nodes_in_subdomains;
     VECTOR_INT is_elem_in_dom;
     VECTOR_INT is_node_in_dom;
-    VECTOR opt_subdomains_initial_values;
+    VECTOR subdomains_initial_values;
     int nNodeInDom;
     int nElemInDom;
     VECTOR_INT optNodeFromGlobNode;
@@ -97,7 +100,7 @@ public:
     void prepareADJ();
     void solveADJ();
     void handle_optimization_domain();
-    void handle_gamma_initial_condition(VECTOR &gamma_opt);
+    void handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma);
     void save_gammaOpt_in_gammaFull(VECTOR &gamma_opt, VECTOR &gamma_full);
 
     void solve();

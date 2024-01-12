@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-double_pipe_regular
+double_pipe_0.02_regular
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)

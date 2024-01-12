@@ -48,19 +48,23 @@ void TOP_OPT::importParameters(std::string inputFile)
     }
 
     //
-    STREAM::getLines(ParameterFile, line, 2);
-    int flag_subdomains;
-    STREAM::getValue(ParameterFile, line, iss, flag_subdomains);
-    std::getline(ParameterFile, line);
+    STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_subdomains);
+    subdomains.initialize(n_subdomains);
+    for (int idom = 0; idom < n_subdomains; idom++)
+    {
+        subdomains[idom] = idom;
+    }
     std::getline(ParameterFile, line);
-    opt_subdomains.initialize(n_subdomains);
+    subdomains_initial_values.initialize(n_subdomains);
+    STREAM::getRowVector(ParameterFile, line, iss, subdomains_initial_values);
+    std::getline(ParameterFile, line);
+    STREAM::getValue(ParameterFile, line, iss, n_opt_subdomains);
+    std::getline(ParameterFile, line);
+    opt_subdomains.initialize(n_opt_subdomains);
     STREAM::getRowVector(ParameterFile, line, iss, opt_subdomains);
     handle_optimization_domain();
-    std::getline(ParameterFile, line);
-    opt_subdomains_initial_values.initialize(n_subdomains);
-    STREAM::getColVector(ParameterFile, line, iss, opt_subdomains_initial_values, n_subdomains);
-
+    
     //
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, q);
@@ -303,15 +307,17 @@ void TOP_OPT::solve()
     int nNodes_v = physics.nNodes_v;
     int nNodes = physics.nNodes;
     int dim = physics.dim;
-    VECTOR gamma = VECTOR::zeros(nNodes_v) + 1;
+    VECTOR gamma;
+    gamma.setZeros(nNodes_v);
+    gamma += 1;
     VECTOR gammaNew;
     VECTOR gammaOpt(nNodeInDom);
 
-    handle_gamma_initial_condition(gammaOpt);
+    handle_gamma_initial_condition(gammaOpt, gamma);
     
-    save_gammaOpt_in_gammaFull(gammaOpt, gamma);
     gammaNew = gamma;
 
+    // PRINT INITIAL VALUES
     // VECTOR tempGamma = (gamma-1)*(-1);
     // VECTOR alpha(tempGamma.length);
     // for (int inod = 0; inod < tempGamma.length; inod++)
@@ -319,6 +325,7 @@ void TOP_OPT::solve()
     //     alpha[inod] = alpha_min + (alpha_max - alpha_min) * q * tempGamma[inod] / ( q + 1 - tempGamma[inod]);
     // }
     // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
+    // pause();
 
 
     
@@ -810,6 +817,8 @@ void TOP_OPT::handle_optimization_domain()
     optNodeFromGlobNode += - 1;
     is_node_in_dom.setZeros(nNodes_v);
     is_node_in_dom += - 2; //set all to -2: -2=not passed, -1=not in opt domain, others=relative domain id
+    not_opt_nodes_in_subdomains.setZeros(nNodes_v);
+    not_opt_nodes_in_subdomains += -1;
     for (int iel = 0; iel < nElem_v; iel++)
     {
         int temp_elem_geo_id = physics.elem_geo_entities_ids_v[iel];
@@ -821,6 +830,14 @@ void TOP_OPT::handle_optimization_domain()
             {
                 int iglob = physics.elem_v[iel][iloc];
                 is_node_in_dom[iglob] = -1;
+                if (not_opt_nodes_in_subdomains[iglob] == -1) 
+                {
+                    not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id; // the sumdomain priority of common nodes for the not_opt subdomains is given by their numbering
+                }
+                else if (temp_elem_geo_id < not_opt_nodes_in_subdomains[iglob])
+                {
+                    not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id;
+                }
             }
         }
         else //  is_elem_in_dom[iel] == 1
@@ -918,15 +935,31 @@ void TOP_OPT::handle_optimization_domain()
     // pause();
 }
 
-void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt)
+void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma)
 {
-    for (int inod = 0; inod < nNodeInDom; inod++)
+    for (int inod = 0; inod < physics.nNodes_v; inod++)
     {
-        int iglob = nodeInDom[inod];
-        int temp_node_domain = is_node_in_dom[iglob];
-        int domain_id;
-        if (!opt_subdomains.hasIn(temp_node_domain, domain_id)) throw_line("ERROR: node with domain ID not in the possible set");
-        gamma_opt[inod] = opt_subdomains_initial_values[domain_id];
+        int temp_node_domain = is_node_in_dom[inod];
+        if (temp_node_domain != -1)
+        {
+            prec temp_init_value = subdomains_initial_values[temp_node_domain];
+            int temp_opt_node = optNodeFromGlobNode[inod];
+            gamma_opt[temp_opt_node] = temp_init_value;
+            gamma[inod] = temp_init_value;
+        }
+        else 
+        {
+            int temp_not_node_domain = not_opt_nodes_in_subdomains[inod];
+            if (temp_not_node_domain == -1)
+            {
+                throw_line("ERROR: not is_node_in_dom node is not classified as not_opt_nodes_in_subdomains\n");
+            }
+            else
+            {
+                prec temp_init_value = subdomains_initial_values[temp_not_node_domain];
+                gamma[inod] = temp_init_value;
+            }
+        }
     }
 }
 
