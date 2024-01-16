@@ -108,6 +108,7 @@ public:
         solution_times.append(t_end);
         solution_deltaT.initialize(solution_times.length-1);
         solution_deltaT.reset(deltaT);
+        solution_deltaT[solution_deltaT.length-1] = t_end - solution_times[solution_times.length-2]; //adjust the last time step
     }
 };
 

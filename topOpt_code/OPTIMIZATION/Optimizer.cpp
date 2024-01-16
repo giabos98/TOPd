@@ -887,18 +887,31 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
     MATRIX_INT inlet_bound_elem(n_in_bd_elem, dim, (*physics).inlet_bounds_elems.PP, (*physics).inlet_bounds_elems.P);
     VECTOR area_inlet_bound_elem((*physics).area_inlet_bounds_elems.P, n_in_bd_elem);
  
+    
     VECTOR sol_times = (*physics).solution_times;
     int n_times = sol_times.length;
     VECTOR time_steps = (*physics).solution_deltaT;
     prec tot_time = abs(sol_times.get_last() - sol_times[0]);
     VECTOR time_weights(n_times);
-    time_weights[0] = time_steps[0] / 2;
-    for (int itime = 1; itime < (n_times-1); itime++)
+    int time_integration = 0; //0: rectangles over the final time step value; 1:trapezoidal rule
+    if (time_integration == 0)
     {
-        time_weights[itime] = (time_steps[itime-1] + time_steps[itime]) / 2;
-    } 
-    time_weights[n_times-1] = time_steps.get_last() / 2;
-
+        time_weights[0] = 0;
+        for (int itime = 1; itime < n_times; itime++)
+        {
+            time_weights[itime] = time_steps[itime-1];
+        } 
+    }
+    else if (time_integration == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
+    {
+        time_weights[0] = time_steps[0] / 2;
+        for (int itime = 1; itime < (n_times-1); itime++)
+        {
+            time_weights[itime] = (time_steps[itime-1] + time_steps[itime]) / 2;
+        } 
+        time_weights[n_times-1] = time_steps.get_last() / 2;
+    }
+    
     for (int itime = 0; itime < n_times; itime++)
     {
         prec curr_time_weigth = time_weights[itime];
