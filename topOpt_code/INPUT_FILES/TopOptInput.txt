@@ -1,9 +1,9 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
-Vr[0.33]_goc_a1e5_b[1_1_0_0]
+Vr[0.33]_goc_a1e4_b[1_1_0_0]_sep
 
 // optimization scheme (0:MMA, 1:GOC)
-0
+1
 
 // stationary flag : (1 stationary,  0 time dependent)
 0
@@ -28,7 +28,7 @@ Vr[0.33]_goc_a1e5_b[1_1_0_0]
 0
 
 // αmax
-1e5
+1e4
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -44,7 +44,9 @@ Vr[0.33]_goc_a1e5_b[1_1_0_0]
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
-// FUNCTIONAL: 
+// FUNCTIONAL: (it is intended as the mean over time of the quantities)
+// TIME INTEGRATION (0: rectangles centered on the final time of each interval [!RECOMMENDED FOR STATIONARY PROBLEMS]; 1: trapezoidal rule)
+0
 // INT_OMEGA{ beta1*alpha*||u||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  beta4 * INT_GAMMA_in{p} +  // INT__OMEGA { beta5 * 1/2*rho * ||u||^2}
 // beta1    beta2    beta3    beta4 
 1 1 0 0
@@ -72,9 +74,9 @@ Vr[0.33]_goc_a1e5_b[1_1_0_0]
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 0
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.01
+0.025
 // DIFFUSION FILTER WEIGHT
-0.8
+1.0
 
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (1: true)

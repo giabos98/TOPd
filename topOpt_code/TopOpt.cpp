@@ -105,7 +105,10 @@ void TOP_OPT::importParameters(std::string inputFile)
 
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, customFunc);
-    STREAM::getLines(ParameterFile, line, 3);
+    STREAM::getLines(ParameterFile, line, 2);
+    int time_integration;
+    STREAM::getValue(ParameterFile, line, iss, time_integration);
+    STREAM::getLines(ParameterFile, line, 2);
     beta.initialize(nFunctionals);
     STREAM::getRowVector(ParameterFile, line, iss, beta);
 
@@ -182,7 +185,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getValue(ParameterFile, line, iss, enableDiffusionFilter);
     if (customFunc == 1)
     {
-        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter);
+        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter);
     }
     else
     {
@@ -398,8 +401,6 @@ void TOP_OPT::solve()
             }
         }
         
-       
-        Optimizer.solveGOC(gammaOpt, Vol, obj);
         //pause();
         save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
 

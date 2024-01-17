@@ -16,6 +16,7 @@ private:
     int funcType;
     int onlyGrad;
     VECTOR gamma;
+    int time_integration_procedure = 0;
     //-----------
     // mesh info
     //-----------
@@ -141,7 +142,7 @@ public:
         temp_func_val.setZeros(3);
     }
     //---
-    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case)
+    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case)
     {
         physics = physIn;
         nodeInDom = nodeInDom_In;
@@ -162,6 +163,7 @@ public:
         alpha_max = a_max;
         V0   = V0_in;
         Vr   = Vr_in;
+        time_integration_procedure = time_integration;
         fWeights = beta;
         
         define_inlet_pressure_elem();

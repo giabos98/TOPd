@@ -10,9 +10,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // time
 // final time
-1.0
+10000
 // time step
-0.1
+10000
 // minimum time step
 0.00001
 

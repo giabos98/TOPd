@@ -893,8 +893,7 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
     VECTOR time_steps = (*physics).solution_deltaT;
     prec tot_time = abs(sol_times.get_last() - sol_times[0]);
     VECTOR time_weights(n_times);
-    int time_integration = 0; //0: rectangles over the final time step value; 1:trapezoidal rule
-    if (time_integration == 0)
+    if (time_integration_procedure == 0) // RECTANGLES RULE OVER TIME: only one suitable for stationary cases
     {
         time_weights[0] = 0;
         for (int itime = 1; itime < n_times; itime++)
@@ -902,7 +901,7 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
             time_weights[itime] = time_steps[itime-1];
         } 
     }
-    else if (time_integration == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
+    else if (time_integration_procedure == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
     {
         time_weights[0] = time_steps[0] / 2;
         for (int itime = 1; itime < (n_times-1); itime++)
@@ -1037,6 +1036,7 @@ void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
 //-------------------------------------------------------
 void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
 {
+    std::cout << "\n-----| SOLVE GOC |-----\n";
     static int nCons = 1;
     static VECTOR lambda = VECTOR::zeros(nCons) + 1;
     static VECTOR gold = VECTOR::zeros(nCons);
@@ -1086,6 +1086,7 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
 //-------------------------------
 void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
 {
+    std::cout << "\n-----| SOLVE MMA |-----\n";
     static int nCons = 1;
     static VECTOR df0(nNode);
     static VECTOR g(nCons);
