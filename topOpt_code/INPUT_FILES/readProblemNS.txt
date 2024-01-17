@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-double_pipe_0.02_regular
+hole_regular_0.0125
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -17,8 +17,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1  //  rho
-1  //  mu
+10  //  rho
+0.1  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -45,9 +45,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-10
+0
 // geomID
-8 9 11 13 15 16 17 19 22 28
+**
 
 // SYMMETRY WALLS
 //--------
@@ -70,17 +70,17 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 2
 //geomID
-0 3
+2 10
 // functions
-144*[y-1/6]*[2/6-y] 0
-144*[y-4/6]*[5/6-y] 0
+1 0
+-1 0
 
 // NEUMANN
 //--------
 // # NEUMANN
 2
 // geomID
-32 33
+5 6
 // pressure value (applied to the normal component)
 0
 0

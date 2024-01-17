@@ -315,9 +315,7 @@ void TOP_OPT::solve()
     gamma += 1;
     VECTOR gammaNew;
     VECTOR gammaOpt(nNodeInDom);
-
     handle_gamma_initial_condition(gammaOpt, gamma);
-    
     gammaNew = gamma;
 
     // PRINT INITIAL VALUES

@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
-Vr[0.33]_goc_a1e4_b[1_1_0_0]_sep
+Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]
 
 // optimization scheme (0:MMA, 1:GOC)
 1
@@ -10,19 +10,19 @@ Vr[0.33]_goc_a1e4_b[1_1_0_0]_sep
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains)
 // n subdomains
-11
+1
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0 1.0 1.0 0.0 1.0 1.0 1.0 1.0 1.0
+1.0
 //n opt subdomains
-7
+1
 // optimization subdomains
-5 4 6 3 7 2 8
+0
 
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 
 // V_r (desired maximum fraction of fluid volume)
-0.33
+0.36
 
 // αmin
 0
