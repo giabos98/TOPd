@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
-// TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]_a[alpha]_q[q_value][normalV]_[optBox]_[parabolicInlet]
-Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]
+// TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
+Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]_r0.0125_D0.8_p[2]
 
 // optimization scheme (0:MMA, 1:GOC)
 1
@@ -40,7 +40,7 @@ Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]
 10
 
 // maxIter
-1000
+2000
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -55,7 +55,7 @@ Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-0
+2
 // beta MAX
 10
 //beta min
@@ -72,11 +72,11 @@ Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]
 5
 
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
-0
+1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.025
+0.0125
 // DIFFUSION FILTER WEIGHT
-1.0
+0.8
 
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (1: true)

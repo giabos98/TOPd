@@ -1617,7 +1617,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     static VECTOR g(nCons);
     static MATRIX dg(nCons, nNode);
     //---
-    int m = 1;
+    int m = 1; // Number of Constraints
     int n = nNode;
     prec epsimin = 0.0000001;
     VECTOR xval;
@@ -1647,7 +1647,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     int kkttol    = 1e-12;
     int innerit = 0;
     //---
-    if (outeriter < 0.5)
+    if (outeriter < 0.5) //always done since outeriter = 0
     {
         innerit = 0;
         updateVal(x, f0, df0, g, dg, Vol);
@@ -1663,8 +1663,8 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     //---------------
     prec f0app;
     VECTOR fapp(m);
-    prec f0valnew;
-    VECTOR fvalnew(m);
+    prec f0valnew; // functional value
+    VECTOR fvalnew(m); // constraints
     prec conserv;
     while (kktnorm > kkttol && outit < maxoutit)
     {
@@ -1676,9 +1676,10 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
         // The MMA subproblem is solved at the point xval:
         gcmmasub(xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,f0app,fapp,
                  m,n,outeriter,epsimin,xval,xmin,xmax, low, upp, raa0, raa, f0,df0,g,dg,a0,a,c,d);
-        // The user should now calculate function values and gradients
-        // of the objective- and constraint functions at xval.
-        // The results should be put in f0val, df0dx, fval and dfdx.
+        // The user should now calculate function values (no gradients)
+        // of the objective- and constraint functions at the point xmma
+        // ( = the optimal solution of the subproblem).
+        // The results should be put in f0valnew and fvalnew.
         updateJustVal(xmma, f0valnew, fvalnew);
     
         // It is checked if the approximations are conservative:
@@ -1692,7 +1693,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
         {
             while (conserv == 0 && innerit <= 15)
             {
-                innerit = innerit+1;
+                innerit++;
                 // New values on the parameters raa0 and raa are calculated:
                 raaupdate(raa0,raa,
                           xmma,xval,xmin,xmax,low,upp,f0valnew,fvalnew,f0app,fapp,raa0eps,raaeps,epsimin);
@@ -1703,7 +1704,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
                 // The user should now calculate function values (no gradients)
                 // of the objective- and constraint functions at the point xmma
                 // ( = the optimal solution of the subproblem).
-                // The results should be put in f0valnew and fvalnew:
+                // The results should be put in f0valnew and fvalnew.
                 updateJustVal(xmma, f0valnew, fvalnew);
                 // It is checked if the approximations have become conservative:
                 concheck(conserv,
