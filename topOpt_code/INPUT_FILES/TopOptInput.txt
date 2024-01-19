@@ -1,9 +1,9 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]_r0.0125_D0.8_p[2]
+45degrees_Re[10000]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 
 // optimization scheme (0:MMA, 1:GOC)
-1
+0
 
 // stationary flag : (1 stationary,  0 time dependent)
 0
@@ -40,7 +40,7 @@ Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]_r0.0125_D0.8_p[2]
 10
 
 // maxIter
-2000
+1000
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -76,7 +76,7 @@ Re[100]_Vr[0.36]_goc_a1e4_b[1_1_0_0]_r0.0125_D0.8_p[2]
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
 0.0125
 // DIFFUSION FILTER WEIGHT
-0.8
+1.0
 
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (1: true)
