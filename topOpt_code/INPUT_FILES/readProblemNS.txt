@@ -17,8 +17,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-10  //  rho
-0.1  //  mu
+30  //  rho
+0.03  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -72,8 +72,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 //geomID
 5 10
 // functions
-100/sqrt(2) 100/sqrt(2)
--100/sqrt(2) -100/sqrt(2) 
+10/sqrt(2) 10/sqrt(2)
+-10/sqrt(2) -10/sqrt(2) 
 
 // NEUMANN
 //--------
