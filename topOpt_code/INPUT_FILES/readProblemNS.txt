@@ -1,6 +1,6 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-prism_extra_fine
-2
+cyl_sphere_cube_3D_coarse
+3
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 1
@@ -26,7 +26,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // FORCING:
 0
 0
+0
 // FORCING - TIME DEPENDENT:
+0
 0
 0
 
@@ -70,19 +72,17 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-0
+2
 // functions
-4*[0.25-y*y] 0
+0 0 2*[0.5-x*x-y*y]
 
 // NEUMANN
 //--------
 // # NEUMANN
-3
+1
 // geomID
-3 4 7
+3
 // pressure value (applied to the normal component)
-0
-0
 0
 
 // DIRICHLET - TIME DEPENDENT

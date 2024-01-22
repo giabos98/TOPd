@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-Re[1]_Vr[0.6]_mma_a1e4_b[0_0_-2_0]_r0.0125_D1.0_p[2]
+Re[1]_Vr[0.4]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 
 // optimization scheme (0:MMA, 1:GOC)
 0
@@ -22,7 +22,7 @@ Re[1]_Vr[0.6]_mma_a1e4_b[0_0_-2_0]_r0.0125_D1.0_p[2]
 1
 
 // V_r (desired maximum fraction of fluid volume)
-0.6
+0.4
 
 // αmin
 0
@@ -49,7 +49,7 @@ Re[1]_Vr[0.6]_mma_a1e4_b[0_0_-2_0]_r0.0125_D1.0_p[2]
 0
 // INT_OMEGA{ beta1*alpha*||u||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  beta4 * INT_GAMMA_in{p} +  // INT__OMEGA { beta5 * 1/2*rho * ||u||^2}
 // beta1    beta2    beta3    beta4 
-0 0 -2 0
+1 1 0 0
 
 // GAMMA CHANGE TOLERANCE
 0.00001
