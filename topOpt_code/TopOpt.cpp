@@ -2,6 +2,7 @@
 
 TOP_OPT::TOP_OPT(std::string InputFile)
 {
+    prec startTime = omp_get_wtime();
     inputFile = InputFile;
     printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
 
@@ -10,7 +11,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
 
     printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
     ADJ.initialize(NS, alpha);
-    //initialize TopOpt parameters
+    // initialize TopOpt parameters
     printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");
     importParameters("INPUT_FILES/TopOptInput.txt");
     
@@ -21,6 +22,8 @@ TOP_OPT::TOP_OPT(std::string InputFile)
         //throw_line("PAUSE1");
         //diffusionFilter.printNeighbourhood();
     }
+    prec endTime = omp_get_wtime();
+    import_time = endTime - startTime;
 }
 
 void TOP_OPT::importParameters(std::string inputFile)
@@ -295,6 +298,8 @@ void TOP_OPT::solveADJ() // ADJ solver
 
 void TOP_OPT::solve()
 {
+    prec startTime = omp_get_wtime();
+
     //------------------------------
     std::cout << "\n\n----------| NAVIER-STOKES TOPOLOGY OPTIMIZATION SOLVER |----------\n";
     std::cout << "\n----------| GEOMETRIC CONFIGURATION: ";
@@ -327,8 +332,6 @@ void TOP_OPT::solve()
     // }
     // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
     // pause();
-
-
     
     //---------------------
     int loop  = 0;
@@ -356,7 +359,7 @@ void TOP_OPT::solve()
     temp_fluid_energy.setZeros(2);
 
     //UNTILL GAMMA CONVERGENCE DO:
-    while (((change > change_toll || !(feasible)) && loop <= maxIt) || loop < minIt)
+    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
     {
         loop++;
         //-------------------------------
@@ -431,18 +434,20 @@ void TOP_OPT::solve()
         VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", U_print, dim, "Velocity");//, P_print, 1, "Pressure");
         currLoopPrint += deltaPrint;
     }
-    
 
-    //-----------------------------------
+
+    // -----------------------------------
     // EXPORT OPTIMIZAED GEOMETRY NODES
-    //-----------------------------------
+    // -----------------------------------
     prec gammaMinOptMesh = 0.85; // minimum value of gamma to save node coords in the optimized mesh
     MATRIX_INT optElem(physics.nElem_v, dim + 1);
     exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
-    //std::cout << "nRows: " << optElem.nRow << "\n";
     VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
-    
-    VTKWriter.closeTFile();
+    // VTKWriter.closeTFile();
+
+    prec endTime = omp_get_wtime();
+
+    solution_time = endTime - startTime;
 }
 //-------------------------
 
@@ -496,6 +501,19 @@ void TOP_OPT::exportOptimizedDomain(VECTOR gamma, prec gammaMin, MATRIX_INT &opt
     optElem.shrinkRows(nElOpt);
 }
 //-----------------------------------
+
+//---------------------------------------
+// Print Topology Optimization Code Stats
+//---------------------------------------
+void TOP_OPT::print_stats(prec totalTime)
+{
+    std::cout << "\n   ----------------------------------------------------";
+    std::cout << "\n   | TOPOLOGY OPTIMIZATION PROBLEM EXECUTED CORRECTLY |";
+    std::cout << "\n   |---> Import Time: " << import_time;
+    std::cout << "\n   |---> Solution Time: " << solution_time;
+    std::cout << "\n   |---> Total Time: " << totalTime;
+    std::cout << "\n   ----------------------------------------------------\n\n";
+}
 
 //-----------------------------------
 // PREPROCESS QUANTITIES TO PRINT
@@ -604,7 +622,7 @@ void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, i
     print_results_in_console(loop, obj, change);
 
     print_results_in_vtk(nNodes_v, dim, nNodes, loop, currLoopPrint, printNSSol, gamma);
-    
+
     print_for_matlab_interface(loop, obj, change, feasible, funcValues, no_weights_funcValues, changes, valid);
 }
 

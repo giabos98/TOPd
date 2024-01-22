@@ -82,6 +82,12 @@ public:
     VTK VTKWriter;
     int write_on_velocity_mesh;
 
+    //------------------
+    // STATISTICS
+    //------------------
+    prec import_time;
+    prec solution_time;
+
     //----------------------------
     //--------------
     // CLASS METHODS
@@ -110,6 +116,7 @@ public:
     //-----------------------------------
     void exportOptimizedDomain(VECTOR gamma, prec gammaMin, MATRIX_INT &optElem);
 
+    void print_stats(prec totalTime);
     //-----------------------------------
     // PREPROCESS QUANTITIES TO PRINT
     //-----------------------------------

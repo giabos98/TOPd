@@ -37,10 +37,10 @@ Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 0
 
 // min iter
-10
+1
 
 // maxIter
-1000
+5
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
