@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-45degrees_Re[10000]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
+Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 
 // optimization scheme (0:MMA, 1:GOC)
 0
@@ -63,7 +63,7 @@
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
 1
 // change max to turn on beta interpolation
-0.001
+0.0001
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation

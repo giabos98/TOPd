@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-hole_regular_0.0125
+hole_fine
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -17,8 +17,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-30  //  rho
-0.03  //  mu
+1  //  rho
+1  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -70,17 +70,17 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 2
 //geomID
-5 10
+2 10
 // functions
-10/sqrt(2) 10/sqrt(2)
--10/sqrt(2) -10/sqrt(2) 
+1 0
+-1 0
 
 // NEUMANN
 //--------
 // # NEUMANN
 2
 // geomID
-2 6
+5 6
 // pressure value (applied to the normal component)
 0
 0
