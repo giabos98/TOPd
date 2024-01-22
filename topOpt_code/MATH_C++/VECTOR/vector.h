@@ -59,8 +59,13 @@ public:
     }
     void initialize(prec* &vecPointer, int N)
     {  
-        length = N;
-        P = std::shared_ptr<prec[]>(new(vecPointer) prec[N], [](prec* vecPointer){free(vecPointer);});
+        initialize(N);
+        for (int i = 0; i < N; i++)
+        {
+            P[i] = vecPointer[i];
+        }
+        // length = N;
+        // P = std::shared_ptr<prec[]>(new(vecPointer) prec[N], [](prec* vecPointer){free(vecPointer);});
     }
     //---
     static std::shared_ptr<prec[]> makePointer(int N)

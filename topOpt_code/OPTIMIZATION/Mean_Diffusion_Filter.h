@@ -33,17 +33,7 @@ public:
     }
 
 
-    void initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours)
-    {
-        dim = dimension;
-        diffRadius = diffusionRadius;
-        diffFilterWeight = diffusionFilterWeight;
-        globId = nodeGlobId;
-        optId = nodeOptId;
-        prec* coordsP = coords;
-        coord.initialize(coordsP, dim);
-        possibleNB = possibleNeighbours;
-    }
+    void initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours);
 
     void buildNeighbourhood_v0(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode);
     void buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode);
@@ -97,27 +87,7 @@ public:
 
     void initialize(){};
 
-    void initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight)
-    {
-        physics = physicsP;
-        dim = (*physics).dim;
-        nNodesInDom = nNodesInDomain;
-        nodesInDom = nodesInDomain;
-        diffusion_filter_case = diff_filter_case;
-        optNodeFromGlobNode = optimizationNodeFromGlobNode;
-        topOptBox = topologyOptBox;
-        topOptBoxSize.initialize(dim);
-        for (int icomp = 0; icomp < dim; icomp++)
-        {
-            topOptBox[icomp][0] -= 1e-10;
-            topOptBox[icomp][1] += 1e-10;
-            topOptBoxSize[icomp] = abs(topOptBox[icomp][1] - topOptBox[icomp][0]);
-        }
-        diffRadius = diffRadiusPercentace * topOptBoxSize.min();
-        cellSize = 2*diffRadius;
-        diffFilterWeight = diffusionFilterWeight;
-        initializeDiffFilter();
-    }
+    void initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight);
 
     void initializeDiffFilter();
 

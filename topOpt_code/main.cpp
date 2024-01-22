@@ -4,6 +4,7 @@
 int PARALLEL::nThread = 4;
 int main()
 {    
+    prec startTime = omp_get_wtime();
 
     std::string inputFileNS = "INPUT_FILES/readProblemNS.txt";
     TOP_OPT topOpt(inputFileNS);
@@ -11,6 +12,11 @@ int main()
     //*-*-*--*-*-*-*-*-*-*
     topOpt.solve();
     //*-*-*-*-*-*-*-*-*-*-*-
+
+    prec endTime = omp_get_wtime();
+
+    prec totalTime = endTime - startTime;
+    topOpt.print_stats(totalTime);
 
     return 0;
 }

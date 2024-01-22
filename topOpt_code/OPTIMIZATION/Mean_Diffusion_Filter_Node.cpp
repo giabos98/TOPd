@@ -1,5 +1,16 @@
 #include "Mean_Diffusion_Filter.h"
 
+void Mean_DF_NODE_NB::initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours)
+{
+    dim = dimension;
+    diffRadius = diffusionRadius;
+    diffFilterWeight = diffusionFilterWeight;
+    globId = nodeGlobId;
+    optId = nodeOptId;
+    coord.initialize(coords, dim);
+    possibleNB = possibleNeighbours;
+}
+
 void Mean_DF_NODE_NB::buildNeighbourhood_v0(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode)
 {
     int nMaxNB = possibleNB.length;

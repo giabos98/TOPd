@@ -1,5 +1,27 @@
 #include "Mean_Diffusion_Filter.h"
 
+void Mean_DIFFUSION_FILTER::initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight)
+    {
+        physics = physicsP;
+        dim = (*physics).dim;
+        nNodesInDom = nNodesInDomain;
+        nodesInDom = nodesInDomain;
+        diffusion_filter_case = diff_filter_case;
+        optNodeFromGlobNode = optimizationNodeFromGlobNode;
+        topOptBox = topologyOptBox;
+        topOptBoxSize.initialize(dim);
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            topOptBox[icomp][0] -= 1e-10;
+            topOptBox[icomp][1] += 1e-10;
+            topOptBoxSize[icomp] = abs(topOptBox[icomp][1] - topOptBox[icomp][0]);
+        }
+        diffRadius = diffRadiusPercentace * topOptBoxSize.min();
+        cellSize = 2*diffRadius;
+        diffFilterWeight = diffusionFilterWeight;
+        initializeDiffFilter();
+    }
+
 void Mean_DIFFUSION_FILTER::initializeDiffFilter()
 {
     nCells.setZeros(3);
@@ -21,11 +43,8 @@ void Mean_DIFFUSION_FILTER::initializeDiffFilter()
             }                  
         }
     }
-    //throw_line("ECCOCI0");
     buildCellsTensor();
-    //throw_line("ECCOCI1");
     buildNodesNB();
-    // throw_line("ECCOCI2");
 }
 
 void Mean_DIFFUSION_FILTER::buildCellsTensor()
