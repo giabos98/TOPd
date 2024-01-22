@@ -75,7 +75,6 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
         {
             for (int kcell = 0; kcell < nCells[2]; kcell++)
             {
-
                 VECTOR_INT possibleNB(0);
                 for (int iloc = 0; iloc < localNB.length; iloc ++)
                 {

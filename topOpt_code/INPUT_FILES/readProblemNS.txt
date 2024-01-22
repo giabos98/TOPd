@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-hole_normal
+prism_extra_fine
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -68,20 +68,20 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+1
 //geomID
-2 10
+0
 // functions
-1 0
--1 0
+4*[0.25-y*y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+3
 // geomID
-5 6
+3 4 7
 // pressure value (applied to the normal component)
+0
 0
 0
 

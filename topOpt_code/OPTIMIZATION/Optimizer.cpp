@@ -949,7 +949,7 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
         func_val_init = func_val;
         func_in_box_init = func_in_box;
         func_out_box_init = f0Init - func_in_box_init;
-        if (f0Init < 1e-10)
+        if (abs(f0Init) < 1e-10)
         {
             functional_normalization_factor = 1;
         } 
