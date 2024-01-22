@@ -95,7 +95,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # NEUMANN - TIME DEPENDENT
 0
 
-// NORMAL VELOCITY OPEN BOUNDARY (velocity only in the last component: 2D->y, 3D->z) and open boundary on it
+// NORMAL VELOCITY OPEN BOUNDARY (velocity not zero only in the last component: 2D->y, 3D->z) and open boundary on it
 //--------
 // # NVOB
 0
