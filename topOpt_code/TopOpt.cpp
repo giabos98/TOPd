@@ -14,12 +14,9 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     // initialize TopOpt parameters
     printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");
     importParameters("INPUT_FILES/TopOptInput.txt");
-    
     if (enableDiffusionFilter > 0) 
     {
-        //throw_line("PAUSE0");
         Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
-        //throw_line("PAUSE1");
         //diffusionFilter.printNeighbourhood();
     }
     prec endTime = omp_get_wtime();
@@ -66,6 +63,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     std::getline(ParameterFile, line);
     opt_subdomains.initialize(n_opt_subdomains);
     STREAM::getRowVector(ParameterFile, line, iss, opt_subdomains);
+
     handle_optimization_domain();
     
     //
@@ -104,7 +102,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     physics.Vol = V0;
     physics.vol_fract = 1.0;
     // std::cout << "V0: " << V0 << "\n";
-    // pause();
 
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, customFunc);
@@ -194,7 +191,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     {
         throw_line("\nERROR: customFunc != 1\n");
     }
-    
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, diffusionRadiusPercentage);
     getline(ParameterFile, line);
@@ -331,7 +327,6 @@ void TOP_OPT::solve()
     //     alpha[inod] = alpha_min + (alpha_max - alpha_min) * q * tempGamma[inod] / ( q + 1 - tempGamma[inod]);
     // }
     // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
-    // pause();
     
     //---------------------
     int loop  = 0;
@@ -402,7 +397,6 @@ void TOP_OPT::solve()
             }
         }
         
-        //pause();
         save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
 
         change = (gamma-gammaNew).norm() / gamma.norm();
@@ -597,8 +591,6 @@ void TOP_OPT::get_pressure_in_nodes_v(VECTOR &P, VECTOR &P_print)
                         break;
                     }
                 }
-                // std::cout << "glob_id: " << glob_id_v << "\n";
-                // pause();
                 P_print[glob_id_v] = (P[iglob] + P[jglob]) / 2.0;
                 passed_nodes[glob_id_v] = 1;
             }
@@ -814,20 +806,10 @@ void TOP_OPT::evaluate_total_energy()
 // Define the elements and the node of the optimization domain region.
 void TOP_OPT::handle_optimization_domain()
 {
-    //first check if is elem_in_dom
+    
     int nElem_v = physics.nElem_v;
     is_elem_in_dom.setZeros(nElem_v);
-    for (int iel = 0; iel < nElem_v; iel++)
-    {
-        int temp_geo_id = physics.elem_geo_entities_ids_v[iel];
-        if (opt_subdomains.hasIn(temp_geo_id))
-        {
-            is_elem_in_dom[iel] = 1;
-        }
-    }
-    // is_elem_in_dom.printRowMatlab("is_el");
-
-    //check node in dom
+    
     int nodes_per_el = physics.dim + 1;
     int nNodes_v = physics.nNodes_v;
     optNodeFromGlobNode.setZeros(nNodes_v);
@@ -836,95 +818,127 @@ void TOP_OPT::handle_optimization_domain()
     is_node_in_dom += - 2; //set all to -2: -2=not passed, -1=not in opt domain, others=relative domain id
     not_opt_nodes_in_subdomains.setZeros(nNodes_v);
     not_opt_nodes_in_subdomains += -1;
-    for (int iel = 0; iel < nElem_v; iel++)
+    if (n_subdomains == 1) // optimizing on all the domain
     {
-        int temp_elem_geo_id = physics.elem_geo_entities_ids_v[iel];
-        int temp_elem_id_relevance;
-        opt_subdomains.hasIn(temp_elem_geo_id, temp_elem_id_relevance);
-        if (is_elem_in_dom[iel] == 0)
+        nodeInDom.setZeros(nNodes_v);
+        elemInDom.setZeros(nElem_v);
+        for (int inod = 0; inod < nNodes_v; inod++)
         {
-            for (int iloc = 0; iloc < nodes_per_el; iloc++)
+            nodeInDom[inod] = inod;
+            optNodeFromGlobNode[inod] = inod;
+        }
+        for (int iel = 0; iel < nElem_v; iel++)
+        {
+            elemInDom[iel] = iel;
+        }
+        nNodeInDom = nNodes_v;
+        nElemInDom = nElem_v;
+    }
+    else
+    {
+        //first check if is elem_in_dom
+        for (int iel = 0; iel < nElem_v; iel++)
+        {
+            int temp_geo_id = physics.elem_geo_entities_ids_v[iel];
+            if (opt_subdomains.hasIn(temp_geo_id))
             {
-                int iglob = physics.elem_v[iel][iloc];
-                is_node_in_dom[iglob] = -1;
-                if (not_opt_nodes_in_subdomains[iglob] == -1) 
-                {
-                    not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id; // the sumdomain priority of common nodes for the not_opt subdomains is given by their numbering
-                }
-                else if (temp_elem_geo_id < not_opt_nodes_in_subdomains[iglob])
-                {
-                    not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id;
-                }
+                is_elem_in_dom[iel] = 1;
             }
         }
-        else //  is_elem_in_dom[iel] == 1
+        // is_elem_in_dom.printRowMatlab("is_el");
+
+        //check node in dom
+        for (int iel = 0; iel < nElem_v; iel++)
         {
-            for (int iloc = 0; iloc < nodes_per_el; iloc++)
+            int temp_elem_geo_id = physics.elem_geo_entities_ids_v[iel];
+            int temp_elem_id_relevance;
+            opt_subdomains.hasIn(temp_elem_geo_id, temp_elem_id_relevance);
+            if (is_elem_in_dom[iel] == 0)
             {
-                int iglob = physics.elem_v[iel][iloc];
-                int temp_node_geo_id = is_node_in_dom[iglob];
-                if (temp_node_geo_id == -2)
+                for (int iloc = 0; iloc < nodes_per_el; iloc++)
                 {
-                    is_node_in_dom[iglob] = temp_elem_geo_id;
-                }
-                else if (temp_node_geo_id != -1) //not yet passed node
-                {
-                    int temp_node_id_relevance;
-                    opt_subdomains.hasIn(temp_node_geo_id, temp_node_id_relevance);
-                    if (temp_elem_id_relevance < temp_node_id_relevance) // in this way yhe order of relevance of the subdomains belonging is the one inserted by the user
+                    int iglob = physics.elem_v[iel][iloc];
+                    is_node_in_dom[iglob] = -1;
+                    if (not_opt_nodes_in_subdomains[iglob] == -1) 
                     {
-                        is_node_in_dom[iglob] = temp_elem_geo_id;
+                        not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id; // the sumdomain priority of common nodes for the not_opt subdomains is given by their numbering
+                    }
+                    else if (temp_elem_geo_id < not_opt_nodes_in_subdomains[iglob])
+                    {
+                        not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id;
                     }
                 }
             }
-        } 
-    }
-    // is_node_in_dom.printRowMatlab("is_nod");
-    for (int inod = 0; inod < nNodes_v; inod++)
-    {
-        switch (is_node_in_dom[inod])
-        {
-            case -2:
+            else //  is_elem_in_dom[iel] == 1
             {
-                throw_line("ERROR: not defined case of is_node_in_dom.\n");
-                break;
-            }
-            case -1:
-                break;
-            default:
-            {
-                optNodeFromGlobNode[inod] = nodeInDom.length;
-                nodeInDom.append(inod);
-                break;
-            }
-            
+                for (int iloc = 0; iloc < nodes_per_el; iloc++)
+                {
+                    int iglob = physics.elem_v[iel][iloc];
+                    int temp_node_geo_id = is_node_in_dom[iglob];
+                    if (temp_node_geo_id == -2)
+                    {
+                        is_node_in_dom[iglob] = temp_elem_geo_id;
+                    }
+                    else if (temp_node_geo_id != -1) //not yet passed node
+                    {
+                        int temp_node_id_relevance;
+                        opt_subdomains.hasIn(temp_node_geo_id, temp_node_id_relevance);
+                        if (temp_elem_id_relevance < temp_node_id_relevance) // in this way yhe order of relevance of the subdomains belonging is the one inserted by the user
+                        {
+                            is_node_in_dom[iglob] = temp_elem_geo_id;
+                        }
+                    }
+                }
+            } 
         }
-    }
-    nNodeInDom = nodeInDom.length;
-    // nodeInDom.printRowMatlab("nodeInDom");
-    // optNodeFromGlobNode.printRowMatlab("optFrom");
+        // is_node_in_dom.printRowMatlab("is_nod");
+        for (int inod = 0; inod < nNodes_v; inod++)
+        {
+            switch (is_node_in_dom[inod])
+            {
+                case -2:
+                {
+                    throw_line("ERROR: not defined case of is_node_in_dom.\n");
+                    break;
+                }
+                case -1:
+                    break;
+                default:
+                {
+                    optNodeFromGlobNode[inod] = nodeInDom.length;
+                    nodeInDom.append(inod);
+                    break;
+                }
+                
+            }
+        }
+        nNodeInDom = nodeInDom.length;
+        // nodeInDom.printRowMatlab("nodeInDom");
+        // optNodeFromGlobNode.printRowMatlab("optFrom");
 
-    // second check if is elem_in_dom: the idea is now to exclude elements in which one node belongs also to a non in dom element.
-    for (int iel = 0; iel < nElem_v; iel++)
-    {
-        int temp_is_in_dom = 1;
-        for (int iloc = 0; iloc < nodes_per_el; iloc++)
+        // second check if is elem_in_dom: the idea is now to exclude elements in which one node belongs also to a non in dom element.
+        for (int iel = 0; iel < nElem_v; iel++)
         {
-            int iglob = physics.elem_v[iel][iloc];
-            if (is_node_in_dom[iglob] == -1) 
+            int temp_is_in_dom = 1;
+            for (int iloc = 0; iloc < nodes_per_el; iloc++)
             {
-                temp_is_in_dom = 0;
-                break;
+                int iglob = physics.elem_v[iel][iloc];
+                if (is_node_in_dom[iglob] == -1) 
+                {
+                    temp_is_in_dom = 0;
+                    break;
+                }
+            }
+            is_elem_in_dom[iel] = temp_is_in_dom;
+            if (temp_is_in_dom == 1) 
+            {
+                elemInDom.append(iel);
             }
         }
-        is_elem_in_dom[iel] = temp_is_in_dom;
-        if (temp_is_in_dom == 1) 
-        {
-            elemInDom.append(iel);
-        }
+        nElemInDom = elemInDom.length;
+        // elemInDom.printRowMatlab("nodeInDom");
     }
-    nElemInDom = elemInDom.length;
-    // elemInDom.printRowMatlab("nodeInDom");
+    
 
     // finally get the optimization box to be able to use the gamma filtering
     optBox.initialize(physics.dim, 2);
@@ -949,35 +963,44 @@ void TOP_OPT::handle_optimization_domain()
         }
     }
     // MATRIX::printForMatlab(optBox, "optBox");
-    // pause();
 }
 
 void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma)
 {
-    for (int inod = 0; inod < physics.nNodes_v; inod++)
+    if (n_subdomains == 1)
     {
-        int temp_node_domain = is_node_in_dom[inod];
-        if (temp_node_domain != -1)
+        prec init_value = subdomains_initial_values[0]; //only one subdomain
+        gamma_opt.reset(init_value);
+        gamma.reset(init_value);
+    }
+    else
+    {
+        for (int inod = 0; inod < physics.nNodes_v; inod++)
         {
-            prec temp_init_value = subdomains_initial_values[temp_node_domain];
-            int temp_opt_node = optNodeFromGlobNode[inod];
-            gamma_opt[temp_opt_node] = temp_init_value;
-            gamma[inod] = temp_init_value;
-        }
-        else 
-        {
-            int temp_not_node_domain = not_opt_nodes_in_subdomains[inod];
-            if (temp_not_node_domain == -1)
+            int temp_node_domain = is_node_in_dom[inod];
+            if (temp_node_domain != -1)
             {
-                throw_line("ERROR: not is_node_in_dom node is not classified as not_opt_nodes_in_subdomains\n");
-            }
-            else
-            {
-                prec temp_init_value = subdomains_initial_values[temp_not_node_domain];
+                prec temp_init_value = subdomains_initial_values[temp_node_domain];
+                int temp_opt_node = optNodeFromGlobNode[inod];
+                gamma_opt[temp_opt_node] = temp_init_value;
                 gamma[inod] = temp_init_value;
+            }
+            else 
+            {
+                int temp_not_node_domain = not_opt_nodes_in_subdomains[inod];
+                if (temp_not_node_domain == -1)
+                {
+                    throw_line("ERROR: not is_node_in_dom node is not classified as not_opt_nodes_in_subdomains\n");
+                }
+                else
+                {
+                    prec temp_init_value = subdomains_initial_values[temp_not_node_domain];
+                    gamma[inod] = temp_init_value;
+                }
             }
         }
     }
+    
 }
 
 

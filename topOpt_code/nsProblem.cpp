@@ -336,15 +336,15 @@ void PROBLEM_NS::importPREPRO()
     (*physics).nDof = dim * nNodes_v + (*physics).nNodes;
     // choose number of thread dependding on the size of the problem
     unsigned int maxNumThreads = std::thread::hardware_concurrency();
-    if ((*physics).nDof > 1e5)
+    if ((1e5 <= (*physics).nDof) && ((*physics).nDof < 5e5))
     {
         PARALLEL::nThread = 8;
     }
-    else if ((*physics).nDof > 5e5)
+    else if ((5e5 <= (*physics).nDof) && ((*physics).nDof < 1e6))
     {
         PARALLEL::nThread = 14;
     }
-    else if ((*physics).nDof > 1e6)
+    else if (1e6 <= (*physics).nDof)
     {
         PARALLEL::nThread = maxNumThreads;
     }
