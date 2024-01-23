@@ -63,7 +63,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     std::getline(ParameterFile, line);
     opt_subdomains.initialize(n_opt_subdomains);
     STREAM::getRowVector(ParameterFile, line, iss, opt_subdomains);
-
     handle_optimization_domain();
     
     //
