@@ -72,16 +72,16 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-2
+4
 // functions
-0 0 10*2*[0.5-x*x-y*y]
+0 0 10*10/3*[0.3-x*x-y*y]
 
 // NEUMANN
 //--------
 // # NEUMANN
 1
 // geomID
-3
+5
 // pressure value (applied to the normal component)
 0
 

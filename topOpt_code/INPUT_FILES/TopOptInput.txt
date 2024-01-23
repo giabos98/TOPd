@@ -28,7 +28,7 @@ Re[10]_Vr[0.4]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 0
 
 // αmax
-1e4
+1e5
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
