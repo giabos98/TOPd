@@ -2155,7 +2155,7 @@ void OPTIMIZER::eval_J_gradU(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
             {
                 for (int jcomp = 0; jcomp < dim; jcomp++)
                 {
-                    tempGrad[icomp][jcomp] += U[icomp][iglob] * COEF[icomp][iel][iloc] + U[jcomp][iglob]*COEF[jcomp][iel][iloc];
+                    tempGrad[icomp][jcomp] += U[icomp][iglob] * COEF[jcomp][iel][iloc] + U[jcomp][iglob]*COEF[icomp][iel][iloc];
                 }
             }
         }

@@ -1,34 +1,34 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-Re[10]_Vr[0.4]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
+Re[1]_Vr[0.36]_goc_a1e4_b[1_1_0_0]_r0.05_D1.0_p[2]
 
 // optimization scheme (0:MMA, 1:GOC)
-0
+1
 
 // stationary flag : (1 stationary,  0 time dependent)
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains)
 // n subdomains
-1
+3
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0
+1.0 0.0 1.0
 //n opt subdomains
-1
+3
 // optimization subdomains
-0
+0 1 2
 
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 
 // V_r (desired maximum fraction of fluid volume)
-0.4
+0.36
 
 // αmin
 0
 
 // αmax
-1e5
+1e4
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -74,7 +74,7 @@ Re[10]_Vr[0.4]_mma_a1e4_b[1_1_0_0]_r0.0125_D1.0_p[2]
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.0125
+0.05
 // DIFFUSION FILTER WEIGHT
 1.0
 
