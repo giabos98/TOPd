@@ -223,9 +223,11 @@ public:
     //------------------------------------------------
     void getFunc(VECTOR x, prec &f0, MATRIX U);
     void getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, MATRIX Ua);
-    void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
+    void update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
+    void update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol);
     void decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
-    void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);
+    // void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
+    // void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);
 
     //------------------------------------------------
     // GOC

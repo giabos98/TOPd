@@ -70,10 +70,14 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesN
         VECTOR coordNB = tempNB.coord;
         if (coordNB.length != dim) 
         {
-            coord.printRowMatlab("Coord");
-            coordNB.printRowMatlab("CoordNB");
-            std::string errorStr = "ERROR inserting a neighbour for the opt node " + std::to_string(inb) + ". Neighbour optId:" + std::to_string(optIdNB) + "\n";
-            throw_line(errorStr);
+            #pragma omp critical (error_in_coordNB)
+            {
+                coord.printRowMatlab("Coord");
+                coordNB.printRowMatlab("CoordNB");
+                std::string errorStr = "ERROR inserting a neighbour for the opt node " + std::to_string(inb) + ". Neighbour optId:" + std::to_string(optIdNB) + "\n";
+                throw_line(errorStr);
+            }
+            
         }
         VECTOR distVec = coord - coordNB;
         prec tempDist = VECTOR::norm(distVec);
@@ -95,7 +99,10 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesN
     weigthNB.shrink(nNB);
     weigthNB = weigthNB / weigthsSum;
 
-    build_weight_as_NB(nodesNB);
+    #pragma omp critical (build_weight_as_NB)
+    {
+        build_weight_as_NB(nodesNB);
+    }
 }
 
 void Mean_DF_NODE_NB::build_weight_as_NB(std::vector<Mean_DF_NODE_NB> &nodesNB)

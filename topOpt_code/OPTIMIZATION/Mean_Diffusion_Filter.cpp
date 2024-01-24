@@ -43,6 +43,7 @@ void Mean_DIFFUSION_FILTER::initializeDiffFilter()
             }                  
         }
     }
+
     buildCellsTensor();
     buildNodesNB();
 }
@@ -69,6 +70,7 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
     nodesNB.resize(nNodesInDom);
     VECTOR_INT localNB(3);
     localNB.set3Values(-1, 0, 1);
+
     for (int icell = 0; icell < nCells[0]; icell++)
     {
         for (int jcell = 0; jcell < nCells[1]; jcell++)
@@ -110,18 +112,30 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
             }
         }
     }
+
     buildNeighbourhoods();
 }
 
 void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
 {
     std::cout << "\nBUILD NEIGHBOURHOODS \n";
-    for (int inode = 0; inode < nNodesInDom; inode++)
+    
+    int node_counter = 0;
+    #pragma omp parallel num_threads(std::thread::hardware_concurrency())
     {
-        std::cout << "--| Build NB | Node: " << inode << "/" << nNodesInDom << "\t\tperc:" << floor((double(inode+1) / double(nNodesInDom))*100) << "\n";
-        nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
+        #pragma omp for
+        for (int inode = 0; inode < nNodesInDom; inode++)
+        {
+            #pragma omp critical (Build_NB_progress_bar)
+            {
+                node_counter++;
+                std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t\tperc:" << floor((double(node_counter) / double(nNodesInDom))*100) << "\n";
+            }
+            nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
+        }
     }
 }
+    
 
 void Mean_DIFFUSION_FILTER::filterGamma_v0(VECTOR &gammaOld, VECTOR &gammaNew)
 {

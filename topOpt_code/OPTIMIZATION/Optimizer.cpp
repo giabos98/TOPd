@@ -428,149 +428,149 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
     else throw_line("\nERROR: customFunc != 0 or 1\n");
 }
 
-void OPTIMIZER::updateJustVal(VECTOR &x, prec &f0,  VECTOR &g)
-{
-    f0 = 0;
-    int nElem_v = (*physics).nElem_v;
-    int nNode_v = (*physics).nNodes_v;
+// void OPTIMIZER::updateJustVal(VECTOR &x, prec &f0,  VECTOR &g)
+// {
+//     f0 = 0;
+//     int nElem_v = (*physics).nElem_v;
+//     int nNode_v = (*physics).nNodes_v;
 
-    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
-    VECTOR Volume_v = (*physics).Volume_v;
+//     MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+//     VECTOR Volume_v = (*physics).Volume_v;
 
-    prec factor = q*(alpha_min - alpha_max) + alpha_min;
-    VECTOR alpha = (x-1).pointdiv(x+q);
-    alpha *= factor; 
+//     prec factor = q*(alpha_min - alpha_max) + alpha_min;
+//     VECTOR alpha = (x-1).pointdiv(x+q);
+//     alpha *= factor; 
     
-    //--------------------------------------------------------------
-    // f_0, FUNCTIONAL DEFINITION
-    //--------------------------------------------------------------
-    MATRIX U(dim, nNode_v);
-    if ( (*physics).isStationary == 1) 
-    {
-        std::string currNSName = "NSCurrSol/0.txt";
-        std::string currADJName = "ADJCurrSol/0.txt";
+//     //--------------------------------------------------------------
+//     // f_0, FUNCTIONAL DEFINITION
+//     //--------------------------------------------------------------
+//     MATRIX U(dim, nNode_v);
+//     if ( (*physics).isStationary == 1) 
+//     {
+//         std::string currNSName = "NSCurrSol/0.txt";
+//         std::string currADJName = "ADJCurrSol/0.txt";
 
-        std::ifstream rf;
-        rf.open(&currNSName[0], std::ios::out | std::ios::binary);
-        if(!rf) {
-            std::cout << "Cannot open file!" << std::endl;
-            throw_line("ERROR: Can't open NS sol file\n");
-        }
-        prec deltaT;
-        rf.read((char *) &deltaT, sizeof(prec));
+//         std::ifstream rf;
+//         rf.open(&currNSName[0], std::ios::out | std::ios::binary);
+//         if(!rf) {
+//             std::cout << "Cannot open file!" << std::endl;
+//             throw_line("ERROR: Can't open NS sol file\n");
+//         }
+//         prec deltaT;
+//         rf.read((char *) &deltaT, sizeof(prec));
 
-        for (int icomp = 0; icomp < dim; icomp++) 
-        { for (int i = 0; i < nNode_v; i++) rf.read((char *) &U[icomp][i], sizeof(prec));}
-        rf.close();
-        //---------
-        rf.open(&currADJName[0], std::ios::out | std::ios::binary);
-        if(!rf) {
-            std::cout << "Cannot open file!" << std::endl;
-            throw_line("ERROR: Can't open ADJ sol file\n");
-        }
-        rf.close();
-        getFunc(x, f0, U);
-    } 
-    else
-    {
-        prec totTime = (*physics).t_end;
+//         for (int icomp = 0; icomp < dim; icomp++) 
+//         { for (int i = 0; i < nNode_v; i++) rf.read((char *) &U[icomp][i], sizeof(prec));}
+//         rf.close();
+//         //---------
+//         rf.open(&currADJName[0], std::ios::out | std::ios::binary);
+//         if(!rf) {
+//             std::cout << "Cannot open file!" << std::endl;
+//             throw_line("ERROR: Can't open ADJ sol file\n");
+//         }
+//         rf.close();
+//         getFunc(x, f0, U);
+//     } 
+//     else
+//     {
+//         prec totTime = (*physics).t_end;
 
-        for (int itime = 0; itime < nTimeSteps+1; itime++)
-        {
-            std::string currNSName = "NSCurrSol/" + std::to_string(itime) + ".txt";
-            std::string currADJName = "ADJCurrSol/" + std::to_string(itime) + ".txt";
-            std::ifstream rf;
-            rf.open(&currNSName[0], std::ios::out | std::ios::binary);
-            if(!rf) {
-                std::cout << "Cannot open file!" << std::endl;
-                throw_line("ERROR: Can't open NS sol file\n");
-            }
-            prec deltaT;
-            rf.read((char *) &deltaT, sizeof(prec));
+//         for (int itime = 0; itime < nTimeSteps+1; itime++)
+//         {
+//             std::string currNSName = "NSCurrSol/" + std::to_string(itime) + ".txt";
+//             std::string currADJName = "ADJCurrSol/" + std::to_string(itime) + ".txt";
+//             std::ifstream rf;
+//             rf.open(&currNSName[0], std::ios::out | std::ios::binary);
+//             if(!rf) {
+//                 std::cout << "Cannot open file!" << std::endl;
+//                 throw_line("ERROR: Can't open NS sol file\n");
+//             }
+//             prec deltaT;
+//             rf.read((char *) &deltaT, sizeof(prec));
 
-            MATRIX U(dim, nNode_v);
-            for (int icomp = 0; icomp < dim; icomp++) 
-            { for (int i = 0; i < nNode_v; i++) rf.read((char *) &U[icomp][i], sizeof(prec));}
-            rf.close();
-            //---------
-            rf.open(&currADJName[0], std::ios::out | std::ios::binary);
-            if(!rf) {
-                std::cout << "Cannot open file!" << std::endl;
-                throw_line("ERROR: Can't open ADJ sol file\n");
-            }
-            MATRIX Ua(dim, nNode_v);
-            for (int icomp = 0; icomp < dim; icomp++) 
-            { for (int i = 0; i < nNode_v; i++) rf.read((char *) &Ua[icomp][i], sizeof(prec));}
-            rf.close();
-            prec tempF0;
-            getFunc(x, tempF0, U);
-            f0 += tempF0*deltaT/2; 
-        }
-        f0 /= totTime; 
-    }
+//             MATRIX U(dim, nNode_v);
+//             for (int icomp = 0; icomp < dim; icomp++) 
+//             { for (int i = 0; i < nNode_v; i++) rf.read((char *) &U[icomp][i], sizeof(prec));}
+//             rf.close();
+//             //---------
+//             rf.open(&currADJName[0], std::ios::out | std::ios::binary);
+//             if(!rf) {
+//                 std::cout << "Cannot open file!" << std::endl;
+//                 throw_line("ERROR: Can't open ADJ sol file\n");
+//             }
+//             MATRIX Ua(dim, nNode_v);
+//             for (int icomp = 0; icomp < dim; icomp++) 
+//             { for (int i = 0; i < nNode_v; i++) rf.read((char *) &Ua[icomp][i], sizeof(prec));}
+//             rf.close();
+//             prec tempF0;
+//             getFunc(x, tempF0, U);
+//             f0 += tempF0*deltaT/2; 
+//         }
+//         f0 /= totTime; 
+//     }
 
-    if (first_it_flag == 1)
-    {
-        f0Init = f0;
-        functional_normalization_factor = abs(f0Init);
-        first_it_flag = 0;
-    }
-    (*physics).f0Init = f0Init;
-    obj_abs_val = f0;
-    f0 /= functional_normalization_factor; 
-    // // --------------------------------------------------------------
-    // // MESH INDIPENDENCY FILTER (MAYBE MOVE IT AWAY PLEASE)
-    // // --------------------------------------------------------------
-    // VECTOR newDf0(nNode); newDf0.resetZeros();
-    // VECTOR countW(nNode); countW.resetZeros();
-    // for (int iel = 0; iel < nElem; iel++)
-    // {
-    //     int globEl = elemInDom[iel];
-    //      for (int iloc = 0; iloc < dim+1; iloc++)
-    //     {
-    //         int iglob = elem_v[globEl][iloc];
-    //         int optNode = optNodeFromGlobNode[iglob];
-    //         newDf0[optNode] += df0[optNode]*Volume_v[globEl]/(dim+1);
-    //         countW[optNode] += Volume_v[globEl]/(dim+1);
-    //     }
-    // }
-    // newDf0 /= countW;
-    // df0 = newDf0;
+//     if (first_it_flag == 1)
+//     {
+//         f0Init = f0;
+//         functional_normalization_factor = abs(f0Init);
+//         first_it_flag = 0;
+//     }
+//     (*physics).f0Init = f0Init;
+//     obj_abs_val = f0;
+//     f0 /= functional_normalization_factor; 
+//     // // --------------------------------------------------------------
+//     // // MESH INDIPENDENCY FILTER (MAYBE MOVE IT AWAY PLEASE)
+//     // // --------------------------------------------------------------
+//     // VECTOR newDf0(nNode); newDf0.resetZeros();
+//     // VECTOR countW(nNode); countW.resetZeros();
+//     // for (int iel = 0; iel < nElem; iel++)
+//     // {
+//     //     int globEl = elemInDom[iel];
+//     //      for (int iloc = 0; iloc < dim+1; iloc++)
+//     //     {
+//     //         int iglob = elem_v[globEl][iloc];
+//     //         int optNode = optNodeFromGlobNode[iglob];
+//     //         newDf0[optNode] += df0[optNode]*Volume_v[globEl]/(dim+1);
+//     //         countW[optNode] += Volume_v[globEl]/(dim+1);
+//     //     }
+//     // }
+//     // newDf0 /= countW;
+//     // df0 = newDf0;
 
-    // newDf0.resetZeros();
-    // countW.resetZeros();
-    // for (int iel = 0; iel < nElem; iel++)
-    // {
-    //     int globEl = elemInDom[iel];
-    //      for (int iloc = 0; iloc < dim+1; iloc++)
-    //     {
-    //         int iglob = elem_v[globEl][iloc];
-    //         int optNode = optNodeFromGlobNode[iglob];
-    //         newDf0[optNode] += df0[optNode]*Volume_v[globEl]/(dim+1);
-    //         countW[optNode] += Volume_v[globEl]/(dim+1);
-    //     }
-    // }
-    // newDf0 /= countW;
-    // df0 = newDf0;
-    //--------------------------------------------------------------
-    // CONSTRAINTS DEFINITION
-    //--------------------------------------------------------------
-    // volume constraint
-    //--------------------
-    // int_\Omega { x } - V_r*V_0 <= 0 
-    prec integral = 0;
-    for (int iel = 0; iel < nElem; iel++)
-    {
-        int globEl = elemInDom[iel];
-        for (int iloc = 0; iloc < dim+1; iloc++)
-        {
-            int iglob = elem_v[globEl][iloc];
-            int optNode = optNodeFromGlobNode[iglob];
-            integral += x[optNode]/(dim+1)*Volume_v[globEl];
-        }
-    }
-    g[0]  = (integral - Vr * V0)/V0;
-}
+//     // newDf0.resetZeros();
+//     // countW.resetZeros();
+//     // for (int iel = 0; iel < nElem; iel++)
+//     // {
+//     //     int globEl = elemInDom[iel];
+//     //      for (int iloc = 0; iloc < dim+1; iloc++)
+//     //     {
+//     //         int iglob = elem_v[globEl][iloc];
+//     //         int optNode = optNodeFromGlobNode[iglob];
+//     //         newDf0[optNode] += df0[optNode]*Volume_v[globEl]/(dim+1);
+//     //         countW[optNode] += Volume_v[globEl]/(dim+1);
+//     //     }
+//     // }
+//     // newDf0 /= countW;
+//     // df0 = newDf0;
+//     //--------------------------------------------------------------
+//     // CONSTRAINTS DEFINITION
+//     //--------------------------------------------------------------
+//     // volume constraint
+//     //--------------------
+//     // int_\Omega { x } - V_r*V_0 <= 0 
+//     prec integral = 0;
+//     for (int iel = 0; iel < nElem; iel++)
+//     {
+//         int globEl = elemInDom[iel];
+//         for (int iloc = 0; iloc < dim+1; iloc++)
+//         {
+//             int iglob = elem_v[globEl][iloc];
+//             int optNode = optNodeFromGlobNode[iglob];
+//             integral += x[optNode]/(dim+1)*Volume_v[globEl];
+//         }
+//     }
+//     g[0]  = (integral - Vr * V0)/V0;
+// }
 
 // void OPTIMIZER::updateVal(VECTOR x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol)
 // {
@@ -856,9 +856,217 @@ void OPTIMIZER::updateJustVal(VECTOR &x, prec &f0,  VECTOR &g)
 //     }
 // }
 
-void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol)
+// void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol)
+// {
+//     //pause();
+//     obj_functional = 0.0;
+//     func_in_box = 0.0;
+//     f0 = 0.0;
+    
+//     func_val.resetZeros();
+//     no_weighted_func_val.resetZeros();
+
+//     d_obj_functional.resetZeros();
+//     df0.resetZeros();
+
+//     gamma = x; // copy the optimzation procedure value in gamma
+
+//     topology_optimization_diffusive_filter();
+
+//     eval_gamma_acc_and_derivative();
+
+//     x = gamma; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
+
+//     int nElem_v = (*physics).nElem_v;
+//     int nNode_v = (*physics).nNodes_v;
+//     int n_node   = (*physics).nNodes;
+//     int n_in_bd_elem = (*physics).n_inlet_bounds_elems;
+
+//     MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+//     VECTOR Volume_v = (*physics).Volume_v;
+//     MATRIX_INT inlet_bound_elem(n_in_bd_elem, dim, (*physics).inlet_bounds_elems.PP, (*physics).inlet_bounds_elems.P);
+//     VECTOR area_inlet_bound_elem((*physics).area_inlet_bounds_elems.P, n_in_bd_elem);
+    
+//     VECTOR sol_times = (*physics).solution_times;
+//     int n_times = sol_times.length;
+//     VECTOR time_steps = (*physics).solution_deltaT;
+//     prec tot_time = abs(sol_times.get_last() - sol_times[0]);
+//     VECTOR time_weights(n_times);
+//     if (time_integration_procedure == 0) // RECTANGLES RULE OVER TIME: only one suitable for stationary cases
+//     {
+//         time_weights[0] = 0;
+//         for (int itime = 1; itime < n_times; itime++)
+//         {
+//             time_weights[itime] = time_steps[itime-1];
+//         } 
+//     }
+//     else if (time_integration_procedure == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
+//     {
+//         time_weights[0] = time_steps[0] / 2;
+//         for (int itime = 1; itime < (n_times-1); itime++)
+//         {
+//             time_weights[itime] = (time_steps[itime-1] + time_steps[itime]) / 2;
+//         } 
+//         time_weights[n_times-1] = time_steps.get_last() / 2;
+//     }
+    
+//     for (int itime = 0; itime < n_times; itime++)
+//     {
+//         prec curr_time_weigth = time_weights[itime];
+
+//         VECTOR temp_NS_sol = (*physics).NS_solution.get_row(itime);
+//         VECTOR temp_ADJ_sol = (*physics).NS_solution.get_row(itime);
+
+//         MATRIX U(dim, nNode_v);
+//         VECTOR P(n_node);
+//         MATRIX Ua(dim, nNode_v);
+//         VECTOR Pa(n_node);
+
+//         decompose_solution(temp_NS_sol, U, P);
+//         decompose_solution(temp_ADJ_sol, Ua, Pa);
+
+//         temp_obj_functional = 0.0;
+//         temp_func_val.resetZeros();
+//         temp_d_obj_functional.resetZeros();
+
+//         // get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
+//         eval_alpha_and_dAlpha();
+//         eval_functional(elem_v, Volume_v, U, inlet_bound_elem, area_inlet_bound_elem, P);
+//         eval_opt_derivative(elem_v, Volume_v, U, Ua);
+
+//         obj_functional += temp_obj_functional * curr_time_weigth; 
+//         func_in_box += temp_func_in_box * curr_time_weigth;
+//         d_obj_functional += temp_d_obj_functional * curr_time_weigth;
+//         func_val += (temp_func_val * curr_time_weigth);
+//         no_weighted_func_val += (temp_no_weighted_func_val * curr_time_weigth);
+//     }
+//     obj_functional /= tot_time; 
+//     func_in_box /= tot_time;
+//     d_obj_functional /= tot_time;
+//     func_val = func_val / tot_time;
+    
+//     if (first_it_flag == 1)
+//     {
+//         f0Init = obj_functional;
+//         func_val_init = func_val;
+//         func_in_box_init = func_in_box;
+//         func_out_box_init = f0Init - func_in_box_init;
+//         if (abs(f0Init) < 1e-10)
+//         {
+//             functional_normalization_factor = 1;
+//         } 
+//         else 
+//         {
+//             functional_normalization_factor = abs(f0Init);
+//         }
+//         (*physics).f0Init = f0Init;
+//         (*physics).func_normalization_factor = functional_normalization_factor;
+//         first_it_flag = 0;
+//     }
+    
+//     obj_abs_val = obj_functional;
+//     obj_functional /= functional_normalization_factor; 
+//     func_in_box /= functional_normalization_factor;
+//     func_out_box = obj_functional - func_in_box;
+//     func_val = func_val / functional_normalization_factor;
+//     d_obj_functional /= functional_normalization_factor;
+
+//     f0 = obj_functional;
+//     for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+//     {
+//         int iglob = nodeInDom[ioptnode];
+//         df0[ioptnode] = d_obj_functional[iglob];
+//     }
+
+//     //--------------------------------------------------------------
+//     // CONSTRAINTS DEFINITION
+//     //--------------------------------------------------------------
+//     // volume constraint
+//     //--------------------
+//     // int_\Omega { gamma } - V_r*V_0 <= 0 
+//     prec integral = 0;
+//     for (int iel = 0; iel < nElem; iel++)
+//     {
+//         int globEl = elemInDom[iel];
+//         for (int iloc = 0; iloc < dim+1; iloc++)
+//         {
+//             int iglob = elem_v[globEl][iloc];
+//             int optNode = optNodeFromGlobNode[iglob];
+//             integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
+//         }
+//     }
+//     Vol = integral;
+//     g[0]  = (integral - Vr * V0)/V0;
+    
+//     //--------------------------------------------------------------
+//     // CONSTRAINTS DERIVATIVE
+//     //--------------------------------------------------------------
+//     dg.resetZeros();
+
+//     for (int iel = 0; iel < nElem; iel++)
+//     {
+//         int globEl = elemInDom[iel];
+//         for (int iloc = 0; iloc < dim+1; iloc++)
+//         {
+//             int iglob = elem_v[globEl][iloc];
+//             int optNode = optNodeFromGlobNode[iglob];
+//             dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
+//         }
+//     }
+// }
+
+void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol)
 {
-    //pause();
+    // std::cout << "update_val_and_der\n";
+    // pause();
+    
+    //--------------------------------------------------------------
+    // EVALUATE FUNCTIONAL (and its derivatives) AND CONSTRAINTS
+    //--------------------------------------------------------------
+    update_val(x, f0, g, Vol);
+
+    // std::cout << "update_der\n";
+    // pause();
+
+    df0.resetZeros();
+    //--------------------------------------------------------------
+    // FUNCTIONAL DERIVATIVES
+    // The derivatives are evaluated in the update_val method (even if it is not always necessary), 
+    // so it remains just to copy their values also in the correct optimization enetiy: df0.
+    // This procedure is redundand and not optimal, but allows to have a clear code in a complex part at a very small time cost. (that was the purpose at the time of the implementation)
+    //--------------------------------------------------------------
+    for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+    {
+        int iglob = nodeInDom[ioptnode];
+        df0[ioptnode] = d_obj_functional[iglob];
+    }
+    
+    
+    //--------------------------------------------------------------
+    // CONSTRAINTS DERIVATIVES
+    //--------------------------------------------------------------
+    dg.resetZeros();
+    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    VECTOR Volume_v = (*physics).Volume_v;
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
+        }
+    }
+    
+    // std::cout << "updated\n";
+    // pause();
+}
+
+void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
+{
+    // std::cout << "update_val\n";
+    // pause();
     obj_functional = 0.0;
     func_in_box = 0.0;
     f0 = 0.0;
@@ -867,7 +1075,7 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
     no_weighted_func_val.resetZeros();
 
     d_obj_functional.resetZeros();
-    df0.resetZeros();
+    // df0.resetZeros();
 
     gamma = x; // copy the optimzation procedure value in gamma
 
@@ -886,7 +1094,6 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
     VECTOR Volume_v = (*physics).Volume_v;
     MATRIX_INT inlet_bound_elem(n_in_bd_elem, dim, (*physics).inlet_bounds_elems.PP, (*physics).inlet_bounds_elems.P);
     VECTOR area_inlet_bound_elem((*physics).area_inlet_bounds_elems.P, n_in_bd_elem);
- 
     
     VECTOR sol_times = (*physics).solution_times;
     int n_times = sol_times.length;
@@ -930,7 +1137,10 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
         temp_func_val.resetZeros();
         temp_d_obj_functional.resetZeros();
 
-        get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
+        // get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
+        eval_alpha_and_dAlpha();
+        eval_functional(elem_v, Volume_v, U, inlet_bound_elem, area_inlet_bound_elem, P);
+        eval_opt_derivative(elem_v, Volume_v, U, Ua);
 
         obj_functional += temp_obj_functional * curr_time_weigth; 
         func_in_box += temp_func_in_box * curr_time_weigth;
@@ -970,14 +1180,14 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
     d_obj_functional /= functional_normalization_factor;
 
     f0 = obj_functional;
-    for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
-    {
-        int iglob = nodeInDom[ioptnode];
-        df0[ioptnode] = d_obj_functional[iglob];
-    }
+    // for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+    // {
+    //     int iglob = nodeInDom[ioptnode];
+    //     df0[ioptnode] = d_obj_functional[iglob];
+    // }
 
     //--------------------------------------------------------------
-    // CONSTRAINTS DEFINITION
+    // CONSTRAINTS EVALUATION
     //--------------------------------------------------------------
     // volume constraint
     //--------------------
@@ -993,24 +1203,27 @@ void OPTIMIZER::updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& d
             integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
         }
     }
-    Vol = integral;
     g[0]  = (integral - Vr * V0)/V0;
-    //--------------------------------------------------------------
-    // CONSTRAINTS DERIVATIVE
-    //--------------------------------------------------------------
-    dg.resetZeros();
+    Vol = integral;
+    
+    // //--------------------------------------------------------------
+    // // CONSTRAINTS DERIVATIVE
+    // //--------------------------------------------------------------
+    // dg.resetZeros();
 
-    for (int iel = 0; iel < nElem; iel++)
-    {
-        int globEl = elemInDom[iel];
-        for (int iloc = 0; iloc < dim+1; iloc++)
-        {
-            int iglob = elem_v[globEl][iloc];
-            int optNode = optNodeFromGlobNode[iglob];
-            dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
-        }
-    }
+    // for (int iel = 0; iel < nElem; iel++)
+    // {
+    //     int globEl = elemInDom[iel];
+    //     for (int iloc = 0; iloc < dim+1; iloc++)
+    //     {
+    //         int iglob = elem_v[globEl][iloc];
+    //         int optNode = optNodeFromGlobNode[iglob];
+    //         dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
+    //     }
+    // }
 }
+
+
 
 void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
 {
@@ -1044,7 +1257,7 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
     static VECTOR g(nCons);
     static MATRIX dg(nCons, nNode);
 
-    updateVal(x, f0, df0, g, dg, Vol);
+    update_val_and_derivative(x, f0, df0, g, dg, Vol);
 
     prec eps = 0.05; prec maxmove = 0.2;
 
@@ -1078,7 +1291,7 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
     }
     x = xNew;
 
-    updateVal(x, f0, df0, g, dg, Vol);
+    update_val_and_derivative(x, f0, df0, g, dg, Vol);
 }
 
 //-------------------------------
@@ -1117,7 +1330,7 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
     //---
     if (outeriter < 0.5)
     {
-        updateVal(x, f0, df0, g, dg, Vol);
+        update_val_and_derivative(x, f0, df0, g, dg, Vol);
     }
     prec kktnorm = kkttol+10;
     int outit = 0;
@@ -1135,7 +1348,7 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
         xold2 = xold1;
         xold1 = xval;
         xval = xmma;
-        updateVal(xval, f0, df0, g, dg, Vol);
+        update_val_and_derivative(xval, f0, df0, g, dg, Vol);
         kktnorm = kktcheck(m,n,xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,xmin,xmax,df0,g,dg,a0,a,c,d);
     }
     x = xval;
@@ -1650,7 +1863,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     if (outeriter < 0.5) //always done since outeriter = 0
     {
         innerit = 0;
-        updateVal(x, f0, df0, g, dg, Vol);
+        update_val_and_derivative(x, f0, df0, g, dg, Vol);
     }
     prec kktnorm = kkttol+10;
     int outit = 0;
@@ -1680,7 +1893,8 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
         // of the objective- and constraint functions at the point xmma
         // ( = the optimal solution of the subproblem).
         // The results should be put in f0valnew and fvalnew.
-        updateJustVal(xmma, f0valnew, fvalnew);
+        // updateJustVal(xmma, f0valnew, fvalnew);
+        update_val(xmma, f0valnew, fvalnew, Vol);
     
         // It is checked if the approximations are conservative:
         concheck(conserv,
@@ -1705,7 +1919,8 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
                 // of the objective- and constraint functions at the point xmma
                 // ( = the optimal solution of the subproblem).
                 // The results should be put in f0valnew and fvalnew.
-                updateJustVal(xmma, f0valnew, fvalnew);
+                // updateJustVal(xmma, f0valnew, fvalnew);
+                update_val(xmma, f0valnew, fvalnew, Vol);
                 // It is checked if the approximations have become conservative:
                 concheck(conserv,
                         m,epsimin,f0app,f0valnew,fapp,fvalnew);
@@ -1718,7 +1933,7 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
         // The user should now calculate function values and gradients
         // of the objective- and constraint functions at xval.
         // The results should be put in f0val, df0dx, fval and dfdx:
-        updateVal(xval, f0, df0, g, dg, Vol);
+        update_val_and_derivative(xval, f0, df0, g, dg, Vol);
 
         // The residual vector of the KKT conditions is calculated:
 

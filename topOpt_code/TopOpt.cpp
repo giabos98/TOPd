@@ -37,6 +37,15 @@ void TOP_OPT::importParameters(std::string inputFile)
     //
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, optimization_scheme);
+    if (optimization_scheme == 2)
+    {
+        throw_line("ERROR: GCMMA currently not working\n");
+    }
+    else if (optimization_scheme > 2)
+    {
+        throw_line("ERROR: non valid optimization scheme id\n");
+    }
+    
     //
     STREAM::getLines(ParameterFile, line, 2);
     bool isStat;
@@ -392,6 +401,11 @@ void TOP_OPT::solve()
             case 1: // GOC
             {
                 Optimizer.solveGOC(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+            case 2: // GCMMA
+            {
+                Optimizer.solveGCMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
                 break;
             }
         }
