@@ -101,7 +101,7 @@ public:
 
     void filterGamma_v0(VECTOR &gamma, VECTOR &gamma_filter);
 
-    void filter_gamma(VECTOR &gamma, VECTOR &gamma_filter);
+    void filter_gamma(VECTOR &gamma, VECTOR &gamma_filter, int filter_case);
 
     void eval_gamma_filter_derivative(VECTOR &gamma, VECTOR &gamma_filter, VECTOR &dgamma_filter);
 

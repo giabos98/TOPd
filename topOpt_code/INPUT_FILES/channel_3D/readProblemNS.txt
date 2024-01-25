@@ -1,0 +1,103 @@
+// PROBLEM NAME and DIMENSION (2 or 3)
+channel_3D_extra_coarse
+3
+
+SAVE PDE SOLUTION (0: not save, 1: save)
+1
+
+CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
+2
+
+// time
+// final time
+10000
+// time step
+10000
+// minimum time step
+0.00001
+
+// FLUID PROPERTIES
+1  //  rho
+1  //  mu
+
+//FORCING FUNCTIONS
+// flag Forcing: 0 constant, 1 time dependent
+1
+// FORCING:
+0
+0
+0
+// FORCING - TIME DEPENDENT:
+0
+0
+0
+
+// G: COMPRESSIBILITY
+// flag G: 0 constant, 1 time dependent
+0
+// G:
+0
+// G - TIME DEPENDENT:
+0
+
+// BOUNDARY CONDITIONS
+// flagBC: 0 penalty, 1 lifting functions
+1
+
+// INNER WALLS
+//--------
+// # INNER
+4
+// geomID
+4 5 9 10
+
+// SYMMETRY WALLS
+//--------
+// # SYMMETRY PLANES
+0
+// geomID
+**
+
+// flagWall: 0 insert all boundID, 1 set to Wall boundIDs not inserted in any BC
+1
+
+// WALL
+//--------
+// # WALL
+0
+// geomID
+**
+
+// DIRICHLET
+// # DIRICHLET
+1
+//geomID
+6
+// functions
+0 0 100/9*[0.3*0.3-x*x-y*y]
+
+// NEUMANN
+//--------
+// # NEUMANN
+1
+// geomID
+7
+// pressure value (applied to the normal component)
+0
+
+// DIRICHLET - TIME DEPENDENT
+//--------
+// # DIRICHLET - TIME DEPENDENT
+0
+
+// NEUMANN - TIME DEPENDENT
+//--------
+// # NEUMANN - TIME DEPENDENT
+0
+
+// NORMAL VELOCITY OPEN BOUNDARY (velocity not zero only in the last component: 2D->y, 3D->z) and open boundary on it
+//--------
+// # NVOB
+0
+// geomID
+**

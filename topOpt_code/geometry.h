@@ -38,7 +38,9 @@ public:
     MATRIX_INT elem_v;
     VECTOR_INT elem_geo_entities_ids_v; // note: the domains ids are scvaled with c++ notation (starting from 0)
     int max_geo_entity_id; 
-    MATRIX Bloc_v; MATRIX Cloc_v; MATRIX Dloc_v;
+    MATRIX Bloc_v; 
+    MATRIX Cloc_v; 
+    MATRIX Dloc_v;
     std::vector<MATRIX> Coef_v;
     VECTOR Volume_v;
     //--------------------

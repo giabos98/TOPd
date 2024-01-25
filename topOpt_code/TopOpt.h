@@ -117,6 +117,9 @@ public:
     void exportOptimizedDomain(VECTOR gamma, prec gammaMin, MATRIX_INT &optElem);
 
     void print_stats(prec totalTime);
+
+    void eval_gamma_gradiend(VECTOR &gamma, MATRIX &grad_gamma, VECTOR &grad_gamma_norm);
+    void eval_gamma_gradient_norm_with_filter(VECTOR &gamma, VECTOR &grad_gamma_norm);
     //-----------------------------------
     // PREPROCESS QUANTITIES TO PRINT
     //-----------------------------------
@@ -124,11 +127,11 @@ public:
     void evaluate_U_magnitude(MATRIX &U_print, VECTOR &U_magnitude);
     void get_pressure_in_nodes_v(VECTOR &P, VECTOR &P_print);
     
-    void print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, bool &printNSSol, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid);
+    void print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, bool &printNSSol, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid, VECTOR &grad_gamma_norm);
     
     void print_results_in_console(int &loop, prec &obj, prec &change);
 
-    void print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, bool &printNSSol, VECTOR &gamma);
+    void print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, bool &printNSSol, VECTOR &gamma, VECTOR &grad_gamma_norm);
     
     void print_for_matlab_interface(int &loop, prec &obj, prec &change, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid);
     

@@ -154,11 +154,11 @@ void Mean_DIFFUSION_FILTER::filterGamma_v0(VECTOR &gammaOld, VECTOR &gammaNew)
 
 void Mean_DIFFUSION_FILTER::filter_gamma_and_derivative(VECTOR &gamma, VECTOR &gamma_filter, VECTOR &dgamma_filter)
 {
-    filter_gamma(gamma, gamma_filter);
+    filter_gamma(gamma, gamma_filter, diffusion_filter_case);
     eval_gamma_filter_derivative(gamma, gamma_filter, dgamma_filter);
 }
 
-void Mean_DIFFUSION_FILTER::filter_gamma(VECTOR &gamma, VECTOR &gamma_filter)
+void Mean_DIFFUSION_FILTER::filter_gamma(VECTOR &gamma, VECTOR &gamma_filter, int filter_case)
 {
     for (int inode = 0; inode < nNodesInDom; inode++)
     {
@@ -170,7 +170,7 @@ void Mean_DIFFUSION_FILTER::filter_gamma(VECTOR &gamma, VECTOR &gamma_filter)
         }
         else
         {
-            switch (diffusion_filter_case)
+            switch (filter_case)
             {
                 case 1:
                 {

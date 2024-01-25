@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-hole_sliced_extremely_fine
+hole_sliced_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)

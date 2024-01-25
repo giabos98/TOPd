@@ -1,5 +1,7 @@
 #include "TopOpt.h"
 
+namespace fs = std::filesystem;
+
 TOP_OPT::TOP_OPT(std::string InputFile)
 {
     prec startTime = omp_get_wtime();
@@ -237,6 +239,9 @@ void TOP_OPT::importParameters(std::string inputFile)
     {
         throw_line("ERROR: invalid mesh option for print\n");
     }
+
+    fs::copy_file("INPUT_FILES/readProblemNS.txt", "results/" + folderName + "/readProblemNS.txt", fs::copy_options::overwrite_existing);
+    fs::copy_file("INPUT_FILES/TopOptInput.txt", "results/" + folderName + "/TopOptInput.txt", fs::copy_options::overwrite_existing);
     
 
     NS.VTKWriter.binWrite = binPrint;
@@ -326,6 +331,11 @@ void TOP_OPT::solve()
     VECTOR gammaOpt(nNodeInDom);
     handle_gamma_initial_condition(gammaOpt, gamma);
     gammaNew = gamma;
+
+    MATRIX grad_gamma(nNodes_v, dim);
+    VECTOR grad_gamma_norm;
+    grad_gamma_norm.setZeros(nNodes_v);
+    VECTOR grad_gamma_opt_norm(nNodeInDom);
 
     // PRINT INITIAL VALUES
     // VECTOR tempGamma = (gamma-1)*(-1);
@@ -428,7 +438,14 @@ void TOP_OPT::solve()
         physics.vol_fract = vol_fract;
         physics.gamma_max = gamma.max();
 
-        print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma, feasible, funcValues, no_weights_funcValues, changes, valid);
+        // if (enableDiffusionFilter > 0)
+        // {
+        //     eval_gamma_gradient_norm_with_filter(gammaOpt, grad_gamma_opt_norm);
+        // }
+        // save_gammaOpt_in_gammaFull(grad_gamma_opt_norm, grad_gamma_norm);
+        
+
+        print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma, feasible, funcValues, no_weights_funcValues, changes, valid, grad_gamma_norm);
         
     }
 
@@ -508,6 +525,48 @@ void TOP_OPT::exportOptimizedDomain(VECTOR gamma, prec gammaMin, MATRIX_INT &opt
     optElem.shrinkRows(nElOpt);
 }
 //-----------------------------------
+
+void TOP_OPT::eval_gamma_gradiend(VECTOR &gamma, MATRIX &grad_gamma, VECTOR &grad_gamma_norm)
+{
+    grad_gamma.resetZeros();
+    grad_gamma_norm.reset(1.0);
+    int dim = physics.dim;
+    int nNodes_v = physics.nNodes_v;
+    int nElem_v = physics.nElem_v; 
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        for (int iloc = 0; iloc < (dim+1); iloc++)
+        {
+            int iglob = physics.elem_v[iel][iloc];
+            prec temp_gamma = gamma[iglob];
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                prec temp_grad = physics.Coef_v[icomp][iel][iloc] * temp_gamma;
+                grad_gamma[iglob][icomp] += temp_grad;
+            }
+        }
+    }
+
+    for (int inod = 0; inod < nNodes_v; inod++)
+    {
+        prec temp_value = 0;
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            temp_value += grad_gamma[inod][icomp]*grad_gamma[inod][icomp];
+        }
+        grad_gamma_norm[inod] = sqrt(temp_value);
+    }
+}
+void TOP_OPT::eval_gamma_gradient_norm_with_filter(VECTOR &gamma, VECTOR &grad_gamma_norm)
+{
+    VECTOR filtered_gamma(nNodeInDom);
+    Optimizer.diffusionFilter.filter_gamma(gamma, filtered_gamma, 1);
+    for (int inod = 0; inod < physics.nNodes_v; inod++)
+    {
+        grad_gamma_norm = abs(gamma[inod] - filtered_gamma[inod]) / Optimizer.diffusionFilter.diffRadius;
+    }
+}
+
 
 //---------------------------------------
 // Print Topology Optimization Code Stats
@@ -622,11 +681,11 @@ void TOP_OPT::get_pressure_in_nodes_v(VECTOR &P, VECTOR &P_print)
     if (not_pass == 0) pause();
 }
 
-void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, bool &printNSSol, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid)
+void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, bool &printNSSol, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid, VECTOR &grad_gamma_norm)
 {
     print_results_in_console(loop, obj, change);
 
-    print_results_in_vtk(nNodes_v, dim, nNodes, loop, currLoopPrint, printNSSol, gamma);
+    print_results_in_vtk(nNodes_v, dim, nNodes, loop, currLoopPrint, printNSSol, gamma, grad_gamma_norm);
 
     print_for_matlab_interface(loop, obj, change, feasible, funcValues, no_weights_funcValues, changes, valid);
 }
@@ -687,7 +746,7 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
     
 }
 
-void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, bool &printNSSol, VECTOR &gamma)
+void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, bool &printNSSol, VECTOR &gamma, VECTOR &grad_gamma_norm)
 {
     if (loop == currLoopPrint)
         {
@@ -706,7 +765,8 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             VECTOR P_print(nNodes_v);
             prepare_solution_print(U_print, P, U_magnitude, P_print);
             
-            VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
+             VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
+            // VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
             
             currLoopPrint += deltaPrint;
         }
