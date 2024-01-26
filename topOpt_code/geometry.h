@@ -100,17 +100,34 @@ public:
 
     void eval_solution_times()
     {
-        solution_times.resetZeros();
-        prec curr_time = 0.0;
-        while (abs(t_end-curr_time) > 1e-10)
+        switch (isStationary)
         {
-            solution_times.append(curr_time);
-            curr_time += deltaT;
+            case 1: // stationary solution
+            {
+                t_end = 1e16;
+                deltaT = t_end;
+                deltaT_min = 1e-5;
+                solution_times.append(t_end);
+                solution_deltaT.append(deltaT);
+                break;
+            }
+            default: // time dependent solution
+            {
+                solution_times.resetZeros();
+                prec curr_time = 0.0;
+                if (abs(t_end-curr_time) <= 1e-10) throw_line("ERROR: too small ending time (<= 1e-10)\n");
+                while (abs(t_end-curr_time) > 1e-10)
+                {
+                    solution_times.append(curr_time);
+                    curr_time += deltaT;
+                }
+                solution_times.append(t_end);
+                solution_deltaT.initialize(solution_times.length-1);
+                solution_deltaT.reset(deltaT);
+                solution_deltaT[solution_deltaT.length-1] = t_end - solution_times[solution_times.length-2]; //adjust the last time step
+                break;
+            }
         }
-        solution_times.append(t_end);
-        solution_deltaT.initialize(solution_times.length-1);
-        solution_deltaT.reset(deltaT);
-        solution_deltaT[solution_deltaT.length-1] = t_end - solution_times[solution_times.length-2]; //adjust the last time step
     }
 };
 

@@ -1017,16 +1017,11 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 
 void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol)
 {
-    // std::cout << "update_val_and_der\n";
-    // pause();
-    
+   
     //--------------------------------------------------------------
     // EVALUATE FUNCTIONAL (and its derivatives) AND CONSTRAINTS
     //--------------------------------------------------------------
     update_val(x, f0, g, Vol);
-
-    // std::cout << "update_der\n";
-    // pause();
 
     df0.resetZeros();
     //--------------------------------------------------------------
@@ -1040,7 +1035,6 @@ void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECT
         int iglob = nodeInDom[ioptnode];
         df0[ioptnode] = d_obj_functional[iglob];
     }
-    
     
     //--------------------------------------------------------------
     // CONSTRAINTS DERIVATIVES
@@ -1058,15 +1052,10 @@ void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECT
             dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
         }
     }
-    
-    // std::cout << "updated\n";
-    // pause();
 }
 
 void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
 {
-    // std::cout << "update_val\n";
-    // pause();
     obj_functional = 0.0;
     func_in_box = 0.0;
     f0 = 0.0;
@@ -1075,7 +1064,6 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     no_weighted_func_val.resetZeros();
 
     d_obj_functional.resetZeros();
-    // df0.resetZeros();
 
     gamma = x; // copy the optimzation procedure value in gamma
 
@@ -1085,73 +1073,88 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
 
     x = gamma; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
 
-    int nElem_v = (*physics).nElem_v;
-    int nNode_v = (*physics).nNodes_v;
-    int n_node   = (*physics).nNodes;
-    int n_in_bd_elem = (*physics).n_inlet_bounds_elems;
-
-    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    MATRIX_INT elem_v((*physics).nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
     VECTOR Volume_v = (*physics).Volume_v;
-    MATRIX_INT inlet_bound_elem(n_in_bd_elem, dim, (*physics).inlet_bounds_elems.PP, (*physics).inlet_bounds_elems.P);
-    VECTOR area_inlet_bound_elem((*physics).area_inlet_bounds_elems.P, n_in_bd_elem);
-    
-    VECTOR sol_times = (*physics).solution_times;
-    int n_times = sol_times.length;
-    VECTOR time_steps = (*physics).solution_deltaT;
-    prec tot_time = abs(sol_times.get_last() - sol_times[0]);
-    VECTOR time_weights(n_times);
-    if (time_integration_procedure == 0) // RECTANGLES RULE OVER TIME: only one suitable for stationary cases
+    MATRIX_INT inlet_bound_elem((*physics).n_inlet_bounds_elems, dim, (*physics).inlet_bounds_elems.PP, (*physics).inlet_bounds_elems.P);
+    VECTOR area_inlet_bound_elem((*physics).area_inlet_bounds_elems.P, (*physics).n_inlet_bounds_elems);
+
+    switch ((*physics).isStationary)
     {
-        time_weights[0] = 0;
-        for (int itime = 1; itime < n_times; itime++)
+        case 1: // stationary solution
         {
-            time_weights[itime] = time_steps[itime-1];
-        } 
-    }
-    else if (time_integration_procedure == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
-    {
-        time_weights[0] = time_steps[0] / 2;
-        for (int itime = 1; itime < (n_times-1); itime++)
+            get_time_functional(0, elem_v, Volume_v, inlet_bound_elem, area_inlet_bound_elem);
+
+            obj_functional = temp_obj_functional; 
+            func_in_box = temp_func_in_box;
+            d_obj_functional = temp_d_obj_functional;
+            func_val = temp_func_val;
+            no_weighted_func_val = temp_no_weighted_func_val;
+            break;
+        }
+        default: // time dependent solution
         {
-            time_weights[itime] = (time_steps[itime-1] + time_steps[itime]) / 2;
-        } 
-        time_weights[n_times-1] = time_steps.get_last() / 2;
+            VECTOR sol_times = (*physics).solution_times;
+            int n_times = sol_times.length;
+            VECTOR time_steps = (*physics).solution_deltaT;
+            prec tot_time = abs(sol_times.get_last() - sol_times[0]);
+            VECTOR time_weights(n_times);
+            if (time_integration_procedure == 0) // RECTANGLES RULE OVER TIME: only one suitable to simulate the behavior of stationary cases
+            {
+                time_weights[0] = 0;
+                for (int itime = 1; itime < n_times; itime++)
+                {
+                    time_weights[itime] = time_steps[itime-1];
+                } 
+            }
+            else if (time_integration_procedure == 1) // TRAPEZIODAL RULE OVER TIME: not suitable for stationary problems, but it can be more reliable on time dependent ones
+            {
+                time_weights[0] = time_steps[0] / 2;
+                for (int itime = 1; itime < (n_times-1); itime++)
+                {
+                    time_weights[itime] = (time_steps[itime-1] + time_steps[itime]) / 2;
+                } 
+                time_weights[n_times-1] = time_steps.get_last() / 2;
+            }
+            
+            for (int itime = 0; itime < n_times; itime++)
+            {
+                prec curr_time_weigth = time_weights[itime];
+
+                get_time_functional(itime, elem_v, Volume_v, inlet_bound_elem, area_inlet_bound_elem);
+
+                // VECTOR temp_NS_sol = (*physics).NS_solution.get_row(itime);
+                // VECTOR temp_ADJ_sol = (*physics).NS_solution.get_row(itime);
+
+                // MATRIX U(dim, nNode_v);
+                // VECTOR P(n_node);
+                // MATRIX Ua(dim, nNode_v);
+                // VECTOR Pa(n_node);
+
+                // decompose_solution(temp_NS_sol, U, P);
+                // decompose_solution(temp_ADJ_sol, Ua, Pa);
+
+                // temp_obj_functional = 0.0;
+                // temp_func_val.resetZeros();
+                // temp_d_obj_functional.resetZeros();
+
+                // get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
+                // eval_alpha_and_dAlpha();
+                // eval_functional(elem_v, Volume_v, U, inlet_bound_elem, area_inlet_bound_elem, P);
+                // eval_opt_derivative(elem_v, Volume_v, U, Ua);
+
+                obj_functional += (temp_obj_functional * curr_time_weigth); 
+                func_in_box += (temp_func_in_box * curr_time_weigth);
+                d_obj_functional += (temp_d_obj_functional * curr_time_weigth);
+                func_val += (temp_func_val * curr_time_weigth);
+                no_weighted_func_val += (temp_no_weighted_func_val * curr_time_weigth);
+            }
+            obj_functional /= tot_time; 
+            func_in_box /= tot_time;
+            d_obj_functional /= tot_time;
+            func_val = func_val / tot_time;
+            break;
+        }   
     }
-    
-    for (int itime = 0; itime < n_times; itime++)
-    {
-        prec curr_time_weigth = time_weights[itime];
-
-        VECTOR temp_NS_sol = (*physics).NS_solution.get_row(itime);
-        VECTOR temp_ADJ_sol = (*physics).NS_solution.get_row(itime);
-
-        MATRIX U(dim, nNode_v);
-        VECTOR P(n_node);
-        MATRIX Ua(dim, nNode_v);
-        VECTOR Pa(n_node);
-
-        decompose_solution(temp_NS_sol, U, P);
-        decompose_solution(temp_ADJ_sol, Ua, Pa);
-
-        temp_obj_functional = 0.0;
-        temp_func_val.resetZeros();
-        temp_d_obj_functional.resetZeros();
-
-        // get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
-        eval_alpha_and_dAlpha();
-        eval_functional(elem_v, Volume_v, U, inlet_bound_elem, area_inlet_bound_elem, P);
-        eval_opt_derivative(elem_v, Volume_v, U, Ua);
-
-        obj_functional += temp_obj_functional * curr_time_weigth; 
-        func_in_box += temp_func_in_box * curr_time_weigth;
-        d_obj_functional += temp_d_obj_functional * curr_time_weigth;
-        func_val += (temp_func_val * curr_time_weigth);
-        no_weighted_func_val += (temp_no_weighted_func_val * curr_time_weigth);
-    }
-    obj_functional /= tot_time; 
-    func_in_box /= tot_time;
-    d_obj_functional /= tot_time;
-    func_val = func_val / tot_time;
     
     if (first_it_flag == 1)
     {
@@ -2255,6 +2258,26 @@ void OPTIMIZER::define_inlet_pressure_elem()
     bound_nodes_v_file_stream.close();
 
     (*physics).inlet_nodes_v = inlet_nodes_v;
+}
+
+void OPTIMIZER::get_time_functional(int solution_time, MATRIX_INT &elem_v, VECTOR &Volume_v, MATRIX_INT &inlet_bound_elem, VECTOR &area_inlet_bound_elem)
+{
+    VECTOR temp_NS_sol = (*physics).NS_solution.get_row(solution_time);
+    VECTOR temp_ADJ_sol = (*physics).NS_solution.get_row(solution_time);
+
+    MATRIX U(dim, (*physics).nNodes_v);
+    VECTOR P((*physics).nNodes);
+    MATRIX Ua(dim, (*physics).nNodes_v);
+    VECTOR Pa((*physics).nNodes);
+
+    decompose_solution(temp_NS_sol, U, P);
+    decompose_solution(temp_ADJ_sol, Ua, Pa);
+
+    temp_obj_functional = 0.0;
+    temp_func_val.resetZeros();
+    temp_d_obj_functional.resetZeros();
+
+    get_functional_and_opt_derivative(elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);       
 }
 
 void OPTIMIZER::get_functional_and_opt_derivative(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U, MATRIX &Ua,MATRIX_INT &elem, VECTOR &volume, VECTOR &P)

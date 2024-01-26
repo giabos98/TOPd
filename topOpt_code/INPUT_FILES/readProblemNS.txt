@@ -8,11 +8,14 @@ SAVE PDE SOLUTION (0: not save, 1: save)
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
 
-// time
+// Time Settings
+// stationary flag : (1 stationary,  0 time dependent)
+1
+// Time Dependence
 // final time
-10000
+1
 // time step
-10000
+0.1
 // minimum time step
 0.00001
 

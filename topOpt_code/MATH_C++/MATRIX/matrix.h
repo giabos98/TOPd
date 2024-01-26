@@ -198,6 +198,7 @@ public:
     //---
     void modifyRow(int rowID, VECTOR &newRow)
     {
+        if (newRow.length != nCol) throw_line("ERROR: Modifying a row with a vector with wrong size w.r.t nCol\n");
         std::shared_ptr<prec[]> P_in = newRow.P;
         for (int i = 0; i < nCol; i++)
         {

@@ -41,6 +41,14 @@ void PROBLEM_NS::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 3);   
 
     // get time parameters
+    bool isStat;
+    STREAM::getValue(ParameterFile, line, iss, isStat);
+    (*physics).isStationary = isStat;
+    // if (isStat == 1)
+    // {
+    //     throw_line("ERROR: non updated solution case. Message time: 21/12/2023\n");
+    // }
+    STREAM::getLines(ParameterFile, line, 2);  
     STREAM::getValue(ParameterFile, line, iss, (*physics).t_end);
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, deltaT);
@@ -2546,12 +2554,54 @@ void PROBLEM_NS::resetPrint(int iter)
 //-----------------------------------------------
 // SOLVER
 //-----------------------------------------------
+//-------------------------
+void PROBLEM_NS::StatSolver()
+{
+    time = 0;
+    // prec t_end = (*physics).t_end;
+    deltaT = (*physics).deltaT;
+    globIter = 0;
+
+    oneStepSolver(1e-3, 200);
+    simulation_times_solution.append_row(lastSol);
+    print_sol_in_VTK((*physics).NS_solution);
+
+    VTKWriter.closeTFile();
+}
+//----
+
+void PROBLEM_NS::StatSolverIterative()
+{
+    
+    prec t_end = (*physics).t_end; // = (*physics).solution_times[0]
+    deltaT = (*physics).deltaT; // fixed value defined in the geometry.h time settings method
+    time = 0;
+    globIter = 0;
+    prec convergence_toll = 1e-2;
+    prec convergence_it = 20;
+    while (time < t_end)
+    {
+        oneStepSolver(convergence_toll, convergence_it);
+        if (time+deltaT > t_end) 
+        {
+            deltaT = t_end-time;
+            convergence_toll = 1e-4;
+            convergence_it = 100;
+        }
+
+    }
+
+    (*physics).NS_solution.modifyRow(0, lastSol);
+    print_sol_in_VTK((*physics).NS_solution);
+    VTKWriter.closeTFile();
+}
+
 void PROBLEM_NS::Solver()
 {
     real_solution_times.resetZeros();
     real_solution_times.initialize(0);
     simulation_times_solution.complete_reset();
-    (*physics).NS_solution.complete_reset();
+    // (*physics).NS_solution.complete_reset();
     // pos dal primo BC
     time = 0;
     real_solution_times.append(time);
@@ -2559,7 +2609,12 @@ void PROBLEM_NS::Solver()
     prec t_end = (*physics).t_end;
     int nTimeSteps = t_end/deltaT;
 
-    if (nTimeSteps > 1) lastSol.resetZeros();
+    if (nTimeSteps > 1) lastSol.resetZeros();   // in the NS system there are the convergence iterations,
+                                                // so in case of a single time step, starting from the lastSol obtained
+                                                // can fasten the solution procedure starting from an initial condition similar to the solution.
+                                                // Unfortunately, in case of more times steps it's not possible to exploit this "trick". 
+                                                // Maybe it could be useful to recall the solution of the last optimization iteration 
+                                                // and try to find every time step solution starting from a similar one obtained in the simulation before.
 
     // std::ofstream resFile;
     // std::string resFilePath = "NSCurrSol/0.txt";
@@ -2574,13 +2629,16 @@ void PROBLEM_NS::Solver()
 
     printf("|NS| IT: 0 \tTIME: %7.4" format " \tINITIAL CONDITION\n", 0.0);
 
-    simulation_times_solution.append_row(lastSol);
+    VECTOR init_cond((*physics).nDof);
+    init_cond.setZeros(((*physics).nDof));
+    simulation_times_solution.append_row(init_cond);
     
     //print_one_step_sol_in_VTK((*physics).dim, (*physics).nNodes, (*physics).nNodes_v, 0);
 
     while ((t_end-time) > (1e-15 * (nTimeSteps+1)))
     {
         oneStepSolver();
+        simulation_times_solution.append_row(lastSol);
         if (time+deltaT > t_end) deltaT = t_end-time;
     }
     
@@ -2746,7 +2804,7 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
     // //-----------------
     // if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, real_solution_times.get_last(), pressure, 1, "Pressure", velocity, dim, "Velocity");
     // (*physics).NS_solution.append_row(lastSol);
-    simulation_times_solution.append_row(lastSol);
+    // simulation_times_solution.append_row(lastSol);
 
     // print_one_step_sol_in_VTK(dim, nNodes, nNodes_v, real_solution_times.get_last());
     
@@ -2787,7 +2845,16 @@ void PROBLEM_NS::print_sol_in_VTK(MATRIX &requested_sol)
 {
     for (int itime = 0; itime < (*physics).solution_times.length; itime++)
     {
-        prec trial_time = (*physics).solution_times[itime];
+        prec trial_time;
+        if ((*physics).isStationary == 1) //stationary case: only one time = "infinity", so it has no meaning to report it.
+        {
+            trial_time = 0;
+        }
+        else // time dependent case: starting from t0.
+        {
+            trial_time = (*physics).solution_times[itime];
+        }
+         
         // GET VELOCITY
         VECTOR temp_sol = requested_sol.get_row(itime);
         // temp_sol.printRowMatlab("prova");
@@ -2810,13 +2877,13 @@ void PROBLEM_NS::print_sol_in_VTK(MATRIX &requested_sol)
 
 //---------------------------------------------------
 // EVALAUTE THE SOLUTION IN THE REQUESTED TIME STEPS 
-// Approximation error using weighted average: o(h^2)
+// Approximation error using weighted average: o(dt^2)
 //---------------------------------------------------
 void PROBLEM_NS::evaluate_solution_on_requested_time_steps()
 {
     VECTOR solution_times = (*physics).solution_times;
     VECTOR temp_NS_sol = simulation_times_solution.get_row(0);
-    (*physics).NS_solution.append_row(temp_NS_sol);
+    (*physics).NS_solution.modifyRow(0, temp_NS_sol);
     VECTOR temp = (*physics).NS_solution.get_row(0);
     for (prec itime = 1; itime < solution_times.length-1; itime++)
     {
@@ -2839,13 +2906,13 @@ void PROBLEM_NS::evaluate_solution_on_requested_time_steps()
                 if (delta_minus < (*physics).deltaT_min)
                 {
                     temp_NS_sol = simulation_times_solution.get_row(jrealtime);
-                    (*physics).NS_solution.append_row(temp_NS_sol);
+                    (*physics).NS_solution.modifyRow(itime, temp_NS_sol);
                     break;
                 }
                 else if (delta_plus < (*physics).deltaT_min)
                 {
                     temp_NS_sol = simulation_times_solution.get_row(jrealtime+1);
-                    (*physics).NS_solution.append_row(temp_NS_sol);
+                    (*physics).NS_solution.modifyRow(itime, temp_NS_sol);
                     break;
                 }
                 else
@@ -2857,7 +2924,7 @@ void PROBLEM_NS::evaluate_solution_on_requested_time_steps()
                     VECTOR temp_NS_sol_minus = simulation_times_solution.get_row(jrealtime);
                     VECTOR temp_NS_sol_plus = simulation_times_solution.get_row(jrealtime+1);
                     temp_NS_sol = temp_NS_sol_minus * weight_minus + temp_NS_sol_plus * weight_plus;
-                    (*physics).NS_solution.append_row(temp_NS_sol);
+                    (*physics).NS_solution.modifyRow(itime, temp_NS_sol);
                 }
             }
         }
@@ -2867,7 +2934,7 @@ void PROBLEM_NS::evaluate_solution_on_requested_time_steps()
         }
     }
     temp_NS_sol = simulation_times_solution.get_row(simulation_times_solution.nRow-1);
-    (*physics).NS_solution.append_row(temp_NS_sol);
+    (*physics).NS_solution.modifyRow(solution_times.length-1, temp_NS_sol);
     if ((*physics).NS_solution.nRow != (*physics).solution_times.length)
     {
         throw_line("ERROR: different number of solution times than requested.\n");

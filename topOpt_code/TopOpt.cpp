@@ -49,16 +49,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     }
     
     //
-    STREAM::getLines(ParameterFile, line, 2);
-    bool isStat;
-    STREAM::getValue(ParameterFile, line, iss, isStat);
-    physics.isStationary = isStat;
-    if (isStat == 1)
-    {
-        throw_line("ERROR: non updated solution case. Message time: 21/12/2023\n");
-    }
-
-    //
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_subdomains);
     subdomains.initialize(n_subdomains);
@@ -255,14 +245,22 @@ void TOP_OPT::prepareNS() // prepare NS solver
     printf("\n-------\n-| PREPARE NS |--\n-------\n");
     NS.setBC();
     NS.prepareSolver();
+    physics.NS_solution.complete_reset();
+    physics.NS_solution.initialize(physics.solution_times.length, physics.nDof);
 }
 //---
 void TOP_OPT::solveNS() // NS solver
 {
     printf("\n-------\n-| NAVIER-STOKES SOLVER |--\n-------\n\n");
-    if (physics.isStationary == 1) NS.StatSolver();
-    else NS.Solver();
-    lastSolNS = NS.lastSol;
+    if (physics.isStationary == 1)
+    {
+        NS.StatSolverIterative();
+    } 
+    else 
+    {
+        NS.Solver();
+    }
+    lastSolNS = physics.NS_solution.get_row(physics.solution_times.length-1);
 }
 
 //-----------------------
@@ -282,13 +280,15 @@ void TOP_OPT::prepareADJ() // prepare ADJ solver
     ADJ.setBC(NS);
     printf("\n-------\n-| ADJOINT PREPRO |--\n-------\n");
     ADJ.prepareSolver(NS);
+    physics.ADJ_solution.complete_reset();
+    physics.ADJ_solution.initialize(physics.solution_times.length, physics.nDof);
 }
 //---
 void TOP_OPT::solveADJ() // ADJ solver
 {
     if (NS.completeLog < 2) printf("\n-------\n-| ADJOINT STAT FORCING |--\n-------\n");
     // MATRIX U = NS.getVelocityFromSol(lastSolNS);
-    ADJ.globIter = NS.globIter;
+    // ADJ.globIter = NS.globIter;
     ADJ.applyStatForcing();
 
     printf("\n-------\n-| ADJOINT SOLVER |--\n-------\n\n");
@@ -396,8 +396,8 @@ void TOP_OPT::solve()
         ADJ.resetPrint(loop);
         solveADJ();
 
-        if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
-        Optimizer.updateSol(NS.globIter);
+        // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
+        // Optimizer.updateSol(NS.globIter);
 
         printf("\n-------\n-| OPTIMIZER SOLVER |--\n-------\n");
 

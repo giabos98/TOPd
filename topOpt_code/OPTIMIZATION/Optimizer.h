@@ -502,8 +502,10 @@ public:
     void define_inlet_pressure_elem();
 
 public:
-    void get_functional_and_opt_derivative(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U, MATRIX &Ua,MATRIX_INT &elem, VECTOR &area, VECTOR &P);
+    void get_functional_and_opt_derivative(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U, MATRIX &Ua, MATRIX_INT &elem, VECTOR &area, VECTOR &P);
 
+    void get_time_functional(int solution_time, MATRIX_INT &elem_v, VECTOR &Volume_v, MATRIX_INT &inlet_bound_elem, VECTOR &area_inlet_bound_elem);
+    
     void eval_alpha_and_dAlpha();
     void eval_functional(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U, MATRIX_INT &elem, VECTOR &area, VECTOR &P);
     void eval_opt_derivative(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U, MATRIX &Ua);

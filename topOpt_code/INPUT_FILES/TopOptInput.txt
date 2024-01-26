@@ -1,11 +1,8 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.025_D1.0_p[2]
+Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.1_D1.0_p[2]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
-0
-
-// stationary flag : (1 stationary,  0 time dependent)
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [○works also in the subdomains are not really only 1])
@@ -40,7 +37,7 @@ Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.025_D1.0_p[2]
 1
 
 // maxIter
-100
+500
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -74,7 +71,7 @@ Re[1]_Vr[0.36]_mma_a1e4_b[1_1_0_0]_r0.025_D1.0_p[2]
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.025
+0.1
 // DIFFUSION FILTER WEIGHT
 1.0
 

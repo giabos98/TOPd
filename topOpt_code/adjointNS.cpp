@@ -1026,11 +1026,13 @@ void ADJOINT_NS::StatSolver(VECTOR &lastSolNS)
      // pos dal primo BC
         globIter = 1;
         prec t_end = (*physics).t_end;
-
-        time = 2*t_end;
-        deltaT = 1e16;
+        deltaT = (*physics).deltaT;
+        time = t_end;
+        
         oneStepSolver(lastSolNS);
 
+        (*physics).ADJ_solution.modifyRow(0, lastSol);
+        print_sol_in_VTK((*physics).ADJ_solution);
         VTKWriter.closeTFile();
 }
 //---
@@ -1038,19 +1040,21 @@ void ADJOINT_NS::Solver()
 {
     int maxTimeIter = (*physics).solution_deltaT.length;
     globIter = maxTimeIter;
-    (*physics).ADJ_solution.complete_reset();
-    (*physics).ADJ_solution.initialize((*physics).NS_solution.nRow, (*physics).NS_solution.nCol);
+    // (*physics).ADJ_solution.complete_reset();
+    // (*physics).ADJ_solution.initialize((*physics).NS_solution.nRow, (*physics).NS_solution.nCol);
     prec t_end = (*physics).t_end;
 
     time = t_end;
 
-    lastSol.resetZeros();
+    lastSol.resetZeros();   // in the adj system there is no  convergence iterations,
+                            // so the lastSol is not used in the solution procedure
+                            // and can be reinitialized without slowing the solution procedure
 
     printf("|ADJ| IT: 0 \tTIME: %7.4" format " \tFINAL CONDITION\n", t_end);
     curr_iter = maxTimeIter;
 
     (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
-    print_one_step_sol_in_VTK((*physics).dim, (*physics).nNodes, (*physics).nNodes_v, t_end);
+    // print_one_step_sol_in_VTK((*physics).dim, (*physics).nNodes, (*physics).nNodes_v, t_end);
     
     for (int iter = maxTimeIter-1; iter > -1; iter--)
     {
@@ -1058,7 +1062,9 @@ void ADJOINT_NS::Solver()
         VECTOR temp_NS_sol = (*physics).NS_solution.get_row(iter);
         deltaT = (*physics).solution_deltaT[iter];
         oneStepSolver(temp_NS_sol);
+        (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
     }
+    print_sol_in_VTK((*physics).ADJ_solution);
     VTKWriter.closeTFile();
 }
 
@@ -1067,10 +1073,10 @@ void ADJOINT_NS::Solver()
 //-------------------------
 void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
 {
-    int dim = (*physics).dim;
+    // int dim = (*physics).dim;
     prec trialTime = time - deltaT;
-    int nNodes = (*physics).nNodes;
-    int nNodes_v = (*physics).nNodes_v;
+    // int nNodes = (*physics).nNodes;
+    // int nNodes_v = (*physics).nNodes_v;
     
     // updateBC(trialTime);
     updateSYSMAT(nsSol);
@@ -1101,8 +1107,6 @@ void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
     std::shared_ptr<prec[]>  solP = sol.P;
 
     if (completeLog < 2)  std::cout << "\n----------\n--| SOLVING ADJOINT PROBLEM |--\n----------\n";
-
-
 
     // // /   two ways:
     // // /   1) CPU time (t2 - t1)
@@ -1141,11 +1145,9 @@ void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
     
     PARALLEL::copy(sol, lastSol);
 
-
     time = trialTime;
     //solution_times.append(time);
     // SYSMAT_final.dlt();
-
 
     // // GET VELOCITY
     // MATRIX velocity = getVelocityFromSol2(lastSol);
@@ -1157,9 +1159,9 @@ void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
     // //-----------------
     // if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, time, pressure, 1, "Pressure", velocity, dim, "Velocity");
     
-    (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
+    // (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
 
-    print_one_step_sol_in_VTK(dim, nNodes, nNodes_v, time);
+    // print_one_step_sol_in_VTK(dim, nNodes, nNodes_v, time);
     
     globIter--;
     

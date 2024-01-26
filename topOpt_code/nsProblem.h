@@ -292,45 +292,21 @@ public:
     // IMPOSE BOUNDARY CONDITIONS
     //-------------------------------------------
     void imposeBC(CSRMAT &SYSMAT, VECTOR &rhs);
+
     //---------------------------------------------------
     // SOLVER
     //---------------------------------------------------
     void Solver();
-
     //-------------------------
-    void StatSolver()
-    {
-        time = 0;
-        // prec t_end = 1e16;//(*physics).t_end;
-
-        deltaT = 1e16;
-        // while (time < t_end)
-        // {
-            globIter = -1;
-            oneStepSolver(1e-2, 200);
-            // if (time+deltaT > t_end) deltaT = t_end-time;
-        // }
-        VTKWriter.closeTFile();
-    }
+    void StatSolver();
     //----
-    void StatSolverIterative()
-    {
-        time = 0;
-        prec t_end = (*physics).t_end;
-
-        while (time < t_end)
-        {
-            globIter = -1;
-            oneStepSolver(1e-2, 20);
-            if (time+deltaT > t_end) deltaT = t_end-time;
-        }
-        VTKWriter.closeTFile();
-    }
+    void StatSolverIterative();
     //----
     void oneStepSolver(prec toll = 1e-2, int itMax = 20);
 
     //----
     void evaluate_solution_on_requested_time_steps();
+    
     //--------------------------------------
     // ERROR EVALUATION
     //--------------------------------------
