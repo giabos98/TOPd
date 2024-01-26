@@ -56,6 +56,8 @@ void PROBLEM_NS::importParameters(std::string readFile)
     (*physics).deltaT = deltaT;
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, (*physics).deltaT_min);
+    getline(ParameterFile, line);
+    STREAM::getValue(ParameterFile, line, iss, (*physics).convergence_scale_factor);
     (*physics).eval_solution_times();
 
     STREAM::getLines(ParameterFile, line, 2);
@@ -2557,6 +2559,7 @@ void PROBLEM_NS::resetPrint(int iter)
 //-------------------------
 void PROBLEM_NS::StatSolver()
 {
+    throw_line("ERROR: non updated solution case. Disused method\n");
     time = 0;
     // prec t_end = (*physics).t_end;
     deltaT = (*physics).deltaT;
@@ -2581,7 +2584,11 @@ void PROBLEM_NS::StatSolverIterative()
     prec convergence_it = 20;
     while (time < t_end)
     {
+        prec startTime = omp_get_wtime();
         oneStepSolver(convergence_toll, convergence_it);
+        prec endTime = omp_get_wtime();
+        printf("|NS| Static IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", globIter, time, endTime-startTime);
+
         if (time+deltaT > t_end) 
         {
             deltaT = t_end-time;
@@ -2663,6 +2670,7 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
     prec deltaT_min = (*physics).deltaT_min;
     prec trialTime = time + deltaT;
     static prec deltaT_base = deltaT;
+    prec convergence_scale_factor = (*physics).convergence_scale_factor;
     
     updateBC(trialTime);
     updateSYSMAT();
@@ -2764,12 +2772,12 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
         if (scarto <= toll || finalRes > tolRes) 
         {
             converged = true;
-            if (deltaT < deltaT_base) deltaT /= 0.8; 
+            if (deltaT < deltaT_base) deltaT /= convergence_scale_factor; 
             if (deltaT > deltaT_base) deltaT = deltaT_base;
         }
         else 
         {
-            deltaT *= 0.8;
+            deltaT *= convergence_scale_factor;
             scarto = toll + 1;
             it = 0;
             if (deltaT < deltaT_min) 

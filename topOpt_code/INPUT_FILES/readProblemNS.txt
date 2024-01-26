@@ -18,6 +18,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.1
 // minimum time step
 0.00001
+// convergence scale factor
+0.8
 
 // FLUID PROPERTIES
 1  //  rho
