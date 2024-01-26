@@ -44,10 +44,8 @@ void PROBLEM_NS::importParameters(std::string readFile)
     bool isStat;
     STREAM::getValue(ParameterFile, line, iss, isStat);
     (*physics).isStationary = isStat;
-    // if (isStat == 1)
-    // {
-    //     throw_line("ERROR: non updated solution case. Message time: 21/12/2023\n");
-    // }
+    getline(ParameterFile, line);
+    STREAM::getValue(ParameterFile, line, iss, (*physics).convergence_scale_factor);
     STREAM::getLines(ParameterFile, line, 2);  
     STREAM::getValue(ParameterFile, line, iss, (*physics).t_end);
     getline(ParameterFile, line);
@@ -56,8 +54,6 @@ void PROBLEM_NS::importParameters(std::string readFile)
     (*physics).deltaT = deltaT;
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, (*physics).deltaT_min);
-    getline(ParameterFile, line);
-    STREAM::getValue(ParameterFile, line, iss, (*physics).convergence_scale_factor);
     (*physics).eval_solution_times();
 
     STREAM::getLines(ParameterFile, line, 2);
@@ -2584,11 +2580,7 @@ void PROBLEM_NS::StatSolverIterative()
     prec convergence_it = 20;
     while (time < t_end)
     {
-        prec startTime = omp_get_wtime();
         oneStepSolver(convergence_toll, convergence_it);
-        prec endTime = omp_get_wtime();
-        printf("|NS| Static IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", globIter, time, endTime-startTime);
-
         if (time+deltaT > t_end) 
         {
             deltaT = t_end-time;
@@ -2669,7 +2661,7 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
 {
     prec deltaT_min = (*physics).deltaT_min;
     prec trialTime = time + deltaT;
-    static prec deltaT_base = deltaT;
+    prec deltaT_base = (*physics).deltaT;
     prec convergence_scale_factor = (*physics).convergence_scale_factor;
     
     updateBC(trialTime);

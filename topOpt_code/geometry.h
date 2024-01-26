@@ -110,7 +110,6 @@ public:
                 deltaT_min = 1e-5;
                 solution_times.append(t_end);
                 solution_deltaT.append(deltaT);
-                convergence_scale_factor = 0.5;
                 break;
             }
             default: // time dependent solution
