@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-hole_sliced_normal
+bypass_k0.25_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -22,8 +22,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1  //  rho
-1  //  mu
+1050  //  rho
+0.0045  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -50,9 +50,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-2
+3
 // geomID
-5 8
+5 7 15
 
 // SYMMETRY WALLS
 //--------
@@ -73,21 +73,19 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+1
 //geomID
-2 16
+0
 // functions
-1000 0
--1000 0
+2*0.2/[0.0035/2*0.0035/2]*[y+0.0035]*[0-y] 0 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+1
 // geomID
-9 10
+20
 // pressure value (applied to the normal component)
-0
 0
 
 // DIRICHLET - TIME DEPENDENT

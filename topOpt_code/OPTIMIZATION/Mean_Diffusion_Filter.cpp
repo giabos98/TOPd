@@ -130,8 +130,8 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
             {
                 node_counter++;
                 std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t\tperc:" << floor((double(node_counter) / double(nNodesInDom))*100) << "\n";
+                nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
             }
-            nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
         }
     }
 }
