@@ -390,11 +390,18 @@ void TOP_OPT::solve()
         {
             printNSSol = false;
         }
+
+        prec startNStime = omp_get_wtime();
         solveNS();
+        prec endNStime = omp_get_wtime();
+        std::cout << "|NS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
 
         // SOLVE ADJOINT
         ADJ.resetPrint(loop);
+        prec startADJtime = omp_get_wtime();
         solveADJ();
+        prec endADJtime = omp_get_wtime();
+        std::cout << "|ADJ| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
 
         // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
         // Optimizer.updateSol(NS.globIter);
