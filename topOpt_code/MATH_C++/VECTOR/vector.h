@@ -30,7 +30,7 @@ public:
         length = N;
     }
     //---
-    VECTOR( std::shared_ptr<prec[]> &vecPointer, int N)
+    VECTOR(std::shared_ptr<prec[]> &vecPointer, int N)
     {  
         P = vecPointer;
         length = N;

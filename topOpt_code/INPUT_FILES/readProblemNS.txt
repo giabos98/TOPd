@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-bypass_k0.25_normal
+porosity_test
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -10,7 +10,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // Time Settings
 // stationary flag : (1 stationary,  0 time dependent)
-0
+1
 // convergence scale factor
 0.8
 // Time Dependence (not relevant in stationay solution)
@@ -22,8 +22,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1050  //  rho
-0.0045  //  mu
+1  //  rho
+1  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -50,9 +50,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-3
+4
 // geomID
-5 7 15
+3 4 5 6
 
 // SYMMETRY WALLS
 //--------
@@ -77,14 +77,14 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 //geomID
 0
 // functions
-2*0.2/[0.0035/2*0.0035/2]*[y+0.0035]*[0-y] 0 0
+4*y*[1-y] 0 
 
 // NEUMANN
 //--------
 // # NEUMANN
 1
 // geomID
-20
+7
 // pressure value (applied to the normal component)
 0
 
