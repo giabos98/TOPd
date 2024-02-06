@@ -120,20 +120,74 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
 {
     std::cout << "\nBUILD NEIGHBOURHOODS \n";
     
-    int node_counter = 0;
-    #pragma omp parallel num_threads(std::thread::hardware_concurrency())
+    // int node_counter = 0;
+    
+    // int n_threads = std::thread::hardware_concurrency();
+    int n_times = 10;
+    int n_core_cases = 6;
+    VECTOR cores(n_core_cases);
+    cores[0] = 1; cores[1] = 2; cores[2] = 4; cores[3] = 8; cores[4] = 14; cores[5] = 20;
+    MATRIX times(n_times, n_core_cases);
+    VECTOR time_means;
+
+    time_means.setZeros(n_core_cases);
+    for (int i = 0; i < n_core_cases; i++)
     {
-        #pragma omp for
-        for (int inode = 0; inode < nNodesInDom; inode++)
+        int n_threads = cores[i];
+        prec temp_time = 0;
+        for (int j = 0; j < n_times; j++)
         {
-            #pragma omp critical (Build_NB_progress_bar)
+            // int node_counter = 0;
+            prec startTime = omp_get_wtime();
+            #pragma omp parallel num_threads(n_threads)
             {
-                node_counter++;
-                std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t\tperc:" << floor((double(node_counter) / double(nNodesInDom))*100) << "\n";
-                nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
+                #pragma omp for
+                for (int inode = 0; inode < nNodesInDom; inode++)
+                {
+                    // #pragma omp critical (Build_NB_progress_bar)
+                    // {
+                    //     node_counter++;
+                    //     int perc = floor((double(node_counter) / double(nNodesInDom))*100);
+                    //     std::string progress_bar = "[";
+                    //     for (int i = 0; i < perc; i++)
+                    //     {
+                    //         progress_bar += "/";
+                    //     }
+                    //     for (int i = 0; i < (100-perc); i++)
+                    //     {
+                    //         progress_bar += " ";
+                    //     }
+                    //     progress_bar += "] ";
+                    //     std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t" << progress_bar << perc << "%\n"; 
+                    // }
+                    nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
+                }
+            }
+            prec endTime = omp_get_wtime();
+            std::cout << "\n " << j+1 << ") threads: " << n_threads << "\ttime: " << endTime-startTime << "\n";
+            times[j][i] = endTime-startTime;
+            temp_time += endTime-startTime;
+            if ((i == 0) && (j == 0))
+            {
+                temp_time = 0;
             }
         }
+        if (i == 0)
+        {
+            time_means[i] = temp_time/(n_times-1);
+        }
+        else
+        {
+            time_means[i] = temp_time/n_times;
+        }
+        
     }
+    times.print();
+    time_means.printRowMatlab("means");
+    prec t_p = (time_means[0]-time_means[n_core_cases-1])*cores[n_core_cases-1]/(cores[n_core_cases-1]-1);
+    prec t_0 = time_means[0]-t_p;
+    std::cout << "\nt0: " << t_0 << "\tt_p: " << t_p << "\n";
+    throw_line("END");
 }
     
 
