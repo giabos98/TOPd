@@ -307,7 +307,7 @@ void PROBLEM_NS::importPREPRO()
 
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS IMPORT PREPRO |--\n----------\n";
     std::string folderPath    = name;
-    folderPath = "PREPRO_HPC/PROBLEM_DATA/" + folderPath;
+    folderPath = "./PREPRO_HPC/PROBLEM_DATA/" + folderPath;
     std::string NodeFilePath  = folderPath + "/Nodes.txt";
     std::string NodeFilePath_v  = folderPath + "/Nodes_v.txt";
     std::string ElemFilePath_v  = folderPath + "/Elems_v.txt";

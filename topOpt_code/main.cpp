@@ -6,7 +6,7 @@ int main()
 {    
     prec startTime = omp_get_wtime();
 
-    std::string inputFileNS = "INPUT_FILES/readProblemNS.txt";
+    std::string inputFileNS = "./INPUT_FILES/readProblemNS.txt";
     TOP_OPT topOpt(inputFileNS);
 
     //*-*-*--*-*-*-*-*-*-*

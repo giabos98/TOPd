@@ -122,19 +122,19 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
     
     // int node_counter = 0;
     
-    // int n_threads = std::thread::hardware_concurrency();
-    int n_times = 10;
-    int n_core_cases = 6;
-    VECTOR cores(n_core_cases);
-    cores[0] = 1; cores[1] = 2; cores[2] = 4; cores[3] = 8; cores[4] = 14; cores[5] = 20;
-    MATRIX times(n_times, n_core_cases);
-    VECTOR time_means;
+    int n_threads = std::thread::hardware_concurrency();
+    int n_times = 5;
+    int n_core_cases = 1;
+    // VECTOR cores(n_core_cases);
+    // cores[0] = 1; cores[1] = 2; cores[2] = 4; cores[3] = 8; cores[4] = 14; cores[5] = 20;
+    // MATRIX times(n_times, n_core_cases);
+    // VECTOR time_means;
 
-    time_means.setZeros(n_core_cases);
-    for (int i = 0; i < n_core_cases; i++)
-    {
-        int n_threads = cores[i];
-        prec temp_time = 0;
+    // time_means.setZeros(n_core_cases);
+    // for (int i = 0; i < n_core_cases; i++)
+    // {
+    //     int n_threads = cores[i];
+    //     prec temp_time = 0;
         for (int j = 0; j < n_times; j++)
         {
             // int node_counter = 0;
@@ -164,29 +164,29 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
                 }
             }
             prec endTime = omp_get_wtime();
-            std::cout << "\n " << j+1 << ") threads: " << n_threads << "\ttime: " << endTime-startTime << "\n";
-            times[j][i] = endTime-startTime;
-            temp_time += endTime-startTime;
-            if ((i == 0) && (j == 0))
-            {
-                temp_time = 0;
-            }
+            // std::cout << "\n " << j+1 << ") threads: " << n_threads << "\ttime: " << endTime-startTime << "\n";
+           std::cout << "\ntime: " << endTime-startTime << "\n";
+            // times[j][i] = endTime-startTime;
+            // temp_time += endTime-startTime;
+            // if ((i == 0) && (j == 0))
+            // {
+            //     temp_time = 0;
+            // }
         }
-        if (i == 0)
-        {
-            time_means[i] = temp_time/(n_times-1);
-        }
-        else
-        {
-            time_means[i] = temp_time/n_times;
-        }
-        
-    }
-    times.print();
-    time_means.printRowMatlab("means");
-    prec t_p = (time_means[0]-time_means[n_core_cases-1])*cores[n_core_cases-1]/(cores[n_core_cases-1]-1);
-    prec t_0 = time_means[0]-t_p;
-    std::cout << "\nt0: " << t_0 << "\tt_p: " << t_p << "\n";
+        // if (i == 0)
+        // {
+        //     time_means[i] = temp_time/(n_times-1);
+        // }
+        // else
+        // {
+        //     time_means[i] = temp_time/n_times;
+        // } 
+    // }
+    // times.print();
+    // time_means.printRowMatlab("means");
+    // prec t_p = (time_means[0]-time_means[n_core_cases-1])*cores[n_core_cases-1]/(cores[n_core_cases-1]-1);
+    // prec t_0 = time_means[0]-t_p;
+    // std::cout << "\nt0: " << t_0 << "\tt_p: " << t_p << "\n";
     throw_line("END");
 }
     

@@ -15,7 +15,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     ADJ.initialize(NS, alpha);
     // initialize TopOpt parameters
     printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");
-    importParameters("INPUT_FILES/TopOptInput.txt");
+    importParameters("./INPUT_FILES/TopOptInput.txt");
     if (enableDiffusionFilter > 0) 
     {
         Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
