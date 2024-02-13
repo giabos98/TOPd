@@ -122,9 +122,9 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
     
     // int node_counter = 0;
     
-    int n_threads = std::thread::hardware_concurrency();
+    int n_threads = 8;
     int n_times = 5;
-    int n_core_cases = 1;
+    // int n_core_cases = 1;
     // VECTOR cores(n_core_cases);
     // cores[0] = 1; cores[1] = 2; cores[2] = 4; cores[3] = 8; cores[4] = 14; cores[5] = 20;
     // MATRIX times(n_times, n_core_cases);
