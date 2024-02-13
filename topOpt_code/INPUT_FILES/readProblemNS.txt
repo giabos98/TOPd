@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-porosity_test
+stenosis0.25_finer
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -10,7 +10,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // Time Settings
 // stationary flag : (1 stationary,  0 time dependent)
-1
+0
 // convergence scale factor
 0.8
 // Time Dependence (not relevant in stationay solution)
@@ -22,8 +22,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1  //  rho
-1  //  mu
+1050  //  rho
+0.0045  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -50,9 +50,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-4
+2
 // geomID
-3 4 5 6
+6 14
 
 // SYMMETRY WALLS
 //--------
@@ -75,17 +75,18 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-0
+17
 // functions
-4*y*[1-y] 0 
+0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-1
+2
 // geomID
-7
+0 3
 // pressure value (applied to the normal component)
+0
 0
 
 // DIRICHLET - TIME DEPENDENT
