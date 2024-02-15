@@ -2,7 +2,7 @@
 
 namespace fs = std::filesystem;
 
-TOP_OPT::TOP_OPT(std::string InputFile)
+TOP_OPT::TOP_OPT(std::string InputFile, int n_threads, int n_times, VECTOR &general_times)
 {
     prec startTime = omp_get_wtime();
     inputFile = InputFile;
@@ -18,7 +18,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     importParameters("./INPUT_FILES/TopOptInput.txt");
     if (enableDiffusionFilter > 0) 
     {
-        Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
+        Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case, n_threads, n_times, general_times);
         //diffusionFilter.printNeighbourhood();
     }
     prec endTime = omp_get_wtime();

@@ -1,0 +1,5 @@
+// core cases
+20
+
+// repetitions per core cases
+5

@@ -65,7 +65,7 @@ public:
 
     Mean_DIFFUSION_FILTER(){};
 
-    Mean_DIFFUSION_FILTER(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight)
+    Mean_DIFFUSION_FILTER(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight, int n_threads, int n_times, VECTOR &general_times)
     {
         physics = physicsP;
         dim = (*physics).dim;
@@ -82,20 +82,20 @@ public:
         diffRadius = diffRadiusPercentace * topOptBoxSize.min();
         cellSize = 2*diffRadius;
         diffFilterWeight = diffusionFilterWeight;
-        initializeDiffFilter();
+        initializeDiffFilter(n_threads, n_times, general_times);
     }
 
     void initialize(){};
 
-    void initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight);
+    void initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight, int n_threads, int n_times, VECTOR &general_times);
 
-    void initializeDiffFilter();
+    void initializeDiffFilter(int n_threads, int n_times, VECTOR &general_times);
 
     void buildCellsTensor();
 
     void buildNodesNB();
 
-    void buildNeighbourhoods();
+    void buildNeighbourhoods(int n_threads, int n_times, VECTOR &general_times);
 
     void filter_gamma_and_derivative(VECTOR &gamma, VECTOR &gamma_filter, VECTOR &dgamma_filter);
 

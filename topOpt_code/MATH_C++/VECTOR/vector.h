@@ -1319,6 +1319,16 @@ public:
         std::cout << "-------\n";
     }
     //---
+    void printFile(const char* outFileName)
+    {
+        FILE* outFile = fopen(outFileName,"w");
+        for (int i = 0; i < length; i++)
+        {
+            fprintf(outFile, "%10.8" format "\n", P[i]);
+        }
+        fclose(outFile);
+    }
+    //---
     static void print(std::shared_ptr<prec[]> &inVec, int N)
     {
         printf("\n-------\n");

@@ -93,7 +93,7 @@ public:
     // CLASS METHODS
     //--------------
     //----------------------------
-    TOP_OPT(std::string InputFile);
+    TOP_OPT(std::string InputFile, int n_threads, int n_times, VECTOR &general_times);
     //-----------------------
     // PROBLEM INIZIALIZATION
     //-----------------------

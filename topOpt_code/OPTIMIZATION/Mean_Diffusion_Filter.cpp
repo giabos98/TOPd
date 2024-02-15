@@ -1,6 +1,6 @@
 #include "Mean_Diffusion_Filter.h"
 
-void Mean_DIFFUSION_FILTER::initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight)
+void Mean_DIFFUSION_FILTER::initialize(int diff_filter_case, PHYSICS* physicsP, int nNodesInDomain, VECTOR_INT nodesInDomain, VECTOR_INT optimizationNodeFromGlobNode, MATRIX topologyOptBox, prec diffRadiusPercentace, prec diffusionFilterWeight, int n_threads, int n_times, VECTOR &general_times)
     {
         physics = physicsP;
         dim = (*physics).dim;
@@ -19,10 +19,10 @@ void Mean_DIFFUSION_FILTER::initialize(int diff_filter_case, PHYSICS* physicsP, 
         diffRadius = diffRadiusPercentace * topOptBoxSize.min();
         cellSize = 2*diffRadius;
         diffFilterWeight = diffusionFilterWeight;
-        initializeDiffFilter();
+        initializeDiffFilter(n_threads, n_times, general_times);
     }
 
-void Mean_DIFFUSION_FILTER::initializeDiffFilter()
+void Mean_DIFFUSION_FILTER::initializeDiffFilter(int n_threads, int n_times, VECTOR &general_times)
 {
     nCells.setZeros(3);
     nCells += 1;
@@ -46,6 +46,8 @@ void Mean_DIFFUSION_FILTER::initializeDiffFilter()
 
     buildCellsTensor();
     buildNodesNB();
+    general_times[0] = omp_get_wtime();
+    buildNeighbourhoods(n_threads, n_times, general_times);
 }
 
 void Mean_DIFFUSION_FILTER::buildCellsTensor()
@@ -112,82 +114,35 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
             }
         }
     }
-
-    buildNeighbourhoods();
 }
 
-void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
+void Mean_DIFFUSION_FILTER::buildNeighbourhoods(int n_threads, int n_times, VECTOR &general_times)
 {
     std::cout << "\nBUILD NEIGHBOURHOODS \n";
     
-    // int node_counter = 0;
-    
-    int n_threads = 8;
-    int n_times = 5;
-    // int n_core_cases = 1;
-    // VECTOR cores(n_core_cases);
-    // cores[0] = 1; cores[1] = 2; cores[2] = 4; cores[3] = 8; cores[4] = 14; cores[5] = 20;
-    // MATRIX times(n_times, n_core_cases);
-    // VECTOR time_means;
-
-    // time_means.setZeros(n_core_cases);
-    // for (int i = 0; i < n_core_cases; i++)
-    // {
-    //     int n_threads = cores[i];
-    //     prec temp_time = 0;
-        for (int j = 0; j < n_times; j++)
+    VECTOR times(n_times);
+    for (int jtime = 0; jtime < n_times; jtime++)
+    {
+        prec startTime = omp_get_wtime();
+        #pragma omp parallel num_threads(n_threads)
         {
-            // int node_counter = 0;
-            prec startTime = omp_get_wtime();
-            #pragma omp parallel num_threads(n_threads)
+            #pragma omp for
+            for (int inode = 0; inode < nNodesInDom; inode++)
             {
-                #pragma omp for
-                for (int inode = 0; inode < nNodesInDom; inode++)
-                {
-                    // #pragma omp critical (Build_NB_progress_bar)
-                    // {
-                    //     node_counter++;
-                    //     int perc = floor((double(node_counter) / double(nNodesInDom))*100);
-                    //     std::string progress_bar = "[";
-                    //     for (int i = 0; i < perc; i++)
-                    //     {
-                    //         progress_bar += "/";
-                    //     }
-                    //     for (int i = 0; i < (100-perc); i++)
-                    //     {
-                    //         progress_bar += " ";
-                    //     }
-                    //     progress_bar += "] ";
-                    //     std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t" << progress_bar << perc << "%\n"; 
-                    // }
-                    nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
-                }
+                nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
             }
-            prec endTime = omp_get_wtime();
-            // std::cout << "\n " << j+1 << ") threads: " << n_threads << "\ttime: " << endTime-startTime << "\n";
-           std::cout << "\ntime: " << endTime-startTime << "\n";
-            // times[j][i] = endTime-startTime;
-            // temp_time += endTime-startTime;
-            // if ((i == 0) && (j == 0))
-            // {
-            //     temp_time = 0;
-            // }
         }
-        // if (i == 0)
-        // {
-        //     time_means[i] = temp_time/(n_times-1);
-        // }
-        // else
-        // {
-        //     time_means[i] = temp_time/n_times;
-        // } 
-    // }
-    // times.print();
-    // time_means.printRowMatlab("means");
-    // prec t_p = (time_means[0]-time_means[n_core_cases-1])*cores[n_core_cases-1]/(cores[n_core_cases-1]-1);
-    // prec t_0 = time_means[0]-t_p;
-    // std::cout << "\nt0: " << t_0 << "\tt_p: " << t_p << "\n";
-    throw_line("END");
+        prec endTime = omp_get_wtime();
+        times[jtime] = endTime-startTime;
+        std::cout << "\n" << jtime+1 << ") time: " << times[jtime] << "\n";
+    }
+    prec mean_time = VECTOR::mean(times);
+    general_times[1] = mean_time;
+    general_times[2] = mean_time*n_times;
+    std::cout << "\n-| total reps time: " << general_times[2] << "\n";
+    std::cout << "\n-| mean time: " << mean_time << "\n";
+    std::string test_file = "./results/porosity_test/Capri_HPC_test/parallel_times_" + std::to_string(n_threads) + ".txt";
+    times.printFile(test_file.c_str());
 }
     
 

@@ -214,7 +214,7 @@ public:
         printRes = print;
         physics = Physics;
         importParameters(probRefFile);
-        checkImportParameters();
+        // checkImportParameters();
         importPREPRO();
         alphaIn.initialize((*physics).nNodes_v);
         alpha.length = alphaIn.length;

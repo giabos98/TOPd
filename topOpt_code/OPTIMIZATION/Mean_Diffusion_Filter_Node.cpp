@@ -99,10 +99,10 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesN
     weigthNB.shrink(nNB);
     weigthNB = weigthNB / weigthsSum;
 
-    #pragma omp critical (build_weight_as_NB)
-    {
-        build_weight_as_NB(nodesNB);
-    }
+    // #pragma omp critical (build_weight_as_NB)
+    // {
+    //     build_weight_as_NB(nodesNB);
+    // }
 }
 
 void Mean_DF_NODE_NB::build_weight_as_NB(std::vector<Mean_DF_NODE_NB> &nodesNB)

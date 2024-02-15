@@ -5,18 +5,41 @@ int PARALLEL::nThread = 4;
 int main()
 {    
     prec startTime = omp_get_wtime();
+    VECTOR general_times(4);
+
+    // BEGIN STREAMING
+    std::ifstream hpcFile;
+    hpcFile.open("./INPUT_FILES/readHPC.txt");
+    if (!hpcFile.is_open()) throw_line("ERROR, can't open input data file");
+    std::string line;
+    std::istringstream iss;
+    getline(hpcFile, line);
+    int n_threads;
+    STREAM::getValue(hpcFile, line, iss, n_threads);
+    STREAM::getLines(hpcFile, line, 2);
+    int n_times;
+    STREAM::getValue(hpcFile, line, iss, n_times);
+    hpcFile.close();
+    // END STREAMING
 
     std::string inputFileNS = "./INPUT_FILES/readProblemNS.txt";
-    TOP_OPT topOpt(inputFileNS);
+    TOP_OPT topOpt(inputFileNS, n_threads, n_times, general_times);
 
     //*-*-*--*-*-*-*-*-*-*
-    topOpt.solve();
+    // topOpt.solve();
     //*-*-*-*-*-*-*-*-*-*-*-
 
-    prec endTime = omp_get_wtime();
+    // prec endTime = omp_get_wtime();
+    // prec totalTime = endTime-startTime;
 
-    prec totalTime = endTime - startTime;
-    topOpt.print_stats(totalTime);
+    // topOpt.print_stats(totalTime);
+    general_times[0] = general_times[0] - startTime;
+    general_times[3] = omp_get_wtime() - startTime;
+
+    std::cout << "\n-| total time: " << general_times[3] << "\n";
+    std::string times_file = "./results/porosity_test/Capri_HPC_test/general_times_" + std::to_string(n_threads) + ".txt";
+    general_times.printFile(times_file.c_str());
+    std::cout << "\n---| END |---\n";
 
     // int nth = 20;
     // int n = 1e8;
