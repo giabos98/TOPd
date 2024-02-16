@@ -118,8 +118,9 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
 
 void Mean_DIFFUSION_FILTER::buildNeighbourhoods(int n_threads, int n_times, VECTOR &general_times)
 {
+    std::vector<Mean_DF_NODE_NB> temp_nodesNB = nodesNB;
     std::cout << "\nBUILD NEIGHBOURHOODS \n";
-    
+    std::cout << "\nthreads: " << n_threads << "\treps: " << n_times << "\n";
     VECTOR times(n_times);
     for (int jtime = 0; jtime < n_times; jtime++)
     {
@@ -129,10 +130,10 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods(int n_threads, int n_times, VECT
             #pragma omp for
             for (int inode = 0; inode < nNodesInDom; inode++)
             {
-                nodesNB[inode].buildNeighbourhood_v1(nodesNB, optNodeFromGlobNode);
+                nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
             }
-        }
-        prec endTime = omp_get_wtime();
+        } 
+        prec endTime = omp_get_wtime();     
         times[jtime] = endTime-startTime;
         std::cout << "\n" << jtime+1 << ") time: " << times[jtime] << "\n";
     }

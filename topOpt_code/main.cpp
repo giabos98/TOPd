@@ -2,28 +2,20 @@
 #include "nsProblem.h"
 #include "TopOpt.h"
 int PARALLEL::nThread = 4;
-int main()
+int main(int argc, char* argv[])
 {    
+    char* n_threads_char = argv[1];
+    char* n_reps_char = argv[2];
+    std::string n_threads_str = n_threads_char;
+    std::string n_reps_str = n_reps_char;
+    int n_threads = std::stoi(n_threads_str);
+    int n_reps = std::stoi(n_reps_str);
+
     prec startTime = omp_get_wtime();
     VECTOR general_times(4);
 
-    // BEGIN STREAMING
-    std::ifstream hpcFile;
-    hpcFile.open("./INPUT_FILES/readHPC.txt");
-    if (!hpcFile.is_open()) throw_line("ERROR, can't open input data file");
-    std::string line;
-    std::istringstream iss;
-    getline(hpcFile, line);
-    int n_threads;
-    STREAM::getValue(hpcFile, line, iss, n_threads);
-    STREAM::getLines(hpcFile, line, 2);
-    int n_times;
-    STREAM::getValue(hpcFile, line, iss, n_times);
-    hpcFile.close();
-    // END STREAMING
-
     std::string inputFileNS = "./INPUT_FILES/readProblemNS.txt";
-    TOP_OPT topOpt(inputFileNS, n_threads, n_times, general_times);
+    TOP_OPT topOpt(inputFileNS, n_threads, n_reps, general_times);
 
     //*-*-*--*-*-*-*-*-*-*
     // topOpt.solve();

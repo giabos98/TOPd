@@ -57,10 +57,10 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v0(std::vector<Mean_DF_NODE_NB> &nodesN
 void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode)
 {
     int nMaxNB = possibleNB.length;
-    neighbours.initializeZero(nMaxNB);
+    neighbours.setZeros(0);
     VECTOR distNB(nMaxNB);
     prec weigthsSum = 0.0;
-    weigthNB.setZeros(nMaxNB);
+    weigthNB.setZeros(0);
     int nNB = 0;
     for (int inb = 0; inb < nMaxNB; inb++)
     {
@@ -76,27 +76,28 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesN
                 coordNB.printRowMatlab("CoordNB");
                 std::string errorStr = "ERROR inserting a neighbour for the opt node " + std::to_string(inb) + ". Neighbour optId:" + std::to_string(optIdNB) + "\n";
                 throw_line(errorStr);
-            }
-            
+            } 
         }
         VECTOR distVec = coord - coordNB;
         prec tempDist = VECTOR::norm(distVec);
         if (tempDist <= diffRadius)
         {
-            neighbours[nNB] = optIdNB;
+            // neighbours[nNB] = optIdNB;
+            neighbours.append(optIdNB);
             prec tempWeigth = tempDist / diffRadius;
             tempWeigth = 1 - tempWeigth;
             if (globId != tempNB.globId)
             {
                 tempWeigth *= diffFilterWeight;
             }
-            weigthNB[nNB] = tempWeigth;
+            // weigthNB[nNB] = tempWeigth;
+            weigthNB.append(tempWeigth);
             weigthsSum += tempWeigth;
             nNB += 1;
         }
     }
-    neighbours.shrink(nNB);
-    weigthNB.shrink(nNB);
+    // neighbours.shrink(nNB);
+    // weigthNB.shrink(nNB);
     weigthNB = weigthNB / weigthsSum;
 
     // #pragma omp critical (build_weight_as_NB)
