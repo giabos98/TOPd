@@ -1070,8 +1070,10 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     topology_optimization_diffusive_filter();
 
     eval_gamma_acc_and_derivative();
+    // gamma_acc.printRowMatlab("acc");
+    // pause();
 
-    x = gamma; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
+    x = gamma_acc; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
 
     MATRIX_INT elem_v((*physics).nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
     VECTOR Volume_v = (*physics).Volume_v;
@@ -2621,7 +2623,7 @@ void OPTIMIZER::eval_gamma_acc_and_derivative()
             for (int inode = 0; inode < nNode; inode++)
             {
                 gamma_acc[inode] = gamma_filter[inode];
-                dgamma_acc[inode] = 1.0;
+                dgamma_acc[inode] = dgamma_filter[inode];
             }
             break;
         }

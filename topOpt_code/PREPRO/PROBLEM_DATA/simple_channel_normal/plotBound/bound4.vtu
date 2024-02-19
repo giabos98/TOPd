@@ -5,11 +5,11 @@
 			<Points>
 				<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">
 					0 0.75 0
-					0 0.785709 0
-					0 0.825269 0
-					0 0.868202 0
-					0 0.912133 0
-					0 0.956066 0
+					0 0.791667 0
+					0 0.833333 0
+					0 0.875 0
+					0 0.916667 0
+					0 0.958333 0
 					0 1 0
 				</DataArray>
 			</Points>

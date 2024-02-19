@@ -4,12 +4,12 @@
 		<Piece NumberOfPoints="7" NumberOfCells="6">
 			<Points>
 				<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">
-					2 0.0439336 0
+					2 0.0416667 0
 					2 0 0
-					2 0.0878671 0
-					2 0.131798 0
-					2 0.174731 0
-					2 0.214291 0
+					2 0.0833333 0
+					2 0.125 0
+					2 0.166667 0
+					2 0.208333 0
 					2 0.25 0
 				</DataArray>
 			</Points>

@@ -1,94 +1,52 @@
 <?xml version="1.0"?>
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
  <UnstructuredGrid>
-		<Piece NumberOfPoints="40" NumberOfCells="39">
+		<Piece NumberOfPoints="19" NumberOfCells="18">
 			<Points>
 				<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">
 					0 0.25 0
-					0 0.262821 0
-					0 0.275641 0
-					0 0.288462 0
-					0 0.301282 0
-					0 0.314103 0
-					0 0.737179 0
-					0 0.75 0
-					0 0.724359 0
-					0 0.326923 0
-					0 0.711538 0
-					0 0.698718 0
-					0 0.673077 0
-					0 0.685897 0
-					0 0.339744 0
-					0 0.352564 0
-					0 0.365385 0
-					0 0.378205 0
-					0 0.391026 0
-					0 0.403846 0
+					0 0.277778 0
+					0 0.305556 0
+					0 0.333333 0
+					0 0.361111 0
+					0 0.388889 0
 					0 0.416667 0
-					0 0.429487 0
-					0 0.442308 0
-					0 0.455128 0
-					0 0.467949 0
-					0 0.480769 0
-					0 0.49359 0
-					0 0.50641 0
-					0 0.519231 0
-					0 0.532051 0
-					0 0.660256 0
-					0 0.647436 0
-					0 0.544872 0
-					0 0.557692 0
-					0 0.634615 0
-					0 0.570513 0
+					0 0.444444 0
+					0 0.472222 0
+					0 0.5 0
+					0 0.527778 0
+					0 0.555556 0
 					0 0.583333 0
-					0 0.596154 0
-					0 0.608974 0
-					0 0.621795 0
+					0 0.611111 0
+					0 0.638889 0
+					0 0.666667 0
+					0 0.694444 0
+					0 0.722222 0
+					0 0.75 0
 				</DataArray>
 			</Points>
 			<Cells>
-				<DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="39">
+				<DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="18">
 					0 1
 					1 2
 					2 3
 					3 4
 					4 5
+					5 6
 					6 7
-					8 6
-					5 9
-					10 8
-					11 10
+					7 8
+					8 9
+					9 10
+					10 11
+					11 12
 					12 13
-					13 11
-					9 14
+					13 14
 					14 15
 					15 16
 					16 17
 					17 18
-					18 19
-					19 20
-					20 21
-					21 22
-					22 23
-					23 24
-					24 25
-					25 26
-					26 27
-					27 28
-					28 29
-					30 12
-					31 30
-					29 32
-					32 33
-					34 31
-					33 35
-					35 36
-					36 37
-					37 38
-					38 39
-					39 34
 				</DataArray>
-				<DataArray type="Int64" Name="offsets" format="ascii" RangeMin="2" RangeMax="78">
+				<DataArray type="Int64" Name="offsets" format="ascii" RangeMin="2" RangeMax="36">
 					2
 					4
 					6
@@ -107,50 +65,8 @@
 					32
 					34
 					36
-					38
-					40
-					42
-					44
-					46
-					48
-					50
-					52
-					54
-					56
-					58
-					60
-					62
-					64
-					66
-					68
-					70
-					72
-					74
-					76
-					78
 				</DataArray>
 				<DataArray type="UInt8" Name="types" format="ascii" RangeMin="3" RangeMax="3">
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
-3
 3
 3
 3

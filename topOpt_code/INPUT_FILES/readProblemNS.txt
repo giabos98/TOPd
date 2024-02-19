@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-stenosis0.25_finer
+simple_channel_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -9,8 +9,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
 
 // Time Settings
-// stationary flag : (1 stationary,  0 time dependent)
-0
+// stationary flag (0:time_dependent, 1:stationary)
+1
 // convergence scale factor
 0.8
 // Time Dependence (not relevant in stationay solution)
@@ -22,8 +22,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1050  //  rho
-0.0045  //  mu
+3  //  rho
+0.3  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -52,7 +52,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # INNER
 2
 // geomID
-6 14
+3 5
 
 // SYMMETRY WALLS
 //--------
@@ -75,18 +75,17 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-17
+2
 // functions
-0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+10 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+1
 // geomID
-0 3
+8
 // pressure value (applied to the normal component)
-0
 0
 
 // DIRICHLET - TIME DEPENDENT
