@@ -2,35 +2,49 @@
 #include "nsProblem.h"
 #include "TopOpt.h"
 int PARALLEL::nThread = 4;
-int main(int argc, char* argv[])
+int main()//int argc, char* argv[])
 {    
-    char* n_threads_char = argv[1];
-    char* n_reps_char = argv[2];
-    std::string n_threads_str = n_threads_char;
-    std::string n_reps_str = n_reps_char;
-    int n_threads = std::stoi(n_threads_str);
-    int n_reps = std::stoi(n_reps_str);
+    // char* n_threads_char = argv[1];
+    // char* n_reps_char = argv[2];
+    // std::string n_threads_str = n_threads_char;
+    // std::string n_reps_str = n_reps_char;
+    // int n_threads = std::stoi(n_threads_str);
+    // int n_reps = std::stoi(n_reps_str);
+    VECTOR_INT n_th(6);
+    n_th[0] = 1;
+    n_th[1] = 2;
+    n_th[2] = 4;
+    n_th[3] = 8;
+    n_th[4] = 14;
+    n_th[5] = 20;
+    int n_reps = 5;
 
-    prec startTime = omp_get_wtime();
-    VECTOR general_times(4);
+    for (int ith = 0; ith < n_th.length; ith++)
+    {
+        int n_threads = n_th[ith];
 
-    std::string inputFileNS = "./INPUT_FILES/readProblemNS.txt";
-    TOP_OPT topOpt(inputFileNS, n_threads, n_reps, general_times);
+        prec startTime = omp_get_wtime();
+        VECTOR general_times(4);
 
-    //*-*-*--*-*-*-*-*-*-*
-    // topOpt.solve();
-    //*-*-*-*-*-*-*-*-*-*-*-
+        std::string inputFileNS = "./INPUT_FILES/readProblemNS.txt";
+        TOP_OPT topOpt(inputFileNS, n_threads, n_reps, general_times);
 
-    // prec endTime = omp_get_wtime();
-    // prec totalTime = endTime-startTime;
+        //*-*-*--*-*-*-*-*-*-*
+        // topOpt.solve();
+        //*-*-*-*-*-*-*-*-*-*-*-
 
-    // topOpt.print_stats(totalTime);
-    general_times[0] = general_times[0] - startTime;
-    general_times[3] = omp_get_wtime() - startTime;
+        // prec endTime = omp_get_wtime();
+        // prec totalTime = endTime-startTime;
 
-    std::cout << "\n-| total time: " << general_times[3] << "\n";
-    std::string times_file = "./results/porosity_test/Capri_HPC_test/general_times_" + std::to_string(n_threads) + ".txt";
-    general_times.printFile(times_file.c_str());
+        // topOpt.print_stats(totalTime);
+        general_times[0] = general_times[0] - startTime;
+        general_times[3] = omp_get_wtime() - startTime;
+
+        std::cout << "\n-| total time: " << general_times[3] << "\n";
+        std::string times_file = "./results/porosity_test/Capri_HPC_test/general_times_" + std::to_string(n_threads) + ".txt";
+        general_times.printFile(times_file.c_str());
+    }
+
     std::cout << "\n---| END |---\n";
 
     // int nth = 20;

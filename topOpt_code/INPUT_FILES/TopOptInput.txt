@@ -71,7 +71,7 @@ Capri_HPC_test
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.025
+0.07
 // DIFFUSION FILTER WEIGHT
 1.0
 
