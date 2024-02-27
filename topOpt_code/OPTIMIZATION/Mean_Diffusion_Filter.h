@@ -13,6 +13,7 @@ public:
     int optId;
     VECTOR coord;
     VECTOR_INT possibleNB;
+    std::vector<VECTOR_INT> possible_NB;
     VECTOR_INT neighbours;
     VECTOR weigthNB;
     std::map<int, prec> weight_as_NB; //works with optmization nodes indices, contains the weight of the current node as nb of its own neighbours
@@ -33,9 +34,9 @@ public:
     }
 
 
-    void initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours);
+    void initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours, std::vector<VECTOR_INT> possible_neighbours);
 
-    void buildNeighbourhood_v0(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode);
+    void buildNeighbourhood_v0(std::vector<std::vector<std::vector<VECTOR_INT>>> &cellNodesTensor, std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode);
     void buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode);
 
     void build_weight_as_NB(std::vector<Mean_DF_NODE_NB> &nodesNB);

@@ -10,13 +10,13 @@ int main()//int argc, char* argv[])
     // std::string n_reps_str = n_reps_char;
     // int n_threads = std::stoi(n_threads_str);
     // int n_reps = std::stoi(n_reps_str);
-    VECTOR_INT n_th(6);
-    n_th[0] = 1;
-    n_th[1] = 2;
-    n_th[2] = 4;
-    n_th[3] = 8;
-    n_th[4] = 14;
-    n_th[5] = 20;
+    VECTOR_INT n_th(1);
+    n_th[0] = 20;
+    // n_th[1] = 2;
+    // n_th[2] = 4;
+    // n_th[3] = 8;
+    // n_th[4] = 14;
+    // n_th[5] = 20;
     int n_reps = 5;
 
     for (int ith = 0; ith < n_th.length; ith++)

@@ -80,6 +80,7 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
             for (int kcell = 0; kcell < nCells[2]; kcell++)
             {
                 VECTOR_INT possibleNB(0);
+                std::vector<VECTOR_INT> possible_NB(0);
                 for (int iloc = 0; iloc < localNB.length; iloc ++)
                 {
                     int icellNB = icell + localNB[iloc];
@@ -97,19 +98,21 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
                                     {
                                         VECTOR_INT tempNB = cellNodesTensor[icellNB][jcellNB][kcellNB];
                                         possibleNB.append(tempNB);
+                                        VECTOR_INT cellIds(3);
+                                        cellIds[0] = icellNB; cellIds[1] = jcellNB; cellIds[2] = kcellNB;
+                                        possible_NB.push_back(cellIds);
                                     }
                                 }  
                             }
                         }
                     }
                 }
-
                 VECTOR_INT tempCellNodes = cellNodesTensor[icell][jcell][kcell];
                 for (int inode = 0; inode < tempCellNodes.length; inode++)
                 {
                     int tempGlobNode = tempCellNodes[inode];
                     int tempOptNode = optNodeFromGlobNode[tempGlobNode];
-                    nodesNB[tempOptNode].initialize(dim, diffRadius, diffFilterWeight, tempGlobNode, tempOptNode, (*physics).coord_v[tempGlobNode], possibleNB);
+                    nodesNB[tempOptNode].initialize(dim, diffRadius, diffFilterWeight, tempGlobNode, tempOptNode, (*physics).coord_v[tempGlobNode], possibleNB, possible_NB);
                 }
             }
         }
@@ -130,7 +133,8 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods(int n_threads, int n_times, VECT
             #pragma omp for
             for (int inode = 0; inode < nNodesInDom; inode++)
             {
-                nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
+                nodesNB[inode].buildNeighbourhood_v0(cellNodesTensor, temp_nodesNB, optNodeFromGlobNode);
+                // nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
             }
         } 
         prec endTime = omp_get_wtime();     
