@@ -78,6 +78,7 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
             for (int kcell = 0; kcell < nCells[2]; kcell++)
             {
                 VECTOR_INT possibleNB(0);
+                std::vector<VECTOR_INT> possible_NB(0);
                 for (int iloc = 0; iloc < localNB.length; iloc ++)
                 {
                     int icellNB = icell + localNB[iloc];
@@ -95,19 +96,21 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
                                     {
                                         VECTOR_INT tempNB = cellNodesTensor[icellNB][jcellNB][kcellNB];
                                         possibleNB.append(tempNB);
+                                        VECTOR_INT cellIds(3);
+                                        cellIds[0] = icellNB; cellIds[1] = jcellNB; cellIds[2] = kcellNB;
+                                        possible_NB.push_back(cellIds);
                                     }
                                 }  
                             }
                         }
                     }
                 }
-
                 VECTOR_INT tempCellNodes = cellNodesTensor[icell][jcell][kcell];
                 for (int inode = 0; inode < tempCellNodes.length; inode++)
                 {
                     int tempGlobNode = tempCellNodes[inode];
                     int tempOptNode = optNodeFromGlobNode[tempGlobNode];
-                    nodesNB[tempOptNode].initialize(dim, diffRadius, diffFilterWeight, tempGlobNode, tempOptNode, (*physics).coord_v[tempGlobNode], possibleNB);
+                    nodesNB[tempOptNode].initialize(dim, diffRadius, diffFilterWeight, tempGlobNode, tempOptNode, (*physics).coord_v[tempGlobNode], possibleNB, possible_NB);
                 }
             }
         }
@@ -121,7 +124,9 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
     std::cout << "\nBUILD NEIGHBOURHOODS \n";
     std::vector<Mean_DF_NODE_NB> temp_nodesNB = nodesNB;
     int node_counter = 0;
-    #pragma omp parallel num_threads(std::thread::hardware_concurrency())
+    int n_threads = std::thread::hardware_concurrency();
+    // n_threads = 1;
+    #pragma omp parallel num_threads(n_threads)
     {
         #pragma omp for
         for (int inode = 0; inode < nNodesInDom; inode++)
@@ -131,13 +136,15 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
                 node_counter++;
                 std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t\tperc:" << floor((double(node_counter) / double(nNodesInDom))*100) << "\n";
             }
-            nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
+            nodesNB[inode].buildNeighbourhood_v0(cellNodesTensor, temp_nodesNB, optNodeFromGlobNode);
+            // nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
         }
     }
 
     for (int inode = 0; inode < nNodesInDom; inode++)
     {
         nodesNB[inode].build_weight_as_NB(nodesNB);
+        nodesNB[inode].possibleNB.clear();
     }
 }
     

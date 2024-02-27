@@ -699,6 +699,13 @@ public:
     {
         for (int i = 0; i < N; i++) outVec[i+startPos] = inVec[i];
     }
+    //---
+    static void exact_copy(VECTOR_INT &in_vec, VECTOR_INT &out_vec)
+    {
+        out_vec.clear();
+        out_vec.length = in_vec.length;
+        out_vec.P = in_vec.P;
+    }
 
     //----------------------------------------
     // GET MAX AND MIN
@@ -735,7 +742,6 @@ public:
     void append(VECTOR_INT &vecIn)
     {
         int newL = length + vecIn.length;
-
         std::shared_ptr<int[]> newP(new int[newL]);
 
         for (int i = 0; i < length; i++) newP[i] = P[i];
@@ -783,12 +789,9 @@ public:
     void append (int val)
     {
         int newL = length + 1;
-
         std::shared_ptr<int[]> newP(new int[newL]);
-
         for (int i = 0; i < length; i++) newP[i] = P[i];
         newP[length]= val;
-
         P.reset(); P = 0;
         P = newP;
         length = newL;
@@ -1084,17 +1087,12 @@ public:
     }
     
     //--------------------------------------------
-    // DELETE
+    // CLEAR VECTOR
     //--------------------------------------------
-    // void dlt()
-    // {
-    //     if (P != nullptr) free(P); 
-    //     P = nullptr;
-    // }
-    // //---
-    // void dltNull()
-    // {
-    //     free(P);
-    //     P = nullptr;
-    // }
+    void clear()
+    {
+        P.reset(); P = 0;
+        length = 0;
+    }
+    //---
 };

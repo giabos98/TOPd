@@ -2606,7 +2606,7 @@ void OPTIMIZER::eval_opt_derivative(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX
                 tempU[icomp] = U[icomp][iglob];
                 tempUa[icomp] = Ua[icomp][iglob];
             }
-            temp_d_obj_functional[iglob] += (dAlpha[iglob] * tempU.dot(tempUa)) / (dim+1) * volume_v[iel]; // * 1/ rho?
+            temp_d_obj_functional[iglob] += (dAlpha[iglob] * tempU.dot(tempUa)) / (dim+1) * volume_v[iel]; // * alpha?
             temp_d_obj_functional[iglob] += fWeights[0]*(dAlpha[iglob] * tempU.dot(tempU)) / (dim+1) * volume_v[iel];
         }
     }

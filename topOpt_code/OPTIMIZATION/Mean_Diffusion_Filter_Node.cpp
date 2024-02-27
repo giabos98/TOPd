@@ -1,6 +1,6 @@
 #include "Mean_Diffusion_Filter.h"
 
-void Mean_DF_NODE_NB::initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours)
+void Mean_DF_NODE_NB::initialize(int dimension, prec diffusionRadius, prec diffusionFilterWeight, int nodeGlobId, int nodeOptId, prec* coords, VECTOR_INT possibleNeighbours, std::vector<VECTOR_INT> possible_neighbours)
 {
     dim = dimension;
     diffRadius = diffusionRadius;
@@ -9,41 +9,48 @@ void Mean_DF_NODE_NB::initialize(int dimension, prec diffusionRadius, prec diffu
     optId = nodeOptId;
     coord.initialize(coords, dim);
     possibleNB = possibleNeighbours;
+    for (unsigned int icell = 0; icell < possible_neighbours.size(); icell++)
+    {
+        possible_NB.push_back(possible_neighbours[icell]);
+    }
 }
 
-void Mean_DF_NODE_NB::buildNeighbourhood_v0(std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode)
+void Mean_DF_NODE_NB::buildNeighbourhood_v0(std::vector<std::vector<std::vector<VECTOR_INT>>> &cellNodesTensor, std::vector<Mean_DF_NODE_NB> &nodesNB, VECTOR_INT &optNodeFromGlobNode)
 {
-    int nMaxNB = possibleNB.length;
-    neighbours.initializeZero(nMaxNB);
-    VECTOR distNB(nMaxNB);
     prec weigthsSum = 0.0;
-    weigthNB.setZeros(nMaxNB);
     int nNB = 0;
-    for (int inb = 0; inb < nMaxNB; inb++)
+    for (unsigned int inbcell = 0; inbcell < possible_NB.size(); inbcell++)
     {
-        int idNB = possibleNB[inb];
-        int optIdNB = optNodeFromGlobNode[idNB];
-        Mean_DF_NODE_NB tempNode = nodesNB[optIdNB];
-        if (globId != tempNode.globId)
+        VECTOR_INT temp_nb_cell;
+        VECTOR_INT::exact_copy(cellNodesTensor[possible_NB[inbcell][0]][possible_NB[inbcell][1]][possible_NB[inbcell][2]], temp_nb_cell); 
+        for (int inb = 0; inb < temp_nb_cell.length; inb++)
         {
-            VECTOR coordNB = tempNode.coord;
-            //std::cout << "Pre diff\n";
+            int idNB = temp_nb_cell[inb];
+            int optIdNB = optNodeFromGlobNode[idNB];
+            Mean_DF_NODE_NB tempNB = nodesNB[optIdNB];
+            VECTOR coordNB = tempNB.coord;
             if (coordNB.length != dim) 
             {
-                coord.printRowMatlab("Coord");
-                coordNB.printRowMatlab("CoordNB");
-                std::string errorStr = "ERROR inserting a neighbour for the opt node " + std::to_string(inb) + ". Neighbour optId:" + std::to_string(optIdNB) + "\n";
-                throw_line(errorStr);
-            }
+                #pragma omp critical (error_in_coordNB)
+                {
+                    coord.printRowMatlab("Coord");
+                    coordNB.printRowMatlab("CoordNB");
+                    std::string errorStr = "ERROR inserting a neighbour for the opt node " + std::to_string(inb) + ". Neighbour optId:" + std::to_string(optIdNB) + "\n";
+                    throw_line(errorStr);
+                }
+            }           
             VECTOR distVec = coord - coordNB;
-            //std::cout << "Post diff\n";
             prec tempDist = VECTOR::norm(distVec);
-            //std::cout << "Dist: " << tempDist << "; Radius: " << diffRadius << "; CHECK: " << (tempDist <= diffRadius) << "\n";
             if (tempDist <= diffRadius)
             {
-                neighbours[nNB] = idNB;
-                prec tempWeigth = 1 / tempDist;
-                weigthNB[nNB] = tempWeigth;
+                neighbours.append(optIdNB);
+                prec tempWeigth = tempDist / diffRadius;
+                tempWeigth = 1 - tempWeigth;
+                if (globId != tempNB.globId)
+                {
+                    tempWeigth *= diffFilterWeight;
+                }
+                weigthNB.append(tempWeigth);
                 weigthsSum += tempWeigth;
                 nNB += 1;
             }
@@ -58,7 +65,6 @@ void Mean_DF_NODE_NB::buildNeighbourhood_v1(std::vector<Mean_DF_NODE_NB> &nodesN
 {
     int nMaxNB = possibleNB.length;
     neighbours.initializeZero(nMaxNB);
-    VECTOR distNB(nMaxNB);
     prec weigthsSum = 0.0;
     weigthNB.setZeros(nMaxNB);
     int nNB = 0;

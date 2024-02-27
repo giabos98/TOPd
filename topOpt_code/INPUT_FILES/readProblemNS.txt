@@ -15,9 +15,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.8
 // Time Dependence (not relevant in stationay solution)
 // final time
-1
+0.08
 // time step
-0.1
+0.08
 // minimum time step
 0.00001
 
