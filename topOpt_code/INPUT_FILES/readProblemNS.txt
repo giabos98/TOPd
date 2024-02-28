@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-free_inlet_stenosis0.5_normal
+free_inlet_stenosis0.5_finer
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)

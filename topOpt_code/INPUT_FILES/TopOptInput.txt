@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-test_d
+Vr[0.2]_mma_a1e5_time_t0.8_0.025_p2
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -37,7 +37,7 @@ test_d
 1
 
 // maxIter
-1000
+500
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -54,7 +54,7 @@ test_d
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
 2
 // beta MAX
-10
+1
 //beta min
 0.1
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
@@ -64,9 +64,9 @@ test_d
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation
-0.00005
+0.0005
 // crit beta to determine the q_beta for beta interpolation
-5
+0.5
 
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 0
