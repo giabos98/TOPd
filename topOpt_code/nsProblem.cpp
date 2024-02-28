@@ -52,6 +52,10 @@ void PROBLEM_NS::importParameters(std::string readFile)
     STREAM::getValue(ParameterFile, line, iss, deltaT);
     deltaT0 = deltaT;
     (*physics).deltaT = deltaT;
+    if ((*physics).deltaT > (*physics).t_end)
+    {
+        throw_line("ERROR: inserted a deltaT greater than the final time\n");
+    }
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, (*physics).deltaT_min);
     (*physics).eval_solution_times();
@@ -216,7 +220,6 @@ void PROBLEM_NS::importParameters(std::string readFile)
         getline(ParameterFile, line);
         STREAM::getColVector(ParameterFile, line, iss, neuMeanP, nNeuBound);
     }
- 
 
     // //-------------------------------------------------
     // //------------------------------------
@@ -816,7 +819,9 @@ void PROBLEM_NS::setBC()
     //dirNod.shrink(nDir);
     dirNod.length = nDir;
     dirVal.initialize(nDir, dim);
-        //--- ITERATE ON THE TIME NEU BOUNDARIES ----
+
+
+    //--- ITERATE ON THE TIME NEU BOUNDARIES ----
     sum = 0; 
     for (int ineu = 0; ineu < nNeuTimeBound; ineu++)
     {
@@ -826,7 +831,7 @@ void PROBLEM_NS::setBC()
     neuTimeIdCount.initialize(nNeuTimeBound);
     neuTimeNod.initialize(sum); //initialize neuTimeNod with max possible dim
     neuTimeBaseFlux.initialize(sum); 
-    neuTimeNormal.initialize(sum, 3);
+    neuTimeNormal.initialize(sum, dim);
     nTimeNeu = 0;
     std::shared_ptr<prec*[]> coord_v = (*physics).coord_v.PP;
     for (int ineu = 0; ineu < nNeuTimeBound; ineu++)
@@ -870,7 +875,7 @@ void PROBLEM_NS::setBC()
     neuTimeNod.length = nTimeNeu; neuTimeBaseFlux.length = nTimeNeu;
     neuTimeVal.zeros(nTimeNeu, dim); neuTimeNormal.shrinkRows(nTimeNeu);
 
-        //--- ITERATE ON THE STATIC NEU BOUNDARIES ----
+    //--- ITERATE ON THE STATIC NEU BOUNDARIES ----
     sum = 0; 
     for (int ineu = 0; ineu < nNeuBound; ineu++)
     {

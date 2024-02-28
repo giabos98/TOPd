@@ -96,9 +96,9 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
                                     {
                                         VECTOR_INT tempNB = cellNodesTensor[icellNB][jcellNB][kcellNB];
                                         possibleNB.append(tempNB);
-                                        VECTOR_INT cellIds(3);
-                                        cellIds[0] = icellNB; cellIds[1] = jcellNB; cellIds[2] = kcellNB;
-                                        possible_NB.push_back(cellIds);
+                                        // VECTOR_INT cellIds(3);
+                                        // cellIds[0] = icellNB; cellIds[1] = jcellNB; cellIds[2] = kcellNB;
+                                        // possible_NB.push_back(cellIds);
                                     }
                                 }  
                             }
@@ -115,7 +115,6 @@ void Mean_DIFFUSION_FILTER::buildNodesNB()
             }
         }
     }
-
     buildNeighbourhoods();
 }
 
@@ -136,8 +135,8 @@ void Mean_DIFFUSION_FILTER::buildNeighbourhoods()
                 node_counter++;
                 std::cout << "--| Build NB | Node: " << node_counter << "/" << nNodesInDom << "\t\tperc:" << floor((double(node_counter) / double(nNodesInDom))*100) << "\n";
             }
-            nodesNB[inode].buildNeighbourhood_v0(cellNodesTensor, temp_nodesNB, optNodeFromGlobNode);
-            // nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
+            // nodesNB[inode].buildNeighbourhood_v0(cellNodesTensor, temp_nodesNB, optNodeFromGlobNode);
+            nodesNB[inode].buildNeighbourhood_v1(temp_nodesNB, optNodeFromGlobNode);
         }
     }
 
