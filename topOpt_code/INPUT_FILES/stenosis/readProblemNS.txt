@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-stenosis0.5_guess
+free_inlet_stenosis0.5_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -8,7 +8,12 @@ SAVE PDE SOLUTION (0: not save, 1: save)
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
 
-// time
+// Time Settings
+// stationary flag (0:time_dependent, 1:stationary)
+0
+// convergence scale factor
+0.8
+// Time Dependence (not relevant in stationay solution)
 // final time
 1.0
 // time step
@@ -45,9 +50,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-4
+1
 // geomID
-6 8 15 16
+10
 
 // SYMMETRY WALLS
 //--------
@@ -70,9 +75,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-20
-// functions
-0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+13
+//functs
+0.36*[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------
@@ -80,7 +85,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
 // geomID
 0 3
-// pressure value (applied to the normal component)
+//functs
 13332
 13332
 
@@ -94,7 +99,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # NEUMANN - TIME DEPENDENT
 0
 
-// NORMAL VELOCITY OPEN BOUNDARY (velocity only in the last component: 2D->y, 3D->z) and open boundary on it
+// NORMAL VELOCITY OPEN BOUNDARY (velocity not zero only in the last component: 2D->y, 3D->z) and open boundary on it
 //--------
 // # NVOB
 0
