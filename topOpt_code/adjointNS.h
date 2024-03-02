@@ -34,7 +34,7 @@ public:
     //time iteration count
     int curr_iter = 0;
 
-    ADJOINT_NS() : PROBLEM_NS(){}
+    ADJOINT_NS() : PROBLEM_NS(){};
 
     //-----------------------------
     // INITIALIZE FROM NS PROBLEM

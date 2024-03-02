@@ -33,10 +33,12 @@ void TOP_OPT::importParameters(std::string inputFile)
     MATRIX boxOpt(3,2);
     std::string line;
     std::istringstream iss;
-    //
+
+    // PROBLEM NAME
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, name);
-    //
+    
+    // OPTIMIZATION SCHEME
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, optimization_scheme);
     if (optimization_scheme == 2)
@@ -48,7 +50,7 @@ void TOP_OPT::importParameters(std::string inputFile)
         throw_line("ERROR: non valid optimization scheme id\n");
     }
     
-    //
+    // SUBDOMAINS
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_subdomains);
     subdomains.initialize(n_subdomains);
@@ -56,42 +58,45 @@ void TOP_OPT::importParameters(std::string inputFile)
     {
         subdomains[idom] = idom;
     }
-    std::getline(ParameterFile, line);
+    STREAM::getLines(ParameterFile, line, 1);
     subdomains_initial_values.initialize(n_subdomains);
     STREAM::getRowVector(ParameterFile, line, iss, subdomains_initial_values);
-    std::getline(ParameterFile, line);
+    STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, n_opt_subdomains);
-    std::getline(ParameterFile, line);
+    STREAM::getLines(ParameterFile, line, 1);
     opt_subdomains.initialize(n_opt_subdomains);
     STREAM::getRowVector(ParameterFile, line, iss, opt_subdomains);
     handle_optimization_domain();
-    
-    //
-    STREAM::getLines(ParameterFile, line, 2);
-    STREAM::getValue(ParameterFile, line, iss, q);
-    //
-    STREAM::getLines(ParameterFile, line, 2);
 
-    STREAM::getValue(ParameterFile, line, iss, Vr);
-    //
-    STREAM::getLines(ParameterFile, line, 2);
+    // BRINKMAN PENALIZATION
+    STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, alpha_min);
-    //
-    STREAM::getLines(ParameterFile, line, 2);
+    STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, alpha_max);
-    //
-    STREAM::getLines(ParameterFile, line, 5);
-    STREAM::getValue(ParameterFile, line, iss, onlyGrad);
-    //
-    STREAM::getLines(ParameterFile, line, 2);
-    STREAM::getValue(ParameterFile, line, iss, minIt);
-    //
-    STREAM::getLines(ParameterFile, line, 2);
-    STREAM::getValue(ParameterFile, line, iss, maxIt);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, q);
+
+    // CONSTRAINTS
+    CONSTRAINTS constraints;
+    STREAM::getLines(ParameterFile, line, 3);
+    int n_constr;
+    STREAM::getValue(ParameterFile, line, iss, n_constr);
+    STREAM::getLines(ParameterFile, line, 3);
+    VECTOR_INT constraints_types_list(n_constr);
+    STREAM::getRowVector(ParameterFile, line, iss, constraints_types_list);
+    std::vector<VECTOR> constraints_parameters(n_constr);
+    STREAM::getLines(ParameterFile, line, 1);
+    for (int icons = 0; icons < n_constr; icons++)
+    {
+        constraints_parameters[icons].initialize(constraints.max_parameters_length);
+        STREAM::getRowVector(ParameterFile, line, iss, constraints_parameters[icons]);
+    }
+    constraints.initialize(n_constr, constraints_types_list, constraints_parameters);
+
+
     // get total volume
     VECTOR Volume = physics.Volume_v;
     V0 = 0;
-    
     // elemInDom.printRow("elDom");
     for (int iel = 0; iel < nElemInDom; iel++)
     {
@@ -102,7 +107,18 @@ void TOP_OPT::importParameters(std::string inputFile)
     physics.Vol = V0;
     physics.vol_fract = 1.0;
     // std::cout << "V0: " << V0 << "\n";
+    
+    // USELESS BASE FUNCTINONALS
+    STREAM::getLines(ParameterFile, line, 5);
+    STREAM::getValue(ParameterFile, line, iss, onlyGrad);
 
+    // ITERATIONS
+    STREAM::getLines(ParameterFile, line, 3);
+    STREAM::getValue(ParameterFile, line, iss, minIt);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, maxIt);
+
+    // FUNCTIONAL DEFINITION
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, customFunc);
     STREAM::getLines(ParameterFile, line, 2);
@@ -185,7 +201,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getValue(ParameterFile, line, iss, enableDiffusionFilter);
     if (customFunc == 1)
     {
-        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter);
+        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter, constraints);
     }
     else
     {

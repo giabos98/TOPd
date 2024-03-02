@@ -1194,22 +1194,9 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     //--------------------------------------------------------------
     // CONSTRAINTS EVALUATION
     //--------------------------------------------------------------
-    // volume constraint
-    //--------------------
-    // int_\Omega { gamma } - V_r*V_0 <= 0 
-    prec integral = 0;
-    for (int iel = 0; iel < nElem; iel++)
-    {
-        int globEl = elemInDom[iel];
-        for (int iloc = 0; iloc < dim+1; iloc++)
-        {
-            int iglob = elem_v[globEl][iloc];
-            int optNode = optNodeFromGlobNode[iglob];
-            integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
-        }
-    }
-    g[0]  = (integral - Vr * V0)/V0;
-    Vol = integral;
+    update_constraints(g, elem_v, Volume_v);
+    
+    Vol = constraints.list[0].vol;
     
     // //--------------------------------------------------------------
     // // CONSTRAINTS DERIVATIVE
@@ -1226,6 +1213,40 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     //         dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
     //     }
     // }
+}
+
+void OPTIMIZER::update_constraints(VECTOR &g,MATRIX_INT &elem_v, VECTOR &Volume_v)
+{
+    update_volume_constraint(g, elem_v, Volume_v);
+    update_other_constraints(g, elem_v, Volume_v);
+}
+
+void OPTIMIZER::update_volume_constraint(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v)
+{
+    // volume constraint
+    //--------------------
+    // int_\Omega { gamma } - V_r*V_0 <= 0 
+    prec integral = 0;
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
+        }
+    }
+    constraints.list[0].vol = integral;
+    Vr = constraints.list[0].Vr;
+    g[0]  = (integral - Vr * V0)/V0;
+}
+
+void OPTIMIZER::update_other_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v)
+{
+    for (int icons = 1; icons < constraints.n_constr; icons++)
+    {    
+    }
 }
 
 
@@ -1305,12 +1326,12 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
 void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
 {
     std::cout << "\n-----| SOLVE MMA |-----\n";
-    static int nCons = 1;
-    static VECTOR df0(nNode);
-    static VECTOR g(nCons);
-    static MATRIX dg(nCons, nNode);
+    int nCons = constraints.n_constr;
+    VECTOR df0(nNode);
+    VECTOR g(nCons);
+    MATRIX dg(nCons, nNode);
     //---
-    int m = 1;
+    int m = nCons;
     int n = nNode;
     // prec epsimin = 0.0000001;
     VECTOR xval;
@@ -1325,10 +1346,16 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
     low     = xmin;
     VECTOR upp;
     upp     = xmax;
-    VECTOR c(nCons); c[0] = 1000;
-    VECTOR d(nCons); d[0] = 1;
+    VECTOR c(nCons); //c[0] = 1000;
+    VECTOR d(nCons); //d[0] = 1;
     int a0       = 1;
-    VECTOR a(nCons); a[0] = 0;
+    VECTOR a(nCons); //a[0] = 0;
+    for (int i = 0; i < nCons; i++)
+    {
+        c[i] = 1000;
+        d[i] = 1;
+        a[i] = 0;
+    }
     int outeriter = 0;
     int maxoutit  = 1;
     int kkttol    = 1e-12;

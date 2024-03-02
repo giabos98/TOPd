@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../CODE_HEADERS/codeHeader.h"
 #include "../geometry.h"
+#include "../CODE_HEADERS/codeHeader.h"
 
 class Mean_DF_NODE_NB //NB stands for Neighbourhood
 {

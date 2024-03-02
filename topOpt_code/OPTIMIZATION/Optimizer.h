@@ -4,6 +4,7 @@
 #include "../CODE_HEADERS/codeHeader.h"
 #include "../geometry.h"
 #include "../nsProblem.h"
+#include "Mean_Diffusion_Filter.h"
 
 class OPTIMIZER
 {
@@ -93,15 +94,14 @@ public:
     VECTOR gamma_acc;
     VECTOR dgamma_acc;
     
-
     // diffusion filter
     int diffusion_filter_case = 0;
     Mean_DIFFUSION_FILTER diffusionFilter;
     VECTOR gamma_filter;
     VECTOR dgamma_filter;
 
-
-
+    //constraints
+    CONSTRAINTS constraints;
 
     //------------------------------------------------
     // CONSTRUCTOR
@@ -142,7 +142,7 @@ public:
         temp_func_val.setZeros(3);
     }
     //---
-    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case)
+    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case, CONSTRAINTS &constraints_input)
     {
         physics = physIn;
         nodeInDom = nodeInDom_In;
@@ -191,6 +191,9 @@ public:
         diffusion_filter_case = diff_filter_case;
         gamma_filter.setZeros(nNode);
         dgamma_filter.setZeros(nNode);
+
+        constraints = constraints_input;
+
         // initialize alpha and dAplha values in all the domain to their free domain values. 
         // Following this procedure only the values in the Omega_opt nodes will be updated at every optimization loop.
         for (int inod = 0; inod < nNodes_v; inod++)
@@ -225,6 +228,9 @@ public:
     void getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, MATRIX Ua);
     void update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     void update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol);
+    void update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_volume_constraint(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_other_constraints(VECTOR &g,MATRIX_INT &elem_v, VECTOR &Volume_v);
     void decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
     // void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     // void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);

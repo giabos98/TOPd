@@ -4,8 +4,7 @@
 
 class PHYSICS
 {
-
-public:
+    public:
 
     //--- NS PROBLEM NAME
     std::string name;
@@ -90,47 +89,211 @@ public:
     prec vol_fract;
 
     // Top. Opt. parameter filtering geometry
-    
 
-    PHYSICS(){}
+    PHYSICS(){};
 
-    void print()
-    {
-        printf(" dim: %d\n rho: %" format "\n: mu: %" format" \n ni: %" format "\n nNodes_v:%d\n", dim, rho, mu, ni, nNodes_v);
-    }
+    void print();
 
-    void eval_solution_times()
-    {
-        switch (isStationary)
+    void eval_solution_times();
+};
+
+
+
+//--------------------------------------------
+// BASE CONSTRAINT CLASS
+//--------------------------------------------
+class CONSTRAINT
+{
+    public:
+
+    //-----------
+    // PARAMETERS
+    //-----------
+    int type;
+    VECTOR parameters;
+
+    // volume constraint
+    prec Vr = -1.0;
+    prec vol = -1.0;
+
+    //edge size constraint
+    int edge_id = -1;
+    prec Sr = -1.0;
+    prec side = -1.0;
+    //---------------
+    // END PARAMETERS
+    //---------------
+
+    //-------------
+    // CONSTRUCTORS
+    //-------------
+    CONSTRAINT(){};
+
+    CONSTRAINT(int constraint_type)
+    {   
+        int max_type = 0;
+        if ((constraint_type < 0) || (constraint_type > max_type))
         {
-            case 1: // stationary solution
-            {
-                t_end = 1e16;
-                deltaT = t_end;
-                deltaT_min = 1e-5;
-                solution_times.append(t_end);
-                solution_deltaT.append(deltaT);
-                break;
-            }
-            default: // time dependent solution
-            {
-                solution_times.resetZeros();
-                prec curr_time = 0.0;
-                if (abs(t_end-curr_time) <= 1e-10) throw_line("ERROR: too small ending time (<= 1e-10)\n");
-                while (abs(t_end-curr_time) > 1e-10)
-                {
-                    solution_times.append(curr_time);
-                    curr_time += deltaT;
-                }
-                solution_times.append(t_end);
-                solution_deltaT.initialize(solution_times.length-1);
-                solution_deltaT.reset(deltaT);
-                solution_deltaT[solution_deltaT.length-1] = t_end - solution_times[solution_times.length-2]; //adjust the last time step
-                break;
-            }
+            throw_line ("ERROR: invalid constraint type\n");
+        }
+        else
+        {
+            type = constraint_type;
         }
     }
+
+    CONSTRAINT(int constraint_type, VECTOR constraint_parameters)
+    {   
+        int max_type = 0;
+        if ((constraint_type < 0) || (constraint_type > max_type))
+        {
+            throw_line ("ERROR: invalid constraint type\n");
+        }
+        else
+        {
+            type = constraint_type;
+        }
+        parameters = constraint_parameters;
+    }
+
+    void initialize(int constraint_type);
+
+    void initialize(int constraint_type, VECTOR constraint_parameters);
+
+    void initialize_volume_constraint(int constr_type, prec volume_fraction);
+
+    void initialize_edge_constraint(int constr_type, int edge, prec edge_fraction);
+    //-----------------
+    // END CONSTRUCTORS
+    //-----------------
 };
+//--------------------------------------------
+// END BASE CONSTRAINT CLASS
+//--------------------------------------------
+
+// //--------------------------------------------
+// // VOLUME CONSTRAINT CLASS
+// //--------------------------------------------
+// class VOLUME_CONSTRAINT : public CONSTRAINT
+// {
+//     public:
+//     //-------------
+//     // CONSTRUCTORS
+//     //-------------
+//     VOLUME_CONSTRAINT(){};
+
+//     VOLUME_CONSTRAINT(int constraint_type, VECTOR constraint_parameters) : CONSTRAINT(constraint_type)
+//     {
+//         // define maximum volume fraction
+//         prec constraint_Vr = constraint_parameters[0];
+//         if ((0.0 > constraint_Vr) || (constraint_Vr > 1.0))
+//         {
+//             std::cout << "\nVr: " << constraint_Vr << "\n";
+//             throw_line ("ERROR: invalid maximum volume fraction\n");
+//         }
+//         else
+//         {
+//             Vr = constraint_Vr; // the Vr  must be inserted in the first index
+//         }
+//     }
+
+//     void initialize(int constraint_type, VECTOR constraint_parameters);
+//     //-----------------
+//     // END CONSTRUCTORS
+//     //-----------------
+// };
+// //--------------------------------------------
+// // END VOLUME CONSTRAINT CLASS
+// //--------------------------------------------
+
+// //--------------------------------------------
+// // EDGE SIZE CONSTRAINT CLASS
+// //--------------------------------------------
+// class EDGE_SIZE_CONSTRAINT : public CONSTRAINT
+// {
+//     public:
+//     //-------------
+//     // CONSTRUCTORS
+//     //-------------
+//     EDGE_SIZE_CONSTRAINT(){};
+
+//     EDGE_SIZE_CONSTRAINT(int constraint_type, VECTOR constraint_parameters) : CONSTRAINT(constraint_type)
+//     {
+//         // define edge_id
+//         int constraint_edge_id = int(constraint_parameters[0]);
+//         edge_id = constraint_edge_id;
+
+//         // define maximum edge size fraction
+//         prec constraint_Sr = constraint_parameters[1];
+//         if ((0.0 > constraint_Sr) || (constraint_Sr > 1.0))
+//         {
+//             throw_line ("ERROR: invalid maximum volume fraction\n");
+//         }
+//         else
+//         {
+//             Sr = constraint_Sr; // the Vr  must be inserted in the first index
+//         }
+//     }
+
+//     void initialize(int constraint_type, VECTOR constraint_parameters);
+//     //-----------------
+//     // END CONSTRUCTORS
+//     //-----------------
+// };
+// //--------------------------------------------
+// // END EDGE SIZE CONSTRAINT CLASS
+// //--------------------------------------------
+
+//--------------------------------------------
+// CONSTRAINTS HANDLER CLASS
+//--------------------------------------------
+class CONSTRAINTS
+{
+    public:
+
+    //-------------
+    // PARAMETERS
+    //-------------
+    int n_constr;
+    int max_constraint_type = 0;
+    int max_parameters_length = 2;
+    VECTOR_INT types;
+    std::vector<CONSTRAINT> list;
+    //-------------
+    // END PARAMETERS
+    //-------------
+
+    //-------------
+    // CONSTRUCTORS
+    //-------------
+    CONSTRAINTS(){};
+
+    CONSTRAINTS(int constraints_n_constr, VECTOR_INT constraints_types, std::vector<VECTOR> constraints_parameters)
+    {
+        if (constraints_n_constr < 1)
+        {
+            throw_line("ERROR: invalid number of constraints. Less than 1\n");
+        }
+        n_constr = constraints_n_constr;
+        save_constraints_type(constraints_types);
+        build_constraints_list(constraints_parameters);
+    }
+
+    void initialize(int constraints_n_constr, VECTOR_INT constraints_types, std::vector<VECTOR> constraints_parameters);
+
+    void save_constraints_type(VECTOR_INT constraints_types);
+
+    void build_constraints_list(std::vector<VECTOR> constraints_parameters);
+    //-----------------
+    // END CONSTRUCTORS
+    //-----------------
+};
+//--------------------------------------------
+// END CONSTRAINTS HANDLER CLASS
+//--------------------------------------------
+
+
+
 
 
 
