@@ -58,7 +58,6 @@ void PROBLEM_NS::importParameters(std::string readFile)
     }
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, (*physics).deltaT_min);
-    (*physics).eval_solution_times();
 
     STREAM::getLines(ParameterFile, line, 2);
     

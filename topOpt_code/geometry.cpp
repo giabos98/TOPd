@@ -3,6 +3,49 @@
 //--------------------------------------------
 // PHYSICS CLASS
 //--------------------------------------------
+void PHYSICS::initialize()
+{
+    eval_solution_times();
+    build_bounds_elems_v();
+    for (int ibound = 0; ibound < nBounds; ibound++)
+    {
+        bounds_elems_v[ibound].print();
+    }
+    pause();
+}
+
+void PHYSICS::build_bounds_elems_v()
+{
+    bounds_elems_v.resize(nBounds);
+    std::string folder_path = name;
+    folder_path = "PREPRO/PROBLEM_DATA/" + folder_path;
+    std::string file_path = folder_path + "/BoundElems_v.txt";
+    std::ifstream  bound_file; 
+    bound_file.open(file_path); 
+    if (!bound_file.is_open()) 
+    {
+        throw_line("ERROR, can't open input data file");
+    }
+    std::string line;
+    std::istringstream iss;
+    
+    for (int ibound = 0; ibound < nBounds; ibound++)
+    {
+        STREAM::getLines(bound_file, line, 1);
+        VECTOR_INT check(2);
+        STREAM::getRowVector(bound_file, line, iss, check);
+        if (check[0] != ibound)
+        {
+            throw_line("ERROR: uncompatible ibound and reading bound\n");
+        }
+        int n_el_in_bound = check[1];
+        bounds_elems_v[ibound].initialize(n_el_in_bound, dim);
+        STREAM::getMatrix(bound_file, line, iss, bounds_elems_v[ibound]);
+    }
+
+    bound_file.close();
+}
+
 void PHYSICS::print()
 {
     printf(" dim: %d\n rho: %" format "\n: mu: %" format" \n ni: %" format "\n nNodes_v:%d\n", dim, rho, mu, ni, nNodes_v);
@@ -48,8 +91,7 @@ void PHYSICS::eval_solution_times()
 //--------------------------------------------
 void CONSTRAINT::initialize(int constraint_type)
 {
-    int max_type = 0;
-    if ((constraint_type < 0) || (constraint_type > max_type))
+    if (constraint_type < 0)
     {
         throw_line ("ERROR: invalid constraint type\n");
     }
@@ -169,7 +211,7 @@ void CONSTRAINTS::save_constraints_type(VECTOR_INT constraints_types)
         {
             std::cout << "\nconstraint: " << icons+1 << " / " << n_constr << "\n";
             std::cout << "type: " << constraint_type << "\n";
-            throw_line("ERROR: invalid constraint type\n");
+            throw_line("ERROR: not implemented constraint type\n");
         }
         else
         {

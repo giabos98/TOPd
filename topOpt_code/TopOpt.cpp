@@ -12,7 +12,12 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     NS.initialize(tempP, inputFile, alpha, false);
 
     printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
+    physics.initialize();
+
+    printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
     ADJ.initialize(NS, alpha);
+
+
     // initialize TopOpt parameters
     printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");
     importParameters("INPUT_FILES/TopOptInput.txt");
@@ -319,7 +324,6 @@ void TOP_OPT::solveADJ() // ADJ solver
     }
     lastSolADJ = ADJ.lastSol;
 }
-
 
 void TOP_OPT::solve()
 {

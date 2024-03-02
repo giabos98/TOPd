@@ -65,7 +65,7 @@ public:
     int nBoundNodes; //# of total boundary nodes
     int nBoundElems; //# of total boundary elements
     int nBound;      //# of boundary IDs 
-    std::shared_ptr<int[]> nBoundIdNodes; //# of boundary nodes of a specif  ID
+    std::shared_ptr<int[]> nBoundIdNodes; //# of boundary nodes of a specific ID
 
     std::shared_ptr<int[]> neuBoundIdElems_buff_buff;
     std::shared_ptr<int*[]> neuBoundIdElems_buff;

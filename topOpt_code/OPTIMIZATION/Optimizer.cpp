@@ -1215,13 +1215,32 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     // }
 }
 
-void OPTIMIZER::update_constraints(VECTOR &g,MATRIX_INT &elem_v, VECTOR &Volume_v)
+void OPTIMIZER::update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v)
 {
-    update_volume_constraint(g, elem_v, Volume_v);
-    update_other_constraints(g, elem_v, Volume_v);
+    for (int icons = 0; icons < constraints.n_constr; icons++)
+    {    
+        int type = constraints.list[icons].type;
+        switch (type)
+        {
+            case 0:
+            {
+                update_volume_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
+                break;
+            }
+            case 1:
+            {
+                update_edge_size_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
+                break;
+            }
+            default:
+            {
+                break;
+            }  
+        }
+    }
 }
 
-void OPTIMIZER::update_volume_constraint(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v)
+void OPTIMIZER::update_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v)
 {
     // volume constraint
     //--------------------
@@ -1237,19 +1256,17 @@ void OPTIMIZER::update_volume_constraint(VECTOR &g, MATRIX_INT &elem_v, VECTOR &
             integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
         }
     }
-    constraints.list[0].vol = integral;
-    Vr = constraints.list[0].Vr;
-    g[0]  = (integral - Vr * V0)/V0;
+    constr.vol = integral;
+    Vr = constr.Vr;
+    g[iconstr]  = (integral - Vr * V0)/V0;
 }
 
-void OPTIMIZER::update_other_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v)
+void OPTIMIZER::update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v)
 {
-    for (int icons = 1; icons < constraints.n_constr; icons++)
-    {    
-    }
+    std::cout << "\nEDGE CONSTRAINT UPDATE\n";
+    int n_bounds = 1;
+    std::vector<MATRIX_INT> bound_elems(n_bounds);
 }
-
-
 
 void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
 {
@@ -1328,8 +1345,10 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
     std::cout << "\n-----| SOLVE MMA |-----\n";
     int nCons = constraints.n_constr;
     VECTOR df0(nNode);
-    VECTOR g(nCons);
-    MATRIX dg(nCons, nNode);
+    VECTOR g;
+    g.setZeros(nCons);
+    MATRIX dg;
+    dg.zeros(nCons, nNode);
     //---
     int m = nCons;
     int n = nNode;

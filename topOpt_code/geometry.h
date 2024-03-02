@@ -66,6 +66,7 @@ class PHYSICS
     int nBounds;
     std::string bound_info_file_path;
     std::string bound_nodes_v_file_path;
+    std::vector<MATRIX_INT> bounds_elems_v;
 
     // ABOUT SOLUTION TIMES
     VECTOR solution_times;
@@ -92,9 +93,12 @@ class PHYSICS
 
     PHYSICS(){};
 
+    void initialize();
+
     void print();
 
     void eval_solution_times();
+    void build_bounds_elems_v();
 };
 
 
@@ -255,7 +259,7 @@ class CONSTRAINTS
     // PARAMETERS
     //-------------
     int n_constr;
-    int max_constraint_type = 0;
+    int max_constraint_type = 1;
     int max_parameters_length = 2;
     VECTOR_INT types;
     std::vector<CONSTRAINT> list;
