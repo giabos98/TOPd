@@ -54,8 +54,6 @@ public:
     VECTOR rhs_timeForcing;
     VECTOR rhs;
 
-
-
     //--------------------------------------------------------------
     //BOUNDARY CONDITIONS
     //--------------------------------------------------------------
@@ -728,43 +726,6 @@ public:
     // GET LENGTH OR AREA
     //------------------------------------
     prec getArea(MATRIX &matCoord, int dim)
-    {
-        if (dim != 2 && dim != 3) throw_line("ERROR: Getting area in a space different from 2D or 3D");
-        if (matCoord.nRow != dim || matCoord.nCol != dim) throw_line("ERROR: Getting area of coords incompatible with dim\n");
-        prec area;
-        switch (dim)
-        {
-            case 2:
-            {
-                std::shared_ptr<prec[]>  vec(new prec[dim]);
-                vec[0] = matCoord[0][0] - matCoord[1][0];
-                vec[1] = matCoord[0][1] - matCoord[1][1];
-                area = VECTOR::norm(vec,2);
-                break;
-            }
-            case 3:
-            {
-                VECTOR vec31(dim);
-                vec31[0] = matCoord[2][0] - matCoord[0][0];
-                vec31[1] = matCoord[2][1] - matCoord[0][1];
-                vec31[2] = matCoord[2][2] - matCoord[0][2];
-                VECTOR vec21(dim);
-                vec21[0] = matCoord[1][0] - matCoord[0][0];
-                vec21[1] = matCoord[1][1] - matCoord[0][1];
-                vec21[2] = matCoord[1][2] - matCoord[0][2];
-                // VECTOR tempVec; tempVec = vec31.cross(vec21);
-                // vec21 = tempVec;
-                VECTOR newVec;
-                VECTOR::cross(vec31, vec21, newVec);
-                
-                area = VECTOR::norm(newVec)/2;
-                break;
-            }
-        }
-        return area;
-    }
-
-    prec static getSurface(MATRIX &matCoord, int dim)
     {
         if (dim != 2 && dim != 3) throw_line("ERROR: Getting area in a space different from 2D or 3D");
         if (matCoord.nRow != dim || matCoord.nCol != dim) throw_line("ERROR: Getting area of coords incompatible with dim\n");

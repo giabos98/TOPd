@@ -7,11 +7,13 @@ void PHYSICS::initialize()
 {
     eval_solution_times();
     build_bounds_elems_v();
-    for (int ibound = 0; ibound < nBounds; ibound++)
-    {
-        bounds_elems_v[ibound].print();
-    }
-    pause();
+    build_bounds_elems_surfaces_v();
+    
+    // for (int ibound = 0; ibound < nBounds; ibound++)
+    // {
+    //     bounds_elems_v[ibound].print();
+    //     bounds_elems_surface_v[ibound].printRowMatlab(std::to_string(ibound));
+    // }
 }
 
 void PHYSICS::build_bounds_elems_v()
@@ -42,8 +44,30 @@ void PHYSICS::build_bounds_elems_v()
         bounds_elems_v[ibound].initialize(n_el_in_bound, dim);
         STREAM::getMatrix(bound_file, line, iss, bounds_elems_v[ibound]);
     }
-
     bound_file.close();
+}
+
+void PHYSICS::build_bounds_elems_surfaces_v()
+{
+    bounds_elems_surface_v.resize(nBounds);
+    for (int ibound = 0; ibound < nBounds; ibound++)
+    {
+        MATRIX_INT bound_elems = bounds_elems_v[ibound];
+        bounds_elems_surface_v[ibound].initialize(bound_elems.nRow);
+        for (int iel = 0; iel < bound_elems.nRow; iel++)
+        {
+            MATRIX coord(dim, dim);
+            for (int inode = 0; inode < dim; inode++)
+            {
+                int node = bound_elems[iel][inode];
+                for (int jcomp = 0; jcomp < dim; jcomp++)
+                {
+                    coord[inode][jcomp] = coord_v[node][jcomp];
+                }
+            }
+            bounds_elems_surface_v[ibound][iel] = get_surface(coord, dim);
+        }
+    }
 }
 
 void PHYSICS::print()
@@ -121,66 +145,21 @@ void CONSTRAINT::initialize_volume_constraint(int constr_type, prec volume_fract
     Vr = volume_fraction;
 }
 
-void CONSTRAINT::initialize_edge_constraint(int constr_type, int edge, prec edge_fraction)
+void CONSTRAINT::initialize_subdomain_volume_constraint(int constr_type, int subdomain, prec volume_fraction)
+{
+    initialize_volume_constraint(constr_type, volume_fraction);
+    domain_id = subdomain;
+}
+
+void CONSTRAINT::initialize_bound_constraint(int constr_type, int bound, prec bound_fraction)
 {
     initialize(constr_type);
-    edge_id = edge;
-    Sr = edge_fraction;
+    bound_id = bound;
+    Sr = bound_fraction;
 }
 //--------------------------------------------
 // END BASE CONSTRAINT CLASS
 //--------------------------------------------
-
-// //--------------------------------------------
-// // VOLUME CONSTRAINT CLASS
-// //--------------------------------------------
-// void VOLUME_CONSTRAINT::initialize(int constraint_type, VECTOR constraint_parameters)
-// {
-//     // initialize constraint
-//     CONSTRAINT::initialize(constraint_type);
-
-//     // define maximum volume fraction
-//     prec constraint_Vr = constraint_parameters[0];
-//     if ((0.0 >= constraint_Vr) || (constraint_Vr > 1.0))
-//     {
-//         std::cout << "\nVr: " << constraint_Vr << "\n";
-//         throw_line ("ERROR: invalid maximum volume fraction\n");
-//     }
-//     else
-//     {
-//         Vr = constraint_Vr; // the Vr  must be inserted in the first index
-//     }
-// }
-// //--------------------------------------------
-// // END VOLUME CONSTRAINT CLASS
-// //--------------------------------------------
-
-// //--------------------------------------------
-// // EDGE SIZE CONSTRAINT CLASS
-// //--------------------------------------------
-// void EDGE_SIZE_CONSTRAINT::initialize(int constraint_type, VECTOR constraint_parameters)
-// {
-//     // initialize constraint
-//     CONSTRAINT::initialize(constraint_type);
-
-//     // define edge_id
-//     int constraint_edge_id = int(constraint_parameters[0]);
-//     edge_id = constraint_edge_id;
-
-//     // define maximum edge size fraction
-//     prec constraint_Sr = constraint_parameters[1];
-//     if ((0.0 > constraint_Sr) || (constraint_Sr > 1.0))
-//     {
-//         throw_line ("ERROR: invalid maximum volume fraction\n");
-//     }
-//     else
-//     {
-//         Sr = constraint_Sr; // the Vr  must be inserted in the first index
-//     }
-// }
-// //--------------------------------------------
-// // END EDGE SIZE CONSTRAINT CLASS
-// //--------------------------------------------
 
 //--------------------------------------------
 // CONSTRAINTS HANDLER CLASS
@@ -234,27 +213,36 @@ void CONSTRAINTS::build_constraints_list(std::vector<VECTOR> constraints_paramet
         switch (type)
         {
             case 0:
-                {
-                    prec volume_fraction = constraints_parameters[icons][0];
-                    CONSTRAINT vol_constraint;
-                    vol_constraint.initialize_volume_constraint(type, volume_fraction);
-                    list[icons] = vol_constraint;
-                    break;
-                }  
+            {
+                prec volume_fraction = constraints_parameters[icons][0];
+                CONSTRAINT vol_constraint;
+                vol_constraint.initialize_volume_constraint(type, volume_fraction);
+                list[icons] = vol_constraint;
+                break;
+            }  
             case 1:
-                {
-                    int edge = int(constraints_parameters[icons][0]);
-                    prec edge_fraction = constraints_parameters[icons][1];
-                    CONSTRAINT edge_constraint;
-                    edge_constraint.initialize_edge_constraint(type, edge, edge_fraction);
-                    list[icons] = edge_constraint;
-                    break;
-                }
+            {
+                int subdomain = int(constraints_parameters[icons][0]);
+                prec volume_fraction = constraints_parameters[icons][1];
+                CONSTRAINT subdom_vol_constraint;
+                subdom_vol_constraint.initialize_subdomain_volume_constraint(type, subdomain, volume_fraction);
+                list[icons] = subdom_vol_constraint;
+                break;
+            } 
+            case 2:
+            {
+                int bound = int(constraints_parameters[icons][0]);
+                prec bound_fraction = constraints_parameters[icons][1];
+                CONSTRAINT bound_constraint;
+                bound_constraint.initialize_bound_constraint(type, bound, bound_fraction);
+                list[icons] = bound_constraint;
+                break;
+            }
             default:
-                {
-                    throw_line("ERROR: unexpected invalid constraint type, this error should have already popUp in types initialzation\n");
-                    break;
-                }
+            {
+                throw_line("ERROR: unexpected invalid constraint type, this error should have already popUp in types initialzation\n");
+                break;
+            }
         }
     }
 }

@@ -86,7 +86,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 3);
     int n_constr;
     STREAM::getValue(ParameterFile, line, iss, n_constr);
-    STREAM::getLines(ParameterFile, line, 3);
+    STREAM::getLines(ParameterFile, line, 4);
     VECTOR_INT constraints_types_list(n_constr);
     STREAM::getRowVector(ParameterFile, line, iss, constraints_types_list);
     std::vector<VECTOR> constraints_parameters(n_constr);
@@ -97,7 +97,6 @@ void TOP_OPT::importParameters(std::string inputFile)
         STREAM::getRowVector(ParameterFile, line, iss, constraints_parameters[icons]);
     }
     constraints.initialize(n_constr, constraints_types_list, constraints_parameters);
-
 
     // get total volume
     VECTOR Volume = physics.Volume_v;
@@ -473,7 +472,7 @@ void TOP_OPT::solve()
         
 
         print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma, feasible, funcValues, no_weights_funcValues, changes, valid, grad_gamma_norm);
-        
+        // pause();
     }
 
     if (flagPrint == 0)
@@ -719,7 +718,7 @@ void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, i
 
 void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
 {
-    prec VolPerc = Vol/V0*100;
+    // prec VolPerc = Vol/V0*100;
     prec changePerc = change*100;
 
     VECTOR rel_func_val = Optimizer.func_val / obj * 100;
@@ -740,7 +739,38 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
         std::cout << "  |-------> Inlet Pressure | abs: " << Optimizer.func_val[3]  << "; rel: " << rel_func_val[3]  << "\n";
     }
     std::cout << "--| FUNCTIONAL   | obj:" << obj << "\n";
-    std::cout << "--| PERCENT VOL. | vol: " << VolPerc << "% \n";
+    // std::cout << "--| PERCENT VOL. | vol: " << VolPerc << "% \n";
+    for (int iconstr = 0; iconstr < Optimizer.constraints.n_constr; iconstr++)
+    {
+        int type = Optimizer.constraints.list[iconstr].type;
+        switch (type)
+        {
+            case 0:
+            {
+                prec vol_perc = Optimizer.constraints.list[iconstr].vol / Optimizer.constraints.list[iconstr].vol_0 * 100;
+                std::cout << "--| PERCENT VOL. | vol: " << vol_perc << "% \n";
+                break;
+            }
+            case 1:
+            {
+                prec vol_perc = Optimizer.constraints.list[iconstr].vol / Optimizer.constraints.list[iconstr].vol_0 * 100;
+                std::cout << "--| PERCENT VOL. | vol:" << vol_perc << "% \tsubdomain: " << Optimizer.constraints.list[iconstr].domain_id << "\n";
+                break;
+            }
+            case 2:
+            {
+                prec surf_perc = Optimizer.constraints.list[iconstr].surf / Optimizer.constraints.list[iconstr].surf_0 * 100;
+                std::cout << "--| PERCENT SUR. | surf: " << surf_perc << "% \tbound: " << Optimizer.constraints.list[iconstr].bound_id << "\n";
+                break;
+            }
+            default:
+            {
+                std::cout << "\ntype: " << type << "\n";
+                throw_line("ERROR: not handled constraint case\n");
+                break;
+            }
+        }
+    }
     std::cout << "--| GAMMA CHANGE | change: " << changePerc << " %\n";
     switch (physics.turn_on_gamma_acc)
     {
@@ -906,10 +936,9 @@ void TOP_OPT::evaluate_total_energy()
 // Define the elements and the node of the optimization domain region.
 void TOP_OPT::handle_optimization_domain()
 {
-    
     int nElem_v = physics.nElem_v;
     is_elem_in_dom.setZeros(nElem_v);
-    
+    physics.elems_in_doms.resize(n_subdomains);
     int nodes_per_el = physics.dim + 1;
     int nNodes_v = physics.nNodes_v;
     optNodeFromGlobNode.setZeros(nNodes_v);
@@ -940,6 +969,7 @@ void TOP_OPT::handle_optimization_domain()
         for (int iel = 0; iel < nElem_v; iel++)
         {
             int temp_geo_id = physics.elem_geo_entities_ids_v[iel];
+            physics.elems_in_doms[temp_geo_id].append(iel);
             if (opt_subdomains.hasIn(temp_geo_id))
             {
                 is_elem_in_dom[iel] = 1;

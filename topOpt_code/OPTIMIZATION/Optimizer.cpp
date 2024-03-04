@@ -1039,19 +1039,7 @@ void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECT
     //--------------------------------------------------------------
     // CONSTRAINTS DERIVATIVES
     //--------------------------------------------------------------
-    dg.resetZeros();
-    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
-    VECTOR Volume_v = (*physics).Volume_v;
-    for (int iel = 0; iel < nElem; iel++)
-    {
-        int globEl = elemInDom[iel];
-        for (int iloc = 0; iloc < dim+1; iloc++)
-        {
-            int iglob = elem_v[globEl][iloc];
-            int optNode = optNodeFromGlobNode[iglob];
-            dg[0][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
-        }
-    }
+    update_constraints_derivative(dg);
 }
 
 void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
@@ -1229,7 +1217,44 @@ void OPTIMIZER::update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume
             }
             case 1:
             {
-                update_edge_size_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
+                update_subdomain_volume_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
+                break;
+            }
+            case 2:
+            {
+                update_edge_size_constraint(g, icons, constraints.list[icons]);
+                break;
+            }
+            default:
+            {
+                throw_line("ERROR: not handled constraint case\n");
+                break;
+            }  
+        }
+    }
+}
+
+void OPTIMIZER::update_constraints_derivative(MATRIX &dg)
+{
+    dg.resetZeros();
+    for (int icons = 0; icons < constraints.n_constr; icons++)
+    {    
+        int type = constraints.list[icons].type;
+        switch (type)
+        {
+            case 0:
+            {
+                update_volume_constraint_derivative(dg, icons, constraints.list[icons]);
+                break;
+            }
+            case 1:
+            {
+                update_subdomain_volume_constraint_derivative(dg, icons, constraints.list[icons]);
+                break;
+            }
+            case 2:
+            {
+                update_edge_size_constraint_derivative(dg, icons, constraints.list[icons]);
                 break;
             }
             default:
@@ -1257,15 +1282,121 @@ void OPTIMIZER::update_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &con
         }
     }
     constr.vol = integral;
+    if (constr.vol_0 < 0.0)
+    {
+        constr.vol_0 = V0;
+    }
     Vr = constr.Vr;
     g[iconstr]  = (integral - Vr * V0)/V0;
 }
 
-void OPTIMIZER::update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v)
+void OPTIMIZER::update_subdomain_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v)
 {
-    std::cout << "\nEDGE CONSTRAINT UPDATE\n";
-    int n_bounds = 1;
-    std::vector<MATRIX_INT> bound_elems(n_bounds);
+    // subdomain volume constraint
+    //--------------------
+    // int_\Omega_i { gamma } - V_r*V_0 <= 0 
+    VECTOR_INT glob_elems_in_subdom = (*physics).elems_in_doms[constr.domain_id];
+    prec integral = 0;
+    for (int iel = 0; iel < glob_elems_in_subdom.length; iel++)
+    {
+        int globEl = glob_elems_in_subdom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            integral += gamma_acc[optNode]/(dim+1)*Volume_v[globEl];
+        }
+    }
+    constr.vol = integral;
+    if (constr.vol_0 < 0.0)
+    {
+        constr.vol_0 = 0;
+        for (int iel = 0; iel < glob_elems_in_subdom.length; iel++)
+        {
+            int globEl = glob_elems_in_subdom[iel];
+            constr.vol_0 += Volume_v[globEl];
+        }
+    }
+    g[iconstr]  = (integral - constr.Vr * constr.vol_0)/constr.vol_0;
+}
+
+void OPTIMIZER::update_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
+{
+    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    VECTOR Volume_v = (*physics).Volume_v;
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            dg[iconstr][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/V0;
+        }
+    }
+}
+
+void OPTIMIZER::update_subdomain_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
+{
+    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    VECTOR Volume_v = (*physics).Volume_v;
+    VECTOR_INT glob_elems_in_subdom = (*physics).elems_in_doms[constr.domain_id];
+    prec vol_0 = constr.vol_0;
+    for (int iel = 0; iel < glob_elems_in_subdom.length; iel++)
+    {
+        int globEl = glob_elems_in_subdom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            dg[iconstr][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/vol_0;
+        }
+    }
+}
+
+void OPTIMIZER::update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr)
+{
+    int bound_id = constr.bound_id;
+    MATRIX_INT bound_elems = (*physics).bounds_elems_v[bound_id];
+    int n_el_in_bound = bound_elems.nRow;
+    VECTOR elem_gamma_avg(n_el_in_bound);
+    for (int iel = 0; iel < n_el_in_bound; iel++)
+    {
+        prec temp_gamma_avg = 0;
+        for (int inode = 0; inode < dim; inode++)
+        {
+            int opt_node = optNodeFromGlobNode[bound_elems[iel][inode]];
+            temp_gamma_avg += gamma_acc[opt_node];
+        }
+        temp_gamma_avg /= dim;
+        elem_gamma_avg[iel] = temp_gamma_avg;
+    }
+    prec integral = VECTOR::dot(elem_gamma_avg.P, (*physics).bounds_elems_surface_v[bound_id].P, n_el_in_bound);
+    constr.surf = integral;
+    if (constr.surf_0 < 0.0)
+    {
+        constr.surf_0 = (*physics).bounds_elems_surface_v[bound_id].sum();
+    }
+    prec S0 = constr.surf_0;
+    prec Sr = constr.Sr;
+    g[iconstr] = (integral - Sr * S0)/S0;
+}
+
+void OPTIMIZER::update_edge_size_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
+{
+    int bound_id = constr.bound_id;
+    prec S0 = constr.surf_0;
+    MATRIX_INT bound_elems = (*physics).bounds_elems_v[bound_id];
+    int n_el_in_bound = bound_elems.nRow;
+    VECTOR elem_gamma_avg(n_el_in_bound);
+    for (int iel = 0; iel < n_el_in_bound; iel++)
+    {
+        for (int inode = 0; inode < dim; inode++)
+        {
+            int opt_node = optNodeFromGlobNode[bound_elems[iel][inode]];
+            dg[iconstr][opt_node] += dgamma_acc[opt_node] * (*physics).bounds_elems_surface_v[bound_id][iel] / dim / S0;
+        }
+    }
 }
 
 void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
@@ -2266,7 +2397,7 @@ void OPTIMIZER::define_inlet_pressure_elem()
             int iglob = inlet_elems[iel][inode];
             for (int icomp = 0; icomp < dim; icomp++) matCoord[inode][icomp] = coord[iglob][icomp]; 
         }
-        inlet_elems_surface[iel] = PROBLEM_NS::getSurface(matCoord, dim);
+        inlet_elems_surface[iel] = PHYSICS::get_surface(matCoord, dim);
     }
     (*physics).area_inlet_bounds_elems = inlet_elems_surface;
 

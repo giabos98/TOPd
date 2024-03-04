@@ -36,7 +36,8 @@ class PHYSICS
     VECTOR h_v;
     MATRIX coord_v;
     MATRIX_INT elem_v;
-    VECTOR_INT elem_geo_entities_ids_v; // note: the domains ids are scvaled with c++ notation (starting from 0)
+    VECTOR_INT elem_geo_entities_ids_v; // note: the domains ids are scaled with c++ notation (starting from 0)
+    std::vector<VECTOR_INT> elems_in_doms;
     int max_geo_entity_id; 
     MATRIX Bloc_v; 
     MATRIX Cloc_v; 
@@ -67,6 +68,7 @@ class PHYSICS
     std::string bound_info_file_path;
     std::string bound_nodes_v_file_path;
     std::vector<MATRIX_INT> bounds_elems_v;
+    std::vector<VECTOR> bounds_elems_surface_v;
 
     // ABOUT SOLUTION TIMES
     VECTOR solution_times;
@@ -99,6 +101,45 @@ class PHYSICS
 
     void eval_solution_times();
     void build_bounds_elems_v();
+    void build_bounds_elems_surfaces_v();
+
+    // static prec get_surface(MATRIX &matCoord, int dim);
+    static prec get_surface(MATRIX &matCoord, int dim)
+    {
+        if (dim != 2 && dim != 3) throw_line("ERROR: Getting area in a space different from 2D or 3D");
+        if (matCoord.nRow != dim || matCoord.nCol != dim) throw_line("ERROR: Getting area of coords incompatible with dim\n");
+        prec area;
+        switch (dim)
+        {
+            case 2:
+            {
+                std::shared_ptr<prec[]>  vec(new prec[dim]);
+                vec[0] = matCoord[0][0] - matCoord[1][0];
+                vec[1] = matCoord[0][1] - matCoord[1][1];
+                area = VECTOR::norm(vec,2);
+                break;
+            }
+            case 3:
+            {
+                VECTOR vec31(dim);
+                vec31[0] = matCoord[2][0] - matCoord[0][0];
+                vec31[1] = matCoord[2][1] - matCoord[0][1];
+                vec31[2] = matCoord[2][2] - matCoord[0][2];
+                VECTOR vec21(dim);
+                vec21[0] = matCoord[1][0] - matCoord[0][0];
+                vec21[1] = matCoord[1][1] - matCoord[0][1];
+                vec21[2] = matCoord[1][2] - matCoord[0][2];
+                // VECTOR tempVec; tempVec = vec31.cross(vec21);
+                // vec21 = tempVec;
+                VECTOR newVec;
+                VECTOR::cross(vec31, vec21, newVec);
+                
+                area = VECTOR::norm(newVec)/2;
+                break;
+            }
+        }
+        return area;
+    }
 };
 
 
@@ -118,12 +159,16 @@ class CONSTRAINT
 
     // volume constraint
     prec Vr = -1.0;
+    prec vol_0 = -1.0;
     prec vol = -1.0;
+    // subdomain volume constraint
+    int domain_id = -1;
 
-    //edge size constraint
-    int edge_id = -1;
+    //bound size constraint
+    int bound_id = -1;
     prec Sr = -1.0;
-    prec side = -1.0;
+    prec surf_0 = -1.0;
+    prec surf = -1.0;
     //---------------
     // END PARAMETERS
     //---------------
@@ -166,7 +211,9 @@ class CONSTRAINT
 
     void initialize_volume_constraint(int constr_type, prec volume_fraction);
 
-    void initialize_edge_constraint(int constr_type, int edge, prec edge_fraction);
+    void initialize_subdomain_volume_constraint(int constr_type, int subdomain, prec volume_fraction);
+
+    void initialize_bound_constraint(int constr_type, int bound, prec bound_fraction);
     //-----------------
     // END CONSTRUCTORS
     //-----------------
@@ -174,79 +221,6 @@ class CONSTRAINT
 //--------------------------------------------
 // END BASE CONSTRAINT CLASS
 //--------------------------------------------
-
-// //--------------------------------------------
-// // VOLUME CONSTRAINT CLASS
-// //--------------------------------------------
-// class VOLUME_CONSTRAINT : public CONSTRAINT
-// {
-//     public:
-//     //-------------
-//     // CONSTRUCTORS
-//     //-------------
-//     VOLUME_CONSTRAINT(){};
-
-//     VOLUME_CONSTRAINT(int constraint_type, VECTOR constraint_parameters) : CONSTRAINT(constraint_type)
-//     {
-//         // define maximum volume fraction
-//         prec constraint_Vr = constraint_parameters[0];
-//         if ((0.0 > constraint_Vr) || (constraint_Vr > 1.0))
-//         {
-//             std::cout << "\nVr: " << constraint_Vr << "\n";
-//             throw_line ("ERROR: invalid maximum volume fraction\n");
-//         }
-//         else
-//         {
-//             Vr = constraint_Vr; // the Vr  must be inserted in the first index
-//         }
-//     }
-
-//     void initialize(int constraint_type, VECTOR constraint_parameters);
-//     //-----------------
-//     // END CONSTRUCTORS
-//     //-----------------
-// };
-// //--------------------------------------------
-// // END VOLUME CONSTRAINT CLASS
-// //--------------------------------------------
-
-// //--------------------------------------------
-// // EDGE SIZE CONSTRAINT CLASS
-// //--------------------------------------------
-// class EDGE_SIZE_CONSTRAINT : public CONSTRAINT
-// {
-//     public:
-//     //-------------
-//     // CONSTRUCTORS
-//     //-------------
-//     EDGE_SIZE_CONSTRAINT(){};
-
-//     EDGE_SIZE_CONSTRAINT(int constraint_type, VECTOR constraint_parameters) : CONSTRAINT(constraint_type)
-//     {
-//         // define edge_id
-//         int constraint_edge_id = int(constraint_parameters[0]);
-//         edge_id = constraint_edge_id;
-
-//         // define maximum edge size fraction
-//         prec constraint_Sr = constraint_parameters[1];
-//         if ((0.0 > constraint_Sr) || (constraint_Sr > 1.0))
-//         {
-//             throw_line ("ERROR: invalid maximum volume fraction\n");
-//         }
-//         else
-//         {
-//             Sr = constraint_Sr; // the Vr  must be inserted in the first index
-//         }
-//     }
-
-//     void initialize(int constraint_type, VECTOR constraint_parameters);
-//     //-----------------
-//     // END CONSTRUCTORS
-//     //-----------------
-// };
-// //--------------------------------------------
-// // END EDGE SIZE CONSTRAINT CLASS
-// //--------------------------------------------
 
 //--------------------------------------------
 // CONSTRAINTS HANDLER CLASS
@@ -259,7 +233,7 @@ class CONSTRAINTS
     // PARAMETERS
     //-------------
     int n_constr;
-    int max_constraint_type = 1;
+    int max_constraint_type = 2;
     int max_parameters_length = 2;
     VECTOR_INT types;
     std::vector<CONSTRAINT> list;

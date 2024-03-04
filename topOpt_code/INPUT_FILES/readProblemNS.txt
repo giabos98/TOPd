@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-free_inlet_stenosis0.5_normal
+control_free_inlet_stenosis0.5_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -50,9 +50,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-1
+2
 // geomID
-10
+6 13
 
 // SYMMETRY WALLS
 //--------
@@ -75,7 +75,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 1
 //geomID
-13
+16
 //functs
 0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 

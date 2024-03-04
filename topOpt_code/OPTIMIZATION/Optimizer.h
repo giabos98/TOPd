@@ -229,8 +229,13 @@ public:
     void update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     void update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol);
     void update_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v);
-    void update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
+    void update_subdomain_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_subdomain_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
+    void update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr);
+    void update_edge_size_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
     void update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_constraints_derivative(MATRIX &dg);
     void decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
     // void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     // void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);
