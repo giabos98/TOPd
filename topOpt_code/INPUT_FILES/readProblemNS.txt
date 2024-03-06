@@ -1,5 +1,5 @@
 // PROBLEM NAME and DIMENSION (2 or 3)
-control_free_inlet_stenosis0.5_normal
+control_free_inlet_stenosis0.1_normal
 2
 
 SAVE PDE SOLUTION (0: not save, 1: save)
@@ -15,7 +15,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.8
 // Time Dependence (not relevant in stationay solution)
 // final time
-0.1
+0.8
 // time step
 0.1
 // minimum time step

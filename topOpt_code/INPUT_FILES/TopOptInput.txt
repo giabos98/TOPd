@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_Re[Re_value]_[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-dumb5
+d[0.334]_Vr[0.3516]_mma_a1e5_b[1_1_0_0]_tend[0.8]_[0.1]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -32,7 +32,7 @@ dumb5
 // --| 2: max surface size fraction [bound_id, prescribed_surface_fraction]
 0 2 2 1
 // parameters
-0.2
+0.3516
 3 0.334
 6 0.334
 1 0.334
