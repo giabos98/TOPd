@@ -119,9 +119,9 @@ public:
         else frmt = "ascii";
     }
     //------------------------------------------------------------------------
-    void initializeForADJ(std::string name, int dim_in, int nNodes, int nElems)
+    void initializeForADJ(std::string name, int dim_in, int nNodes, int nElems, std::string folderName = "ADJ_sol")
     {
-        initializeForNS(name, dim_in, nNodes, nElems, "ADJ_sol");
+        initializeForNS(name, dim_in, nNodes, nElems, folderName);
     }
     //-----------------
     // RESET FOR NS

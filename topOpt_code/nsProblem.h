@@ -300,6 +300,8 @@ public:
     //----
     void StatSolverIterative();
     //----
+    void oneStepSolverStokes();
+    void oneStepSolverNavierStokes(prec toll = 1e-2, int itMax = 20);
     void oneStepSolver(prec toll = 1e-2, int itMax = 20);
 
     //----

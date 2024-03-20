@@ -11,6 +11,7 @@ class PHYSICS
 
     //--- DIMENSION ---
     int dim;
+    int isNS; // physics model (0:Stokes, 1:Navier-Stokes)
 
     //--- ABOUT TIME ---
     prec t_end;
@@ -158,17 +159,21 @@ class CONSTRAINT
     VECTOR parameters;
 
     // volume constraint
-    prec Vr = -1.0;
+    prec Vr    = -1.0;
     prec vol_0 = -1.0;
-    prec vol = -1.0;
+    prec vol   = -1.0;
     // subdomain volume constraint
     int domain_id = -1;
 
     //bound size constraint
     int bound_id = -1;
-    prec Sr = -1.0;
-    prec surf_0 = -1.0;
-    prec surf = -1.0;
+    prec Sr      = -1.0;
+    prec surf_0  = -1.0;
+    prec surf    = -1.0;
+
+    //discretizing constraint
+    prec discretization_toll = -1.0;
+    prec discretization_res  = -1.0;
     //---------------
     // END PARAMETERS
     //---------------
@@ -214,6 +219,8 @@ class CONSTRAINT
     void initialize_subdomain_volume_constraint(int constr_type, int subdomain, prec volume_fraction);
 
     void initialize_bound_constraint(int constr_type, int bound, prec bound_fraction);
+
+    void initialize_discretizing_constraint(int constr_type, prec discretization_tollerance);
     //-----------------
     // END CONSTRUCTORS
     //-----------------
@@ -233,7 +240,7 @@ class CONSTRAINTS
     // PARAMETERS
     //-------------
     int n_constr;
-    int max_constraint_type = 2;
+    int max_constraint_type = 3;
     int max_parameters_length = 2;
     VECTOR_INT types;
     std::vector<CONSTRAINT> list;

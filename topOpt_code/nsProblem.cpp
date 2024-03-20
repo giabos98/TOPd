@@ -15,14 +15,28 @@ void PROBLEM_NS::importParameters(std::string readFile)
     std::string line;
     std::istringstream iss;
 
-    getline(ParameterFile, line); 
+    STREAM::getLines(ParameterFile, line, 1);
 
-    // problem name and dimension
+    // problem name 
     STREAM::getValue(ParameterFile, line, iss, name);
     (*physics).name = name;
+
+    STREAM::getLines(ParameterFile, line, 1); 
+    
+    // dimension   
     STREAM::getValue(ParameterFile, line, iss, (*physics).dim);
     int dim = (*physics).dim;
     if (dim != 2 && dim != 3) throw_line("ERROR: Inizializing a Problem of dimension different from 2 or 3 \n");
+
+    STREAM::getLines(ParameterFile, line, 1); 
+
+    // physics model   
+    STREAM::getValue(ParameterFile, line, iss, (*physics).isNS);
+    std::cout << "(*physics).isNS: " << (*physics).isNS << "\n";
+    if (((*physics).isNS != 0) && ((*physics).isNS != 1)) 
+    {
+        throw_line("ERROR: not handled problem physics (Fluid physics different from Stokes or Navier-Stokes)\n");
+    }
 
     STREAM::getLines(ParameterFile, line, 2);
 
@@ -34,11 +48,9 @@ void PROBLEM_NS::importParameters(std::string readFile)
     //console log
     STREAM::getValue(ParameterFile, line, iss, (*physics).completeLog); 
     if ((*physics).completeLog != 0 && (*physics).completeLog != 1 && (*physics).completeLog != 2) throw_line("ERROR: completeLog different from 0, 1 or 2\n");
-
     completeLog = (*physics).completeLog;
 
-
-    STREAM::getLines(ParameterFile, line, 3);   
+    STREAM::getLines(ParameterFile, line, 3); 
 
     // get time parameters
     bool isStat;
@@ -2512,7 +2524,25 @@ void PROBLEM_NS::prepareSolver()
     int nNodes = (*physics).nNodes;
     int nElem = (*physics).nElem;
     int nNodes_v = (*physics).nNodes_v;
-    VTKWriter.initializeForNS(name, dim, nNodes, nElem);
+    std::string folderName;
+    switch ((*physics).isNS)
+    {
+        case 0:
+        {
+            folderName = "S_sol";
+            break;
+        }
+        case 1:
+        {
+            folderName = "NS_sol";
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    VTKWriter.initializeForNS(name, dim, nNodes, nElem, folderName);
 
     setInitCond();
 
@@ -2591,9 +2621,9 @@ void PROBLEM_NS::StatSolverIterative()
             convergence_toll = 1e-4;
             convergence_it = 100;
         }
-
     }
-
+    // std::cout << "\nNS_las_sol_norm: " << lastSol.norm() << "\n";
+    // pause();
     (*physics).NS_solution.modifyRow(0, lastSol);
     print_sol_in_VTK((*physics).NS_solution);
     VTKWriter.closeTFile();
@@ -2611,57 +2641,112 @@ void PROBLEM_NS::Solver()
     globIter = 0;
     prec t_end = (*physics).t_end;
     int nTimeSteps = t_end/deltaT;
-
     if (nTimeSteps > 1) lastSol.resetZeros();   // in the NS system there are the convergence iterations,
                                                 // so in case of a single time step, starting from the lastSol obtained
                                                 // can fasten the solution procedure starting from an initial condition similar to the solution.
                                                 // Unfortunately, in case of more times steps it's not possible to exploit this "trick". 
                                                 // Maybe it could be useful to recall the solution of the last optimization iteration 
                                                 // and try to find every time step solution starting from a similar one obtained in the simulation before.
-
-    // std::ofstream resFile;
-    // std::string resFilePath = "NSCurrSol/0.txt";
-    // resFile.open(resFilePath, std::ios::out | std::ios::binary);
-    // if(!resFile) {
-    // throw_line("ERROR: Can't open NS result file\n");
-    // }
-
-    // resFile.write((char *) &deltaT, sizeof(int));
-    // for (int i = 0; i < nDof; i++) resFile.write((char *) &lastSol[i], sizeof(prec));
-    // resFile.close();
-
-    printf("|NS| IT: 0 \tTIME: %7.4" format " \tINITIAL CONDITION\n", 0.0);
+    printf("|-| IT: 0 \tTIME: %7.4" format " \tINITIAL CONDITION\n", 0.0);
 
     VECTOR init_cond((*physics).nDof);
     init_cond.setZeros(((*physics).nDof));
     simulation_times_solution.append_row(init_cond);
-    
     //print_one_step_sol_in_VTK((*physics).dim, (*physics).nNodes, (*physics).nNodes_v, 0);
 
     while ((t_end-time) > (1e-15 * (nTimeSteps+1)))
     {
         oneStepSolver();
         simulation_times_solution.append_row(lastSol);
+        // std::cout << "\nNS_las_sol_norm: " << lastSol.norm() << "\n";
         if (time+deltaT > t_end) deltaT = t_end-time;
     }
-    
+    // pause();
     evaluate_solution_on_requested_time_steps();
     print_sol_in_VTK((*physics).NS_solution);
     VTKWriter.closeTFile();
-
-    // VECTOR deltaT_values(real_solution_times.length-1);
-    // for (int i = 0; i < deltaT_values.length; i++)
-    // {
-    //     deltaT_values[i] = real_solution_times[i+1] - real_solution_times[i];
-    // }
-    // (*physics).solution_times.exact_copy(real_solution_times);
-    // (*physics).solution_deltaT.exact_copy(deltaT_values);
 }
 
 //-------------------------
 // ONE-STEP SOLVER
 //-------------------------
-void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
+void PROBLEM_NS::oneStepSolverStokes()
+{
+    prec trialTime = time + deltaT;
+    
+    updateBC(trialTime);
+    updateSYSMAT();
+    updateRHS();
+
+    // if (completeLog) 
+    if (completeLog < 2) std::cout << "\n----------------------------------------------------------------------------\n--| NS ONE-STEP SOLVER TIME " << time << "-> " << trialTime << "|--\n----------------------------------------------------------------------------\n";
+
+    VECTOR rhs_final;
+    CSRMAT SYSMAT_final;
+    prec finalRes = 0.0;
+    prec scarto = 0.0;
+
+    VECTOR oldSol;
+    oldSol = lastSol;
+    VECTOR sol(nDof);
+
+    double startTime = 0;
+    double endTime = 0;
+    // double startSolverTime = 0;
+    // double endSolverTime = 0;
+
+    startTime = omp_get_wtime();
+    rhs_final = rhs;
+    SYSMAT_final = SYSMAT;
+
+    imposeBC(SYSMAT_final, rhs_final);
+
+    std::shared_ptr<prec []> solP = sol.P;
+
+    // SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, solP, 1); finalRes = toll-1;
+    // precondJacobiSolver(SYSMAT_final, rhs_final, sol);
+    // precondSchurSolver(SYSMAT_final, rhs_final, sol);
+    SIMPLESolver(SYSMAT_final, rhs_final, sol, finalRes);
+    // SCHURgmres(SYSMAT_final, rhs_final, sol, finalRes);
+    // prec bNorm   = rhs_final.norm();
+    // sol = SOLVERLS::gmres_p(SYSMAT_final, rhs_final.P, lastSol.P, bNorm, 1e-6, 500); 
+
+    bool is_nan = false;
+    for (int i = 0; i < nDof; i++) if(!(abs(sol[i]) < 1e16))
+    {
+        is_nan = true;
+        break;
+        // throw_line("THE ERROR IS HERE MAN\n");
+    }
+    if (is_nan) 
+    {
+        // sol = SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, 0);
+
+        // prec bNorm   = rhs_final.norm();
+        // sol = SOLVERLS::gmres_p(SYSMAT_final, rhs_final.P, lastSol.P, bNorm, 1e-6, 500); 
+    }
+    // update last sol
+    PARALLEL::copy(sol, lastSol);
+    scarto = evalErrRelV(oldSol.P, sol.P);
+    //printf("TIME INNER |SIMPLE| SOLVER: %" format ", scarto: %e\n", endTime-startTime, scarto);
+    // printf("scarto it %d è : %" format_e "\n", it, sol);
+
+    PARALLEL::copy(lastSol, oldSol);
+
+    endTime = omp_get_wtime();
+
+    printf("|S| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", non-linear toll: %e\n", (globIter+1), trialTime, endTime-startTime, scarto);
+    
+    time = trialTime;
+    real_solution_times.append(time);
+    prec t_end = (*physics).t_end;  
+    if (completeLog < 2) printf("In progress... %%%4.2f\n", time/t_end*100);
+    
+    globIter++;
+}
+//
+//Navier Stokes
+void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
 {
     prec deltaT_min = (*physics).deltaT_min;
     prec trialTime = time + deltaT;
@@ -2712,30 +2797,17 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
 
             imposeBC(SYSMAT_final, rhs_final);
 
-            // call gmres
-
             // if (completeLog) 
             if (completeLog < 2) std::cout << "\n----------\n--| NS GM-RES inner it: " << it << " |--\n----------\n";
-
-
-            //startSolverTime = omp_get_wtime();
-
             std::shared_ptr<prec []> solP = sol.P;
+
             // SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, solP, 1); finalRes = toll-1;
-
             // precondJacobiSolver(SYSMAT_final, rhs_final, sol);
-
             // precondSchurSolver(SYSMAT_final, rhs_final, sol);
-    
             SIMPLESolver(SYSMAT_final, rhs_final, sol, finalRes);
-
             // SCHURgmres(SYSMAT_final, rhs_final, sol, finalRes);
-
             // prec bNorm   = rhs_final.norm();
             // sol = SOLVERLS::gmres_p(SYSMAT_final, rhs_final.P, lastSol.P, bNorm, 1e-6, 500); 
-
-            //endSolverTime = omp_get_wtime();
-
 
             bool is_nan = false;
             for (int i = 0; i < nDof; i++) if(!(abs(sol[i]) < 1e16))
@@ -2755,14 +2827,12 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
             
             PARALLEL::copy(sol, lastSol);
             scarto = evalErrRelV(oldSol.P, sol.P);
-
             //printf("TIME INNER |SIMPLE| SOLVER: %" format ", scarto: %e\n", endTime-startTime, scarto);
-
             // printf("scarto it %d è : %" format_e "\n", it, sol);
+
             PARALLEL::copy(lastSol, oldSol);
             it = it+1;
-            if (it == 1) scarto = toll+1;
-            
+            if (it == 1) scarto = toll+1;            
         }
         //----------------------------------------------------
         if (scarto <= toll || finalRes > tolRes) 
@@ -2796,37 +2866,31 @@ void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
     real_solution_times.append(time);
     prec t_end = (*physics).t_end;  
     if (completeLog < 2) printf("In progress... %%%4.2f\n", time/t_end*100);
-
-    // // GET VELOCITY
-    // MATRIX velocity = getVelocityFromSol2(lastSol);
-    // // GET PRESSURE
-    // VECTOR pressure(nNodes);
-    // prec* tempP = &lastSol[dim*nNodes_v];
-    // pressure = tempP;
-    // std::vector<VECTOR> analyticSolV(dim);
-    
-    // //-----------------
-    // if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, real_solution_times.get_last(), pressure, 1, "Pressure", velocity, dim, "Velocity");
-    // (*physics).NS_solution.append_row(lastSol);
-    // simulation_times_solution.append_row(lastSol);
-
-    // print_one_step_sol_in_VTK(dim, nNodes, nNodes_v, real_solution_times.get_last());
     
     globIter++;
-    
-    // std::ofstream resFile;
-    // std::string resFilePath = "NSCurrSol/" + std::to_string(globIter) + ".txt";
-    // resFile.open(resFilePath, std::ios::out | std::ios::binary);
-    // if(!resFile) {
-    //   throw_line("ERROR: Can't open NS result file\n");
-    // }
-    // resFile.write((char *) &deltaT, sizeof(prec));
-    // for (int i = 0; i < nDof; i++) resFile.write((char *) &lastSol[i], sizeof(prec));
-    // resFile.close();
-
-    // std::string tempFile = "../MATLAB_INTERFACE/womersley/u" + std::to_string(globIter) + ".txt";
-    // velocity.print(&tempFile[0]);
-    // (*physics).coord.print("../MATLAB_INTERFACE/womersley/mesh.txt");
+}
+//
+// General
+void PROBLEM_NS::oneStepSolver(prec toll, int itMax)
+{
+    switch ((*physics).isNS)
+    {
+        case 0:
+        {
+            oneStepSolverStokes();
+            break;
+        }
+        case 1:
+        {
+            oneStepSolverNavierStokes(toll, itMax);
+            break;
+        }
+        default:
+        {
+            throw_line("ERROR: not handled problem physics (Fluid physics different from Stokes or Navier-Stokes)\n");
+            break;
+        }
+    }
 }
 
 //-------------------------------

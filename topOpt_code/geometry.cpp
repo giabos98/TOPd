@@ -8,7 +8,7 @@ void PHYSICS::initialize()
     eval_solution_times();
     build_bounds_elems_v();
     build_bounds_elems_surfaces_v();
-    
+
     // for (int ibound = 0; ibound < nBounds; ibound++)
     // {
     //     bounds_elems_v[ibound].print();
@@ -157,6 +157,12 @@ void CONSTRAINT::initialize_bound_constraint(int constr_type, int bound, prec bo
     bound_id = bound;
     Sr = bound_fraction;
 }
+
+void CONSTRAINT::initialize_discretizing_constraint(int constr_type, prec discretization_tollerance)
+{
+    initialize(constr_type);
+    discretization_toll = discretization_tollerance;
+}
 //--------------------------------------------
 // END BASE CONSTRAINT CLASS
 //--------------------------------------------
@@ -236,6 +242,14 @@ void CONSTRAINTS::build_constraints_list(std::vector<VECTOR> constraints_paramet
                 CONSTRAINT bound_constraint;
                 bound_constraint.initialize_bound_constraint(type, bound, bound_fraction);
                 list[icons] = bound_constraint;
+                break;
+            }
+            case 3:
+            {
+                prec discretization_toll = int(constraints_parameters[icons][0]);
+                CONSTRAINT discretizing_constraint;
+                discretizing_constraint.initialize_discretizing_constraint(type, discretization_toll);
+                list[icons] = discretizing_constraint;
                 break;
             }
             default:

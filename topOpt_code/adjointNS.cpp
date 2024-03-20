@@ -16,7 +16,25 @@
     alpha.P = alphaIn.P;
     nDof = NS.nDof;
 
-    VTKWriter.initializeForADJ(name, (*physics).dim, (*physics).nNodes, (*physics).nElem);
+    std::string folderName;
+    switch ((*physics).isNS)
+    {
+        case 0:
+        {
+            folderName = "ADJ_S_sol";
+            break;
+        }
+        case 1:
+        {
+            folderName = "ADJ_NS_sol";
+            break;
+        }
+        default:
+        {
+            break;
+        }
+    }
+    VTKWriter.initializeForADJ(name, (*physics).dim, (*physics).nNodes, (*physics).nElem, folderName);
 }
 //----------------------------------
 // SET ADJOINT BC
@@ -1009,13 +1027,15 @@ void ADJOINT_NS::updateSYSMAT(VECTOR &lastSolNS)
 
     // add Adjoint Matrices
     // assemble
-
-    assembleA(lastSolNS); // assebmle Ac & Ag coefficients
-    //add Ac
-    std::vector<std::vector<VECTOR>> coefAcVec = {{Ac}};
-    addToSysmat(coefAcVec); // sum only on diagonal blocks
-    // add Ag
-    addToSysmat(Ag, 1); // sum on all the blocks of H pattern in SYSMAT_ADJ
+    if ((*physics).isNS == 1)
+    {
+        assembleA(lastSolNS); // assebmle Ac & Ag coefficients
+        //add Ac
+        std::vector<std::vector<VECTOR>> coefAcVec = {{Ac}};
+        addToSysmat(coefAcVec); // sum only on diagonal blocks
+        // add Ag
+        addToSysmat(Ag, 1); // sum on all the blocks of H pattern in SYSMAT_ADJ
+    }
     //---
 }
 //---------------------------
@@ -1029,8 +1049,9 @@ void ADJOINT_NS::StatSolver(VECTOR &lastSolNS)
         deltaT = (*physics).deltaT;
         time = t_end;
         
-        oneStepSolver(lastSolNS);
-
+        oneStepSolverAdjoint(lastSolNS);
+        // std::cout << "\nADJ_las_sol_norm: " << lastSol.norm() << "\n";
+        // pause();
         (*physics).ADJ_solution.modifyRow(0, lastSol);
         print_sol_in_VTK((*physics).ADJ_solution);
         VTKWriter.closeTFile();
@@ -1050,7 +1071,7 @@ void ADJOINT_NS::Solver()
                             // so the lastSol is not used in the solution procedure
                             // and can be reinitialized without slowing the solution procedure
 
-    printf("|ADJ| IT: 0 \tTIME: %7.4" format " \tFINAL CONDITION\n", t_end);
+    printf("|-| IT: 0 \tTIME: %7.4" format " \tFINAL CONDITION\n", t_end);
     curr_iter = maxTimeIter;
 
     (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
@@ -1061,9 +1082,11 @@ void ADJOINT_NS::Solver()
         curr_iter = iter;
         VECTOR temp_NS_sol = (*physics).NS_solution.get_row(iter);
         deltaT = (*physics).solution_deltaT[iter];
-        oneStepSolver(temp_NS_sol);
+        oneStepSolverAdjoint(temp_NS_sol);
+        // std::cout << "\nADJ_las_sol_norm: " << lastSol.norm() << "\n";
         (*physics).ADJ_solution.modifyRow(curr_iter, lastSol);
     }
+    // pause();
     print_sol_in_VTK((*physics).ADJ_solution);
     VTKWriter.closeTFile();
 }
@@ -1071,12 +1094,9 @@ void ADJOINT_NS::Solver()
 //-------------------------
 // ONE-STEP SOLVER
 //-------------------------
-void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
+void ADJOINT_NS::oneStepSolverAdjoint(VECTOR &nsSol)
 {
-    // int dim = (*physics).dim;
     prec trialTime = time - deltaT;
-    // int nNodes = (*physics).nNodes;
-    // int nNodes_v = (*physics).nNodes_v;
     
     // updateBC(trialTime);
     updateSYSMAT(nsSol);
@@ -1108,14 +1128,6 @@ void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
 
     if (completeLog < 2)  std::cout << "\n----------\n--| SOLVING ADJOINT PROBLEM |--\n----------\n";
 
-    // // /   two ways:
-    // // /   1) CPU time (t2 - t1)
-    // clock_t t1,t2;
-    // t1 = clock();
-    // ///   2) wall-clock time (tv2 - tv1)
-    // struct timeval  tv1, tv2;
-    // gettimeofday(&tv1, NULL);
-
     double startTime = omp_get_wtime();
     
     //SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, solP);
@@ -1141,7 +1153,25 @@ void ADJOINT_NS::oneStepSolver(VECTOR &nsSol)
 
     double endTime = omp_get_wtime();
 
-    printf("|ADJ| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", ((*physics).solution_deltaT.length - globIter + 1), trialTime, endTime-startTime);
+    switch ((*physics).isNS)
+    {
+        case 0:
+        {
+            printf("|ADJ_S| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", ((*physics).solution_deltaT.length - globIter + 1), trialTime, endTime-startTime);
+            break;
+        }
+        case 1:
+        {
+            printf("|ADJ_NS| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", ((*physics).solution_deltaT.length - globIter + 1), trialTime, endTime-startTime);
+            break;
+        }
+        default:
+        {
+            throw_line("ERROR: not handled problem physics (Fluid physics different from Stokes or Navier-Stokes)\n");
+            break;
+        }
+    }
+    // printf("|ADJ| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format "\n", ((*physics).solution_deltaT.length - globIter + 1), trialTime, endTime-startTime);
     
     PARALLEL::copy(sol, lastSol);
 

@@ -82,6 +82,6 @@ public:
     void StatSolver(VECTOR &nsSol);
     void Solver();
 
-    void oneStepSolver(VECTOR &nsSol);
+    void oneStepSolverAdjoint(VECTOR &nsSol);
 
 };

@@ -28,8 +28,8 @@ private:
     int dim;
     int nElem_v;
     int nNodes_v;
-    int nNode;
-    int nElem;
+    int n_nodes_in_dom;
+    int n_elems_in_dom;
     prec rho;
     prec mu;
 
@@ -115,8 +115,8 @@ public:
         nodeInDom = nodeInDom_In;
         elemInDom = elemInDom_In;
         optNodeFromGlobNode = optNodeFromGlobNode_In;
-        nNode = nodeInDom.length;
-        nElem = elemInDom.length;
+        n_nodes_in_dom = nodeInDom.length;
+        n_elems_in_dom = elemInDom.length;
 
         // int nNodes_v = (*physics).nNodes_v;
         dim = (*physics).dim;
@@ -148,8 +148,8 @@ public:
         nodeInDom = nodeInDom_In;
         elemInDom = elemInDom_In;
         optNodeFromGlobNode = optNodeFromGlobNode_In;
-        nNode = nodeInDom.length;
-        nElem = elemInDom.length;
+        n_nodes_in_dom = nodeInDom.length;
+        n_elems_in_dom = elemInDom.length;
 
         // int nNodes_v = (*physics).nNodes_v;
         dim = (*physics).dim;
@@ -176,8 +176,8 @@ public:
         alpha.setZeros(nNodes_v);
         dAlpha.setZeros(nNodes_v);
         gamma_acc_case = opt_acceleration_case;
-        gamma_acc.setZeros(nNode);
-        dgamma_acc.setZeros(nNode);
+        gamma_acc.setZeros(n_nodes_in_dom);
+        dgamma_acc.setZeros(n_nodes_in_dom);
         beta_max = betaMax;
         beta_min = betaMin;
         beta_min_init = beta_min;
@@ -189,8 +189,8 @@ public:
         crit_change = critChange;
         crit_beta = critBeta;
         diffusion_filter_case = diff_filter_case;
-        gamma_filter.setZeros(nNode);
-        dgamma_filter.setZeros(nNode);
+        gamma_filter.setZeros(n_nodes_in_dom);
+        dgamma_filter.setZeros(n_nodes_in_dom);
 
         constraints = constraints_input;
 
@@ -234,6 +234,8 @@ public:
     void update_subdomain_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
     void update_edge_size_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr);
     void update_edge_size_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
+    void update_discretizing_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v);
+    void update_discretizing_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr);
     void update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume_v);
     void update_constraints_derivative(MATRIX &dg);
     void decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
@@ -524,6 +526,7 @@ public:
     void eval_J_alpha(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U);
     void eval_J_gradU(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U);
     void eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U);
+    void eval_J_omega_by_grad(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U);
     void eval_J_p_inlet(MATRIX_INT &elem, VECTOR &area, VECTOR &P);
 
     void eval_gamma_acc_and_derivative();

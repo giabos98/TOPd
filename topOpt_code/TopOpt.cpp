@@ -86,7 +86,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 3);
     int n_constr;
     STREAM::getValue(ParameterFile, line, iss, n_constr);
-    STREAM::getLines(ParameterFile, line, 4);
+    STREAM::getLines(ParameterFile, line, 5);
     VECTOR_INT constraints_types_list(n_constr);
     STREAM::getRowVector(ParameterFile, line, iss, constraints_types_list);
     std::vector<VECTOR> constraints_parameters(n_constr);
@@ -413,14 +413,14 @@ void TOP_OPT::solve()
         prec startNStime = omp_get_wtime();
         solveNS();
         prec endNStime = omp_get_wtime();
-        std::cout << "|NS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
+        std::cout << "|PHYSICS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
 
         // SOLVE ADJOINT
         ADJ.resetPrint(loop);
         prec startADJtime = omp_get_wtime();
         solveADJ();
         prec endADJtime = omp_get_wtime();
-        std::cout << "|ADJ| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
+        std::cout << "|ADJOINT| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
 
         // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
         // Optimizer.updateSol(NS.globIter);
@@ -761,6 +761,12 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
             {
                 prec surf_perc = Optimizer.constraints.list[iconstr].surf / Optimizer.constraints.list[iconstr].surf_0 * 100;
                 std::cout << "--| PERCENT SUR. | surf: " << surf_perc << "% \tbound: " << Optimizer.constraints.list[iconstr].bound_id << "\n";
+                break;
+            }
+            case 3:
+            {
+                prec discratization_res = Optimizer.constraints.list[iconstr].discretization_res;
+                std::cout << "--| DISCRET RES. | res: " << discratization_res << "\n";
                 break;
             }
             default:

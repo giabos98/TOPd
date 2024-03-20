@@ -1604,7 +1604,7 @@ public:
         for (int i = 0; i < N; i++)
         {
             //std::cout << " " << vec1[i] << "\t\t " << vec2[i] << "\n";
-            printf(" %4.2" format "\t\t %4.2" format "\n", vec1[i], vec2[i]);
+            printf(" %9.7" format "\t\t %9.7" format "\n", vec1[i], vec2[i]);
         }
         std::cout << "-------\t\t" << "-------\n";
     }

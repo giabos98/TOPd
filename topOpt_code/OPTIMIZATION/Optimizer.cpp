@@ -14,7 +14,7 @@ void OPTIMIZER::getFunc(VECTOR x, prec &f0, MATRIX U)
     {
         case 0: // func = \alpha ||u||^2
         {
-            for (int iel = 0; iel < nElem; iel++)
+            for (int iel = 0; iel < n_elems_in_dom; iel++)
             {
                 int globEl = elemInDom[iel];
                 for (int iloc = 0; iloc < dim+1; iloc++)
@@ -34,7 +34,7 @@ void OPTIMIZER::getFunc(VECTOR x, prec &f0, MATRIX U)
         }
         case 1: //func = \alpha ||u||^2 + 1/2*mu ||grad(u) + grad(u)^T||^2
         {
-            for (int iel = 0; iel < nElem; iel++)
+            for (int iel = 0; iel < n_elems_in_dom; iel++)
             {
                 int globEl = elemInDom[iel];
                 for (int iloc = 0; iloc < dim+1; iloc++)
@@ -51,7 +51,7 @@ void OPTIMIZER::getFunc(VECTOR x, prec &f0, MATRIX U)
                 }
             }
             prec part2 = 0;
-            for (int iel = 0; iel < nElem; iel++)
+            for (int iel = 0; iel < n_elems_in_dom; iel++)
             {
                 MATRIX tempGrad;
                 tempGrad.zeros(dim,dim);
@@ -77,7 +77,7 @@ void OPTIMIZER::getFunc(VECTOR x, prec &f0, MATRIX U)
         }
         case 2: // 1/2*mu ||grad(u) + grad(u)^T||^2
         {
-            for (int iel = 0; iel < nElem; iel++)
+            for (int iel = 0; iel < n_elems_in_dom; iel++)
             {
                 int globEl = elemInDom[iel];
                 MATRIX tempGrad;
@@ -122,7 +122,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
         {
             case 0: // func = \alpha ||u||^2
             {
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -142,7 +142,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
             }
             case 1: //func = \alpha ||u||^2 + 1/2*mu ||grad(u) + grad(u)^T||^2
             {
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -161,7 +161,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
                 prec part2 = 0;
                 prec gradFact = 1;
                 if (onlyGrad == 1) gradFact = 0;
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     MATRIX tempGrad;
                     tempGrad.zeros(dim,dim);
@@ -187,7 +187,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
             }
             case 2: // 1/2*mu ||grad(u) + grad(u)^T||^2
             {
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     MATRIX tempGrad;
@@ -217,7 +217,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
     {
         // alpha
         prec part0 = 0;
-        for (int iel = 0; iel < nElem; iel++)
+        for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             int globEl = elemInDom[iel];
             for (int iloc = 0; iloc < dim+1; iloc++)
@@ -242,7 +242,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
         prec part1 = 0;
         prec gradFact = 1;
         if (onlyGrad == 1) gradFact = 0;
-        for (int iel = 0; iel < nElem; iel++)
+        for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             MATRIX tempGrad;
             tempGrad.zeros(dim,dim);
@@ -278,7 +278,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
             ezComps[0] = 0; ezComps[1] = 1; ezComps[2] = 2; ezComps[3] = 0; ezComps[4] = 1;
         }
 
-        for (int iel = 0; iel < nElem; iel++)
+        for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             VECTOR tempCurl(3);
             tempCurl.resetZeros();
@@ -316,8 +316,8 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
     
     //--------------------------------------------------------------
     // DERIVATIVE OF THE FUCNTIONAL df0/dx
-    VECTOR dAlpha(nNode);
-    for (int iglob = 0; iglob < nNode; iglob++)
+    VECTOR dAlpha(n_nodes_in_dom);
+    for (int iglob = 0; iglob < n_nodes_in_dom; iglob++)
     {
         dAlpha[iglob] = -(alpha_max - alpha_min) * q * (q+1) / ((q+x[iglob])*(q+x[iglob]));
     }
@@ -339,7 +339,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 
                 VECTOR tempU(dim);
                 VECTOR tempUa(dim);
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -361,7 +361,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
             {
                 VECTOR tempU(dim);
                 VECTOR tempUa(dim);
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -383,7 +383,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
             {
                 VECTOR tempU(dim);
                 VECTOR tempUa(dim);
-                for (int iel = 0; iel < nElem; iel++)
+                for (int iel = 0; iel < n_elems_in_dom; iel++)
                 {
                     int globEl = elemInDom[iel];
                     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -408,7 +408,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
         VECTOR tempU(dim);
         VECTOR tempUa(dim);
         
-        for (int iel = 0; iel < nElem; iel++)
+        for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             int globEl = elemInDom[iel];
             for (int iloc = 0; iloc < dim+1; iloc++)
@@ -521,9 +521,9 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     // // --------------------------------------------------------------
 //     // // MESH INDIPENDENCY FILTER (MAYBE MOVE IT AWAY PLEASE)
 //     // // --------------------------------------------------------------
-//     // VECTOR newDf0(nNode); newDf0.resetZeros();
-//     // VECTOR countW(nNode); countW.resetZeros();
-//     // for (int iel = 0; iel < nElem; iel++)
+//     // VECTOR newDf0(n_nodes_in_dom); newDf0.resetZeros();
+//     // VECTOR countW(n_nodes_in_dom); countW.resetZeros();
+//     // for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     // {
 //     //     int globEl = elemInDom[iel];
 //     //      for (int iloc = 0; iloc < dim+1; iloc++)
@@ -539,7 +539,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 
 //     // newDf0.resetZeros();
 //     // countW.resetZeros();
-//     // for (int iel = 0; iel < nElem; iel++)
+//     // for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     // {
 //     //     int globEl = elemInDom[iel];
 //     //      for (int iloc = 0; iloc < dim+1; iloc++)
@@ -559,7 +559,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //--------------------
 //     // int_\Omega { x } - V_r*V_0 <= 0 
 //     prec integral = 0;
-//     for (int iel = 0; iel < nElem; iel++)
+//     for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     {
 //         int globEl = elemInDom[iel];
 //         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -712,7 +712,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //             temp_func_val.resetZeros();
 //             temp_d_obj_functional.resetZeros();
 //             // prec tempF0;
-//             // VECTOR tempDF0(nNode);
+//             // VECTOR tempDF0(n_nodes_in_dom);
 //             //getFuncAndDerivative(x, tempF0, tempDF0, U, Ua);
 //             get_functional_and_opt_derivative(x, elem_v, Volume_v, U, Ua, inlet_bound_elem, area_inlet_bound_elem, P);
 //             // std::cout << temp_obj_functional << "\n";
@@ -764,7 +764,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //pause();
 
 //     f0 = obj_functional;
-//     for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+//     for (int ioptnode = 0; ioptnode < n_nodes_in_dom; ioptnode++)
 //     {
 //         int iglob = nodeInDom[ioptnode];
 //         df0[ioptnode] = d_obj_functional[iglob];
@@ -772,9 +772,9 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     // // --------------------------------------------------------------
 //     // // MESH INDIPENDENCY FILTER (MAYBE MOVE IT AWAY PLEASE)
 //     // // --------------------------------------------------------------
-//     // VECTOR newDf0(nNode); newDf0.resetZeros();
-//     // VECTOR countW(nNode); countW.resetZeros();
-//     // for (int iel = 0; iel < nElem; iel++)
+//     // VECTOR newDf0(n_nodes_in_dom); newDf0.resetZeros();
+//     // VECTOR countW(n_nodes_in_dom); countW.resetZeros();
+//     // for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     // {
 //     //     int globEl = elemInDom[iel];
 //     //      for (int iloc = 0; iloc < dim+1; iloc++)
@@ -790,7 +790,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 
 //     // newDf0.resetZeros();
 //     // countW.resetZeros();
-//     // for (int iel = 0; iel < nElem; iel++)
+//     // for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     // {
 //     //     int globEl = elemInDom[iel];
 //     //      for (int iloc = 0; iloc < dim+1; iloc++)
@@ -806,7 +806,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 
 //     // newDf0.resetZeros();
 //     // countW.resetZeros();
-//     // for (int iel = 0; iel < nElem; iel++)
+//     // for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     // {
 //     //     int globEl = elemInDom[iel];
 //     //      for (int iloc = 0; iloc < dim+1; iloc++)
@@ -826,7 +826,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //--------------------
 //     // int_\Omega { x } - V_r*V_0 <= 0 
 //     prec integral = 0;
-//     for (int iel = 0; iel < nElem; iel++)
+//     for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     {
 //         int globEl = elemInDom[iel];
 //         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -844,7 +844,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //--------------------------------------------------------------
 //     dg.resetZeros();
 
-//     for (int iel = 0; iel < nElem; iel++)
+//     for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     {
 //         int globEl = elemInDom[iel];
 //         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -972,7 +972,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     d_obj_functional /= functional_normalization_factor;
 
 //     f0 = obj_functional;
-//     for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+//     for (int ioptnode = 0; ioptnode < n_nodes_in_dom; ioptnode++)
 //     {
 //         int iglob = nodeInDom[ioptnode];
 //         df0[ioptnode] = d_obj_functional[iglob];
@@ -985,7 +985,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //--------------------
 //     // int_\Omega { gamma } - V_r*V_0 <= 0 
 //     prec integral = 0;
-//     for (int iel = 0; iel < nElem; iel++)
+//     for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     {
 //         int globEl = elemInDom[iel];
 //         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -1003,7 +1003,7 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //     //--------------------------------------------------------------
 //     dg.resetZeros();
 
-//     for (int iel = 0; iel < nElem; iel++)
+//     for (int iel = 0; iel < n_elems_in_dom; iel++)
 //     {
 //         int globEl = elemInDom[iel];
 //         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -1030,7 +1030,7 @@ void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECT
     // so it remains just to copy their values also in the correct optimization enetiy: df0.
     // This procedure is redundand and not optimal, but allows to have a clear code in a complex part at a very small time cost. (that was the purpose at the time of the implementation)
     //--------------------------------------------------------------
-    for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+    for (int ioptnode = 0; ioptnode < n_nodes_in_dom; ioptnode++)
     {
         int iglob = nodeInDom[ioptnode];
         df0[ioptnode] = d_obj_functional[iglob];
@@ -1173,7 +1173,7 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     d_obj_functional /= functional_normalization_factor;
 
     f0 = obj_functional;
-    // for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+    // for (int ioptnode = 0; ioptnode < n_nodes_in_dom; ioptnode++)
     // {
     //     int iglob = nodeInDom[ioptnode];
     //     df0[ioptnode] = d_obj_functional[iglob];
@@ -1191,7 +1191,7 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     // //--------------------------------------------------------------
     // dg.resetZeros();
 
-    // for (int iel = 0; iel < nElem; iel++)
+    // for (int iel = 0; iel < n_elems_in_dom; iel++)
     // {
     //     int globEl = elemInDom[iel];
     //     for (int iloc = 0; iloc < dim+1; iloc++)
@@ -1223,6 +1223,11 @@ void OPTIMIZER::update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume
             case 2:
             {
                 update_edge_size_constraint(g, icons, constraints.list[icons]);
+                break;
+            }
+            case 3:
+            {
+                update_discretizing_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
                 break;
             }
             default:
@@ -1257,6 +1262,11 @@ void OPTIMIZER::update_constraints_derivative(MATRIX &dg)
                 update_edge_size_constraint_derivative(dg, icons, constraints.list[icons]);
                 break;
             }
+            case 3:
+            {
+                update_discretizing_constraint_derivative(dg, icons, constraints.list[icons]);
+                break;
+            }
             default:
             {
                 break;
@@ -1271,7 +1281,7 @@ void OPTIMIZER::update_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &con
     //--------------------
     // int_\Omega { gamma } - V_r*V_0 <= 0 
     prec integral = 0;
-    for (int iel = 0; iel < nElem; iel++)
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
     {
         int globEl = elemInDom[iel];
         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -1320,11 +1330,33 @@ void OPTIMIZER::update_subdomain_volume_constraint(VECTOR &g, int iconstr, CONST
     g[iconstr]  = (integral - constr.Vr * constr.vol_0)/constr.vol_0;
 }
 
+void OPTIMIZER::update_discretizing_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v)
+{
+    // volume constraint
+    //--------------------
+    // int_\Omega { gamma } - V_r*V_0 <= 0 
+    prec integral = 0;
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            prec temp_gamma = gamma_acc[optNode];
+            integral += temp_gamma*(1-temp_gamma)/(dim+1)*Volume_v[globEl];
+        }
+    }
+
+    constr.discretization_res = (integral / (*physics).V0) - constr.discretization_toll;
+    g[iconstr]  = constr.discretization_res;
+}
+
 void OPTIMIZER::update_volume_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
 {
     MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
     VECTOR Volume_v = (*physics).Volume_v;
-    for (int iel = 0; iel < nElem; iel++)
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
     {
         int globEl = elemInDom[iel];
         for (int iloc = 0; iloc < dim+1; iloc++)
@@ -1350,6 +1382,24 @@ void OPTIMIZER::update_subdomain_volume_constraint_derivative(MATRIX &dg, int ic
             int iglob = elem_v[globEl][iloc];
             int optNode = optNodeFromGlobNode[iglob];
             dg[iconstr][optNode] += dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/vol_0;
+        }
+    }
+}
+
+void OPTIMIZER::update_discretizing_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
+{
+    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    VECTOR Volume_v = (*physics).Volume_v;
+    prec vol_0 = (*physics).V0;
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            prec temp_coef = 1 - 2*gamma_acc[optNode];
+            dg[iconstr][optNode] += temp_coef * dgamma_acc[optNode] * Volume_v[globEl]/(dim+1)/vol_0;
         }
     }
 }
@@ -1427,16 +1477,16 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
     static int nCons = 1;
     static VECTOR lambda = VECTOR::zeros(nCons) + 1;
     static VECTOR gold = VECTOR::zeros(nCons);
-    static VECTOR df0(nNode);
+    static VECTOR df0(n_nodes_in_dom);
     static VECTOR g(nCons);
-    static MATRIX dg(nCons, nNode);
+    static MATRIX dg(nCons, n_nodes_in_dom);
 
     update_val_and_derivative(x, f0, df0, g, dg, Vol);
 
     prec eps = 0.05; prec maxmove = 0.2;
 
     VECTOR deltag = g - gold; gold = g;
-    VECTOR xNew(nNode);
+    VECTOR xNew(n_nodes_in_dom);
     //------------------------
     for (int icons = 0; icons < nCons; icons++)
     {
@@ -1447,7 +1497,7 @@ void OPTIMIZER::solveGOC(VECTOR &x, prec &Vol, prec &f0)
         lambda[icons] *= (1+ p0*(g[icons] + deltag[icons]));
     }
     //-------------------------------------------------------
-    for (int iglob = 0; iglob < nNode; iglob++)
+    for (int iglob = 0; iglob < n_nodes_in_dom; iglob++)
     {
         prec num = 0;
         prec den = 0;
@@ -1475,14 +1525,14 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
 {
     std::cout << "\n-----| SOLVE MMA |-----\n";
     int nCons = constraints.n_constr;
-    VECTOR df0(nNode);
+    VECTOR df0(n_nodes_in_dom);
     VECTOR g;
     g.setZeros(nCons);
     MATRIX dg;
-    dg.zeros(nCons, nNode);
+    dg.zeros(nCons, n_nodes_in_dom);
     //---
     int m = nCons;
-    int n = nNode;
+    int n = n_nodes_in_dom;
     // prec epsimin = 0.0000001;
     VECTOR xval;
     xval    = x;
@@ -1490,8 +1540,8 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
     xold1   = xval;
     VECTOR xold2;
     xold2   = xval;
-    VECTOR xmin    = VECTOR::zeros(nNode);
-    VECTOR xmax    = VECTOR::zeros(nNode) + 1;
+    VECTOR xmin    = VECTOR::zeros(n_nodes_in_dom);
+    VECTOR xmax    = VECTOR::zeros(n_nodes_in_dom) + 1;
     VECTOR low;
     low     = xmin;
     VECTOR upp;
@@ -1517,9 +1567,9 @@ void OPTIMIZER::solveMMA(VECTOR &x, prec &Vol, prec &f0)
     prec kktnorm = kkttol+10;
     int outit = 0;
     //---
-    VECTOR xmma(nNode);  VECTOR ymma(nCons); prec zmma;
+    VECTOR xmma(n_nodes_in_dom);  VECTOR ymma(nCons); prec zmma;
     VECTOR lam(nCons); VECTOR eta; prec zet; VECTOR mu(nCons); VECTOR s(nCons);
-    VECTOR xsi(nNode);
+    VECTOR xsi(n_nodes_in_dom);
     while (kktnorm > kkttol && outit < maxoutit)
     {
         outit++;
@@ -2008,12 +2058,12 @@ prec OPTIMIZER::kktcheck(int m, int n, VECTOR x, VECTOR y, prec z, VECTOR lam, V
 void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
 {
     static int nCons = 1;
-    static VECTOR df0(nNode);
+    static VECTOR df0(n_nodes_in_dom);
     static VECTOR g(nCons);
-    static MATRIX dg(nCons, nNode);
+    static MATRIX dg(nCons, n_nodes_in_dom);
     //---
     int m = 1; // Number of Constraints
-    int n = nNode;
+    int n = n_nodes_in_dom;
     prec epsimin = 0.0000001;
     VECTOR xval;
     xval    = x;
@@ -2021,8 +2071,8 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     xold1   = xval;
     VECTOR xold2;
     xold2   = xval;
-    VECTOR xmin    = VECTOR::zeros(nNode);
-    VECTOR xmax    = VECTOR::zeros(nNode) + 1;
+    VECTOR xmin    = VECTOR::zeros(n_nodes_in_dom);
+    VECTOR xmax    = VECTOR::zeros(n_nodes_in_dom) + 1;
     VECTOR low;
     low     = xmin;
     VECTOR upp;
@@ -2050,9 +2100,9 @@ void OPTIMIZER::solveGCMMA(VECTOR &x, prec &Vol, prec &f0)
     prec kktnorm = kkttol+10;
     int outit = 0;
     //---
-    VECTOR xmma(nNode);  VECTOR ymma(nCons); prec zmma = 0;
+    VECTOR xmma(n_nodes_in_dom);  VECTOR ymma(nCons); prec zmma = 0;
     VECTOR lam(nCons); VECTOR eta; prec zet = 0; VECTOR mu(nCons); VECTOR s(nCons);
-    VECTOR xsi(nNode);
+    VECTOR xsi(n_nodes_in_dom);
     //----------------
     // GOC SPECIAL PARAMETERS
     //---------------
@@ -2472,7 +2522,7 @@ void OPTIMIZER::eval_alpha_and_dAlpha()
     prec alpha_factor = q*(alpha_max - alpha_min);
     prec dAlpha_factor = -q*(q+1)*(alpha_max-alpha_min);
     dAlpha.reset(dAlpha_factor / ((q+1)*(q+1)));
-    for (int ioptnode = 0; ioptnode < nNode; ioptnode++)
+    for (int ioptnode = 0; ioptnode < n_nodes_in_dom; ioptnode++)
     {
         int iglob = nodeInDom[ioptnode];
         prec temp_gamma_acc = gamma_acc[ioptnode];
@@ -2507,48 +2557,37 @@ void OPTIMIZER::eval_J_alpha(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
                 int iglob = elem_v[iel][iloc];
-                prec tempFactor = 0;
+                prec tempFactor = 0.0;
                 for (int icomp = 0; icomp < dim; icomp++)
                 {
                     prec Uval = U[icomp][iglob];
                     tempFactor += Uval*Uval;
                 }
-                temp_alpha += alpha[iglob] * tempFactor/(dim+1)*volume_v[iel]; 
+                prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
+                temp_alpha += alpha[iglob] * tempFactor * temp_integral; 
             }
         }
-        // if (isnan(temp_alpha)) 
-        // {
-        //     std::cout << "ERROR: temp_alpha NAN\n";
-        //     pause();
-        // }
         temp_no_weighted_func_val[0] = temp_alpha;
-        if (abs(fWeights[0]) > 1e-12) temp_func_val[0] = fWeights[0]*temp_alpha;
+        temp_func_val[0] = fWeights[0]*temp_alpha;
 
         // get func in top opt box
         prec temp_f_alpha = 0.0;
-        for (int iel = 0; iel < nElem; iel++)
+        for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             int globEl = elemInDom[iel];
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
                 int iglob = elem_v[globEl][iloc];
-                int optNode = optNodeFromGlobNode[iglob];
+                // int optNode = optNodeFromGlobNode[iglob];
                 prec tempFactor = 0;
                 for (int icomp = 0; icomp < dim; icomp++)
                 {
                     prec Uval = U[icomp][iglob];
                     tempFactor += Uval*Uval;
                 }
-                temp_f_alpha += alpha[optNode] * tempFactor/(dim+1)*volume_v[globEl]; 
+                prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
+                temp_f_alpha += alpha[iglob] * tempFactor * temp_integral;
             }
-        }
-        if (abs(fWeights[0]) > 1e-12)
-        {
-            temp_f_alpha *= fWeights[0];
-        }
-        else
-        {
-            temp_f_alpha = 0.0;
         }
         temp_func_in_box += temp_f_alpha;
     }
@@ -2590,7 +2629,7 @@ void OPTIMIZER::eval_J_gradU(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
 
     // get func in top opt box
     prec temp_f_grad = 0.0;
-    for (int iel = 0; iel < nElem; iel++)
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
     {
         MATRIX tempGrad;
         tempGrad.zeros(dim,dim);
@@ -2621,14 +2660,13 @@ void OPTIMIZER::eval_J_gradU(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
     temp_func_in_box += temp_f_grad;
 }
 
-void OPTIMIZER::eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
+void OPTIMIZER::eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U) // eval the vorticity functional by calculating the vorticity
 {
     //curl
     temp_func_val[2] = 0.0;
     temp_no_weighted_func_val[2] = 0.0;
 
     prec temp_omega = 0.0;
-
     VECTOR_INT ezComps;
     if (dim == 3)
     {
@@ -2660,7 +2698,7 @@ void OPTIMIZER::eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
         prec tempNorm = tempCurl.norm();
         temp_omega += tempNorm*tempNorm * volume_v[iel]; 
     }
-    if (isnan(temp_omega)) 
+    // if (isnan(temp_omega)) 
     // {
     //     std::cout << "ERROR: temp_omega NAN\n";
     //     pause();
@@ -2671,7 +2709,7 @@ void OPTIMIZER::eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
 
     // get func in top opt box
     prec temp_f_vort= 0.0;
-    for (int iel = 0; iel < nElem; iel++)
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
     {
         VECTOR tempCurl(3);
         tempCurl.resetZeros();
@@ -2707,6 +2745,74 @@ void OPTIMIZER::eval_J_omega(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
         temp_f_vort = 0.0;
     }
     temp_func_in_box += temp_f_vort;
+}
+
+void OPTIMIZER::eval_J_omega_by_grad(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U) // eval the vorticity functional by calculating the anti-sym part of the gradient
+{
+    // curl
+    temp_func_val[2] = 0.0;
+    temp_no_weighted_func_val[2] = 0.0;
+
+    prec temp_omega = 0.0;
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        MATRIX tempGrad;
+        tempGrad.zeros(dim,dim);
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                for (int jcomp = 0; jcomp < dim; jcomp++)
+                {
+                    tempGrad[icomp][jcomp] += U[icomp][iglob]*COEF[jcomp][iel][iloc] - U[jcomp][iglob]*COEF[icomp][iel][iloc];
+                }
+            }
+            
+        }
+        prec tempNorm = tempGrad.normFro();
+        temp_omega += tempNorm*tempNorm * volume_v[iel];
+    }
+    // if (isnan(temp_grad)) 
+    // {
+    //     std::cout << "ERROR: temp_grad NAN\n";
+    //     pause();
+    // }
+    temp_omega *= 0.5 * 0.5*mu; //the first 0.5 is imposed because the norm of the vorticity is one half the norm of the anti-sym part of the gradient
+    temp_no_weighted_func_val[2] = temp_omega;
+    if (abs(fWeights[2]) > 1e-12) temp_func_val[2] = fWeights[2]*temp_omega;
+
+    // get func in top opt box
+    prec temp_f_omega = 0.0;
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
+    {
+        MATRIX tempGrad;
+        tempGrad.zeros(dim,dim);
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                for (int jcomp = 0; jcomp < dim; jcomp++)
+                {
+                    tempGrad[icomp][jcomp] += U[icomp][iglob] * COEF[jcomp][globEl][iloc] - U[jcomp][iglob]*COEF[icomp][globEl][iloc];
+                }
+            }
+        }
+        prec tempNorm = tempGrad.normFro();
+        temp_f_omega += tempNorm*tempNorm * volume_v[globEl];
+    }
+    temp_f_omega *= 0.5 * 0.5*mu;
+    if (abs(fWeights[2]) > 1e-12)
+    {
+        temp_f_omega *= fWeights[2];
+    }
+    else
+    {
+        temp_f_omega = 0.0;
+    }
+    temp_func_in_box += temp_f_omega;
 }
 
 void OPTIMIZER::eval_J_p_inlet(MATRIX_INT &elem, VECTOR &area, VECTOR &P)
@@ -2797,7 +2903,7 @@ void OPTIMIZER::eval_gamma_acc_and_derivative()
     {
         case 0: // no projection
         {   
-            for (int inode = 0; inode < nNode; inode++)
+            for (int inode = 0; inode < n_nodes_in_dom; inode++)
             {
                 gamma_acc[inode] = gamma_filter[inode];
                 dgamma_acc[inode] = dgamma_filter[inode];
@@ -2806,7 +2912,7 @@ void OPTIMIZER::eval_gamma_acc_and_derivative()
         }
         case 1: //projection function: -2x^3 + 3x^2
         {
-            for (int inode = 0; inode < nNode; inode++)
+            for (int inode = 0; inode < n_nodes_in_dom; inode++)
             {
                 prec gamma_filter_node = gamma_filter[inode];
                 prec dgamma_filter_node = dgamma_filter[inode];
@@ -2831,7 +2937,7 @@ void OPTIMIZER::eval_gamma_acc_and_derivative()
             }
             prec factor = tanh(beta_proj*gamma_acc_mean_value) + tanh(beta_proj*(1-gamma_acc_mean_value));
             prec constant = tanh(beta_proj*gamma_acc_mean_value);
-            for (int inode = 0; inode < nNode; inode++)
+            for (int inode = 0; inode < n_nodes_in_dom; inode++)
             {
                 prec gamma_filter_node = gamma_filter[inode];
                 prec dgamma_filter_node = dgamma_filter[inode];
@@ -2931,7 +3037,7 @@ void OPTIMIZER::topology_optimization_diffusive_filter()
     {
         case 0:
         {
-            for (int inode = 0; inode < nNode; inode++)
+            for (int inode = 0; inode < n_nodes_in_dom; inode++)
             {
                 gamma_filter[inode] = gamma[inode];
                 dgamma_filter[inode] = 1.0;
