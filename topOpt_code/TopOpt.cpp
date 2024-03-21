@@ -75,7 +75,10 @@ void TOP_OPT::importParameters(std::string inputFile)
 
     // BRINKMAN PENALIZATION
     STREAM::getLines(ParameterFile, line, 3);
-    STREAM::getValue(ParameterFile, line, iss, alpha_min);
+    VECTOR alpha_min_vector(2);
+    STREAM::getRowVector(ParameterFile, line, iss, alpha_min_vector);
+    set_alpha_min(alpha_min_vector);
+
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, alpha_max);
     STREAM::getLines(ParameterFile, line, 1);
@@ -255,6 +258,40 @@ void TOP_OPT::importParameters(std::string inputFile)
     
 
     NS.VTKWriter.binWrite = binPrint;
+}
+
+void TOP_OPT::set_alpha_min(VECTOR &alpha_min_vector) 
+{
+    prec a_min = alpha_min_vector[0];
+    if (physics.dim == 2) // for the 3D case it must be set equal to 0, tha tis the default value
+    {
+        physics.half_domain_thickness = alpha_min_vector[1];
+    }
+    prec h = physics.half_domain_thickness;
+
+    if (h < 0.0)
+    {
+        throw_line("ERROR: invalid half out of plane domain thickness\n");
+    }
+    else
+    {
+        if (h == 0)
+        {
+            alpha_min = a_min;
+        }
+        else
+        {
+            prec a_theory = 5*physics.mu / (2*h*h); // folloving Borrval & Perersson (2003), Gersborg-Hansen et al. (2005)
+            if (a_min >= a_theory)
+            {
+                alpha_min = a_min;
+            }
+            else
+            {
+                alpha_min = a_theory; 
+            }
+        }  
+    }
 }
 
 //-----------------------

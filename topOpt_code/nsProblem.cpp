@@ -32,7 +32,6 @@ void PROBLEM_NS::importParameters(std::string readFile)
 
     // physics model   
     STREAM::getValue(ParameterFile, line, iss, (*physics).isNS);
-    std::cout << "(*physics).isNS: " << (*physics).isNS << "\n";
     if (((*physics).isNS != 0) && ((*physics).isNS != 1)) 
     {
         throw_line("ERROR: not handled problem physics (Fluid physics different from Stokes or Navier-Stokes)\n");
@@ -3519,6 +3518,91 @@ void PROBLEM_NS::updatePrecond(CSRMAT &SYS, CSRMAT &A, VECTOR &M1, CSRMAT &B, CS
     CSRMAT downPrecond = CSRMAT::concatDiagInRow(BM1, Id_p);
     CSRMAT::concatDiagInCol(Id_v, downPrecond, leftPrecond);
 }
+
+void PROBLEM_NS::checkImportParameters()
+{
+    std::cout << "\n+++++++++++++++| CHECK PHYSICS IMPORT-PARAMETERS |+++++++++++++++\n\n";
+
+    // PROBLEM NAME & DIMENSION
+    std::cout << " Problem Name: " << name << "\n" ;
+    std::cout << " Dimension: " << (*physics).dim << "\n";
+
+    // TIME PARAMETERS
+    std::cout << "\n.-=| TIME PARAMETERS |=-. \n";
+    std::cout << " Ending time:  " << (*physics).t_end << "\n" ;
+    std::cout << " Default time step: " << deltaT << "\n" ;
+    std::cout << " Minimal time step: " << (*physics).deltaT_min << "\n" ;
+
+    // PHYSICS PARAMETERS
+    std::cout << "\n.-=| PHYSICS PARAMETERS |=-. \n";
+    std::cout << " rho: "<< (*physics).rho << "\n";
+    std::cout << " mu: " << (*physics).mu << "\n" ;
+    
+    // FORCING & COMPRESSIBILITY
+    std::cout << "\n.-=| FORCING & COMPRESSIBILITY |=-. \n";
+    // forcing
+    CUSTOM::printRowStd(statForcing, " STATIC Forcing: ");
+    if (flagForcing == 1) CUSTOM::printRowStd(timeForcing, " TIME DEPENDENT Forcing: ");
+    // compressibility G
+    std::cout << " STATIC Compressibility G: " << statG << "\n";
+    if (flagG == 1) std::cout << " TIME DEPENDENT Compressibility G: " << timeG << "\n";
+
+    // BOUNDARY CONDITIONS
+    std::cout << "\n.-=| BOUNDARY CONDITIONS |=-. \n";
+    std::cout << " Flag BC: " << (*physics).flagBC << "\n";
+    std::cout << " Flag Wall: " << flagWall << "\n";
+    // Wall
+    std::cout << "\n--| WALL:  ";
+    std::cout << "\n # Wall Bound ID: " << nWallBound << "\n";
+    wallBound.printRowMatlab(" Wall Bound ID");
+    // Inner 
+    std::cout << "\n--| INNER:  ";
+    std::cout << "\n # Inner Bound ID: " << nInnerBound << "\n";
+    innerBound.printRowMatlab(" Inner Bound ID");
+    // Symmetry
+    std::cout << "\n--| SYMMETRY:  ";
+    std::cout << "\n # Symmetry Bound ID: " << nSymmBound << "\n";
+    symmBound.printRowMatlab(" Symmetry Bound ID");
+    // Static Dirichlet
+    std::cout << "\n--| STATIC DIRICHLET:  ";
+    std::cout << "\n # STATIC Dirichlet Bound ID: " << nDirBound << "\n";
+    dirBound.printRowMatlab(" STATIC Dirichlet Bound ID");
+    for (int ibound = 0; ibound < nDirBound; ibound++)
+    {
+        std::string tempName = " " + std::to_string(ibound+1) + "th STATIC Dirichlet function: ";
+        CUSTOM::printRowStd(dirFunc[ibound], tempName);
+    }
+    // Static Neumann
+    std::cout << "\n--| STATIC NEUMANN:  ";
+    std::cout << "\n # STATIC Neumann Bound ID: " << nNeuBound << "\n";
+    neuBound.printRowMatlab(" STATIC Neumann Bound ID");
+    neuMeanP.printRowMatlab(" STATIC Neumann flux");
+
+    // Time Dependent Dirichlet
+    std::cout << "\n--| TIME DEPENDENT DIRICHLET:  ";
+    std::cout << "\n # TIME DEPENDENT Dirichlet Bound ID: " << nDirTimeBound << "\n";
+    dirTimeBound.printRowMatlab(" TIME DEPENDENDT Dirichlet Bound ID");
+    for (int i = 0; i < nDirTimeBound; i++)
+    {
+        std::string tempName = std::to_string(i+1) + "th TIME DEPENDENT Dirichlet function";
+        dirTimeFunc[i].print(tempName);
+    }
+    // Time Dependent Neumann
+    std::cout << "\n--| TIME DEPENDENT NEUMANN:  ";
+    std::cout << "\n # TIME DEPENDENT Neumann Bound ID: " << nNeuTimeBound << "\n";
+    neuTimeBound.printRowMatlab(" TIME DEPENDENT Neumann Bound ID");
+    for (int ibound = 0; ibound < nNeuTimeBound; ibound++)
+    {
+        std::string tempName = std::to_string(ibound+1) + "th TIME DEPENDENT Neumann function";
+        neuTimeMeanP[ibound].print(tempName);
+    }
+    // NVOB
+    std::cout << "\n--| NVOB:  ";
+    std::cout << "\n # NVOB Bound ID: " << nNVOBBound << "\n";
+    NVOBBound.printRowMatlab(" NVOB Bound ID");
+    std::cout << "\n----------| END CHECK PHYSICS IMPORT PARAMETERS |----------|\n\n";
+}
+
 
 // // SIMPLE SOLVER ALGORITHM
 // void PROBLEM_NS::SIMPLESolver(CSRMAT &SYS, VECTOR &b, VECTOR &sol)

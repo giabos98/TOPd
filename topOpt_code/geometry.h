@@ -23,6 +23,7 @@ class PHYSICS
     int completeLog;
 
     //--- PHYSICS PARAMETERS ---
+    prec half_domain_thickness = 0.0;
     prec rho;
     prec mu;
     prec ni;
