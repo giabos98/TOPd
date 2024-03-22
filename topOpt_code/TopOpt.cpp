@@ -361,183 +361,6 @@ void TOP_OPT::solveADJ() // ADJ solver
     lastSolADJ = ADJ.lastSol;
 }
 
-void TOP_OPT::solve()
-{
-    prec startTime = omp_get_wtime();
-
-    //------------------------------
-    std::cout << "\n\n----------| NAVIER-STOKES TOPOLOGY OPTIMIZATION SOLVER |----------\n";
-    std::cout << "\n----------| GEOMETRIC CONFIGURATION: ";
-    std::cout << "\n-------------| dimension: " << physics.dim;
-    std::cout << "\n-------------| n° nodes: " << physics.nNodes;
-    std::cout << "\n-------------| n° velocity nodes: " << physics.nNodes_v;
-    std::cout << "\n-------------| n° elements: " << physics.nElem;
-    std::cout << "\n-------------| n° velocity elements: " << physics.nElem_v;
-    std::cout << "\n-------------| n° d.o.f.: " << physics.nDof;
-    std::cout << "\n----------| PARALLEL CONFIGURATION: " << PARALLEL::nThread << " threads\n\n";
-    //------------------------------
-
-    int nNodes_v = physics.nNodes_v;
-    int nNodes = physics.nNodes;
-    int dim = physics.dim;
-    VECTOR gamma;
-    gamma.setZeros(nNodes_v);
-    gamma += 1;
-    VECTOR gammaNew;
-    VECTOR gammaOpt(nNodeInDom);
-    handle_gamma_initial_condition(gammaOpt, gamma);
-    gammaNew = gamma;
-
-    MATRIX grad_gamma(nNodes_v, dim);
-    VECTOR grad_gamma_norm;
-    grad_gamma_norm.setZeros(nNodes_v);
-    VECTOR grad_gamma_opt_norm(nNodeInDom);
-
-    // PRINT INITIAL VALUES
-    // VECTOR tempGamma = (gamma-1)*(-1);
-    // VECTOR alpha(tempGamma.length);
-    // for (int inod = 0; inod < tempGamma.length; inod++)
-    // {
-    //     alpha[inod] = alpha_min + (alpha_max - alpha_min) * q * tempGamma[inod] / ( q + 1 - tempGamma[inod]);
-    // }
-    // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
-    
-    //---------------------
-    int loop  = 0;
-    //prec toll = 1e-5;
-    prec change = change_toll + 1;
-    prec obj = 1000;
-    int currLoopPrint = -1;
-    bool feasible = false;
-    bool printNSSol = false;
-    if (flagPrint > 0) currLoopPrint = 1;
-    if (flagPrint == 2) printNSSol = true;
-    
-
-    prepareNS();
-    prepareADJ();
-
-    MATRIX U(dim, nNodes_v);
-    MATRIX Ua(dim, nNodes_v);
-
-    MATRIX funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    MATRIX no_weights_funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    VECTOR changes(maxIt);
-    VECTOR_INT valid(maxIt);
-
-    temp_fluid_energy.setZeros(2);
-
-    //UNTILL GAMMA CONVERGENCE DO:
-    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
-    {
-        loop++;
-        //-------------------------------
-        // UPDATE ALPHA GIVEN GAMMA
-        //-------------------------------
-        prec factor = q*(alpha_max - alpha_min);
-        for (int inod = 0; inod < nNodes_v; inod++)
-        {
-            alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
-        }
-
-        // SOLVE NS
-        NS.resetPrint(loop);
-        if (printNSSol) 
-        {
-            printNSSol = false;
-        }
-
-        prec startNStime = omp_get_wtime();
-        solveNS();
-        prec endNStime = omp_get_wtime();
-        std::cout << "|PHYSICS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
-
-        // SOLVE ADJOINT
-        ADJ.resetPrint(loop);
-        prec startADJtime = omp_get_wtime();
-        solveADJ();
-        prec endADJtime = omp_get_wtime();
-        std::cout << "|ADJOINT| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
-
-        // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
-        // Optimizer.updateSol(NS.globIter);
-
-        printf("\n-------\n-| OPTIMIZER SOLVER |--\n-------\n");
-
-        switch (optimization_scheme)
-        {
-            case 0: // MMA
-            {
-                Optimizer.solveMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-            case 1: // GOC
-            {
-                Optimizer.solveGOC(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-            case 2: // GCMMA
-            {
-                Optimizer.solveGCMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-        }
-        
-        save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
-
-        change = (gamma-gammaNew).norm() / gamma.norm();
-        physics.gamma_change = change;
-        gamma = gammaNew;
-        prec vol_fract = Vol / V0;
-        if (vol_fract <= Vr)
-        {
-            feasible = true;
-        }
-        else
-        {
-            feasible = false;
-        }
-        physics.Vol = Vol;
-        physics.vol_fract = vol_fract;
-        physics.gamma_max = gamma.max();
-
-        // if (enableDiffusionFilter > 0)
-        // {
-        //     eval_gamma_gradient_norm_with_filter(gammaOpt, grad_gamma_opt_norm);
-        // }
-        // save_gammaOpt_in_gammaFull(grad_gamma_opt_norm, grad_gamma_norm);
-        
-
-        print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma, feasible, funcValues, no_weights_funcValues, changes, valid, grad_gamma_norm);
-        // pause();
-    }
-
-    if (flagPrint == 0)
-    {
-        VECTOR tempGamma = (gamma-1)*(-1);
-        MATRIX U_print(nNodes_v, dim);
-        VECTOR P_print(nNodes);
-        NS.getUPFromSol(lastSolNS, U_print, P_print);
-        VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", U_print, dim, "Velocity");//, P_print, 1, "Pressure");
-        currLoopPrint += deltaPrint;
-    }
-
-
-    // -----------------------------------
-    // EXPORT OPTIMIZAED GEOMETRY NODES
-    // -----------------------------------
-    prec gammaMinOptMesh = 0.85; // minimum value of gamma to save node coords in the optimized mesh
-    MATRIX_INT optElem(physics.nElem_v, dim + 1);
-    exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
-    VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
-    // VTKWriter.closeTFile();
-
-    prec endTime = omp_get_wtime();
-
-    solution_time = endTime - startTime;
-}
-//-------------------------
-
 // save the gamma value in the optimization nodes in the whole gamma vector
 void TOP_OPT::save_gammaOpt_in_gammaFull(VECTOR &gamma_opt, VECTOR &gamma_full)
 {
@@ -762,18 +585,18 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
 
     std::cout << "\n-| It. " << loop << " <OPTIMIZATION RESULTS>| \n";
     std::cout << "--| VOLUME INFO| " << "\n";
-    std::cout << "  |-----> Opt Box Vol: " << V0 << "\n"; 
-    std::cout << "  |-----> Current Vol: " << Vol << "\n";
+    std::cout << "    |-----> Opt Box Vol: " << V0 << "\n"; 
+    std::cout << "    |-----> Current Vol: " << Vol << "\n";
     
     std::cout << "--| FUNCTIONAL INFO|" << "\n";
-    std::cout << "  |-----> Initial obj: " << Optimizer.f0Init << "\n";
-    std::cout << "  |-----> Non-normalized obj: " << Optimizer.obj_abs_val << "\n";
+    std::cout << "    |-----> Initial obj: " << Optimizer.f0Init << "\n";
+    std::cout << "    |-----> Non-normalized obj: " << Optimizer.obj_abs_val << "\n";
     if (Optimizer.customFunc == 1)
     {
-        std::cout << "  |-------> Inertial Part  | abs: " << Optimizer.func_val[0]  << "; rel: " << rel_func_val[0]  << "\n";
-        std::cout << "  |-------> Shear Stress   | abs: " << Optimizer.func_val[1]  << "; rel: " << rel_func_val[1]  << "\n";
-        std::cout << "  |-------> Vorticity      | abs: " << Optimizer.func_val[2]  << "; rel: " << rel_func_val[2]  << "\n";
-        std::cout << "  |-------> Inlet Pressure | abs: " << Optimizer.func_val[3]  << "; rel: " << rel_func_val[3]  << "\n";
+        std::cout << "    |-------> Inertial Part  | abs: " << Optimizer.func_val[0]  << "; rel: " << rel_func_val[0]  << "\n";
+        std::cout << "    |-------> Shear Stress   | abs: " << Optimizer.func_val[1]  << "; rel: " << rel_func_val[1]  << "\n";
+        std::cout << "    |-------> Vorticity      | abs: " << Optimizer.func_val[2]  << "; rel: " << rel_func_val[2]  << "\n";
+        std::cout << "    |-------> Inlet Pressure | abs: " << Optimizer.func_val[3]  << "; rel: " << rel_func_val[3]  << "\n";
     }
     std::cout << "--| FUNCTIONAL   | obj:" << obj << "\n";
     // std::cout << "--| PERCENT VOL. | vol: " << VolPerc << "% \n";
@@ -909,7 +732,7 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     }
 
     VECTOR temp_gamma_changes(loop);
-    VECTOR temp_feasible_volume(loop);
+    VECTOR_INT temp_feasible_volume(loop);
     for (int iloop = 1; iloop < loop+1; iloop++)
     {
         temp_gamma_changes[iloop-1] = changes[iloop-1];
@@ -1175,6 +998,189 @@ void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma)
     }
     
 }
+
+//-----------------------------------
+//---| TOPOLOGY OPTIMIZATION SOLVER |
+//-----------------------------------
+void TOP_OPT::solve()
+{
+    prec startTime = omp_get_wtime();
+
+    //------------------------------
+    std::cout << "\n\n----------| NAVIER-STOKES TOPOLOGY OPTIMIZATION SOLVER |----------\n";
+    std::cout << "\n----------| GEOMETRIC CONFIGURATION: ";
+    std::cout << "\n-------------| dimension: " << physics.dim;
+    std::cout << "\n-------------| n° nodes: " << physics.nNodes;
+    std::cout << "\n-------------| n° velocity nodes: " << physics.nNodes_v;
+    std::cout << "\n-------------| n° elements: " << physics.nElem;
+    std::cout << "\n-------------| n° velocity elements: " << physics.nElem_v;
+    std::cout << "\n-------------| n° d.o.f.: " << physics.nDof;
+    std::cout << "\n----------| PARALLEL CONFIGURATION: " << PARALLEL::nThread << " threads\n\n";
+    //------------------------------
+
+    int nNodes_v = physics.nNodes_v;
+    int nNodes = physics.nNodes;
+    int dim = physics.dim;
+    VECTOR gamma;
+    gamma.setZeros(nNodes_v);
+    gamma += 1;
+    VECTOR gammaNew;
+    VECTOR gammaOpt(nNodeInDom);
+    handle_gamma_initial_condition(gammaOpt, gamma);
+    gammaNew = gamma;
+
+    MATRIX grad_gamma(nNodes_v, dim);
+    VECTOR grad_gamma_norm;
+    grad_gamma_norm.setZeros(nNodes_v);
+    VECTOR grad_gamma_opt_norm(nNodeInDom);
+
+    // PRINT INITIAL VALUES
+    // VECTOR tempGamma = (gamma-1)*(-1);
+    // VECTOR alpha(tempGamma.length);
+    // for (int inod = 0; inod < tempGamma.length; inod++)
+    // {
+    //     alpha[inod] = alpha_min + (alpha_max - alpha_min) * q * tempGamma[inod] / ( q + 1 - tempGamma[inod]);
+    // }
+    // VTKWriter.write(physics.coord_v, physics.elem_v, 0, tempGamma, 1, "Gamma", alpha, 1, "Alpha");
+    
+    //---------------------
+    int loop  = 0;
+    //prec toll = 1e-5;
+    prec change = change_toll + 1;
+    prec obj = 1000;
+    int currLoopPrint = -1;
+    bool feasible = false;
+    bool printNSSol = false;
+    if (flagPrint > 0) currLoopPrint = 1;
+    if (flagPrint == 2) printNSSol = true;
+    
+
+    prepareNS();
+    prepareADJ();
+
+    MATRIX U(dim, nNodes_v);
+    MATRIX Ua(dim, nNodes_v);
+
+    MATRIX funcValues(maxIt, (Optimizer.fWeights.length + 2));
+    MATRIX no_weights_funcValues(maxIt, (Optimizer.fWeights.length + 2));
+    VECTOR changes(maxIt);
+    VECTOR_INT valid(maxIt);
+
+    temp_fluid_energy.setZeros(2);
+
+    //UNTILL GAMMA CONVERGENCE DO:
+    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
+    {
+        loop++;
+        //-------------------------------
+        // UPDATE ALPHA GIVEN GAMMA
+        //-------------------------------
+        prec factor = q*(alpha_max - alpha_min);
+        for (int inod = 0; inod < nNodes_v; inod++)
+        {
+            alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
+        }
+
+        // SOLVE NS
+        NS.resetPrint(loop);
+        if (printNSSol) 
+        {
+            printNSSol = false;
+        }
+
+        prec startNStime = omp_get_wtime();
+        solveNS();
+        prec endNStime = omp_get_wtime();
+        std::cout << "|PHYSICS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
+
+        // SOLVE ADJOINT
+        ADJ.resetPrint(loop);
+        prec startADJtime = omp_get_wtime();
+        solveADJ();
+        prec endADJtime = omp_get_wtime();
+        std::cout << "|ADJOINT| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
+
+        // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
+        // Optimizer.updateSol(NS.globIter);
+
+        printf("\n-------\n-| OPTIMIZER SOLVER |--\n-------\n");
+
+        switch (optimization_scheme)
+        {
+            case 0: // MMA
+            {
+                Optimizer.solveMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+            case 1: // GOC
+            {
+                Optimizer.solveGOC(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+            case 2: // GCMMA
+            {
+                Optimizer.solveGCMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
+                break;
+            }
+        }
+        
+        save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
+
+        change = (gamma-gammaNew).norm() / gamma.norm();
+        physics.gamma_change = change;
+        gamma = gammaNew;
+        prec vol_fract = Vol / V0;
+        if (vol_fract <= Vr)
+        {
+            feasible = true;
+        }
+        else
+        {
+            feasible = false;
+        }
+        physics.Vol = Vol;
+        physics.vol_fract = vol_fract;
+        physics.gamma_max = gamma.max();
+
+        // if (enableDiffusionFilter > 0)
+        // {
+        //     eval_gamma_gradient_norm_with_filter(gammaOpt, grad_gamma_opt_norm);
+        // }
+        // save_gammaOpt_in_gammaFull(grad_gamma_opt_norm, grad_gamma_norm);
+        // std::vector<VECTOR> gamma_gradient;
+        // physics.eval_gradient_from_centroids(gamma, gamma_gradient);
+        VECTOR gamma_gradient_norm;
+        // physics.eval_gradient_norm(gamma_gradient, gamma_gradient_norm);
+    
+        print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma, feasible, funcValues, no_weights_funcValues, changes, valid, gamma_gradient_norm);
+        // pause();
+    }
+
+    if (flagPrint == 0)
+    {
+        VECTOR tempGamma = (gamma-1)*(-1);
+        MATRIX U_print(nNodes_v, dim);
+        VECTOR P_print(nNodes);
+        NS.getUPFromSol(lastSolNS, U_print, P_print);
+        VTKWriter.write(physics.coord_v, physics.elem_v, loop, tempGamma, 1, "Gamma", U_print, dim, "Velocity");//, P_print, 1, "Pressure");
+        currLoopPrint += deltaPrint;
+    }
+
+
+    // -----------------------------------
+    // EXPORT OPTIMIZAED GEOMETRY NODES
+    // -----------------------------------
+    prec gammaMinOptMesh = 0.85; // minimum value of gamma to save node coords in the optimized mesh
+    MATRIX_INT optElem(physics.nElem_v, dim + 1);
+    exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
+    VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
+    // VTKWriter.closeTFile();
+
+    prec endTime = omp_get_wtime();
+
+    solution_time = endTime - startTime;
+}
+//-------------------------
 
 
 
