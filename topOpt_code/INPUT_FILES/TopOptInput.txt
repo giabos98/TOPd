@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_[projectionFilter]
-vel[1]_NS_Re[10]_Vr[0.4]_mma_a1e4_b[1_1_0_0]_time[stat]_p2
+test
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0

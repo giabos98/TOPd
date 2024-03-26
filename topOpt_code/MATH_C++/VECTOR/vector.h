@@ -406,7 +406,7 @@ public:
 
     void operator /= (VECTOR vec)
     {
-        if (vec.length != length) throw_line("ERROR: Pointwise product of vectors of different lenght\n");
+        if (vec.length != length) throw_line("ERROR: Pointwise division of vectors of different lenght\n");
         for (int i = 0; i < length; i++)
         {
             if (vec[i] == 0) throw_line("ERROR: Dividing by zero in pointwise divsion of vectors\n");
@@ -1667,6 +1667,15 @@ public:
             printf("%.2" format "   ", P[i]);
         }
         printf("%.2" format, P[length-1]);
+    }
+
+    void print_with_ids()
+    {
+        for (int i = 0; i < length-1; i++)
+        {
+            printf("\n%d: %.9" format , i, P[i]);
+        }
+        printf("\n%d: %.9" format "\n", length-1, P[length-1]);
     }
     
     //--------------------------------------------

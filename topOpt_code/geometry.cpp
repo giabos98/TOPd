@@ -206,32 +206,86 @@ prec PHYSICS::get_surface(MATRIX &matCoord, int dim)
     return area;
 }
 
-void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient)
+void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method)
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[nodal_value]
     // gradient structure: gradient[derivative_component][nodel_value]
-    gradient.resize(dim);
-    for (int icomp = 0; icomp < dim; icomp++)
+    //eval_method = 0: Lampeato. Other cases not implemented
+    if (eval_method == 0) // Lampeato
     {
-        gradient[icomp].completeReset();
-        gradient[icomp].setZeros(value.length);
-    }
-    for (int iel = 0; iel < nElem_v; iel++)
-    {
-        for (int iloc = 0; iloc < dim+1; iloc++)
+        gradient.resize(dim);
+        VECTOR weights; 
+        weights.setZeros(nNodes_v);
+        for (int icomp = 0; icomp < dim; icomp++)
         {
-            int iglob = elem_v[iel][iloc];
-            prec nodal_value = value[iglob];
-            for (int icomp = 0; icomp < dim; icomp++)
+            gradient[icomp].completeReset();
+            gradient[icomp].setZeros(value.length);
+        }
+        for (int iel = 0; iel < nElem_v; iel++)
+        {
+            prec temp_weight = Volume_v[iel];
+            prec element_value = 0.0;
+            for (int iloc = 0; iloc < dim+1; iloc++)
             {
-                gradient[icomp][iglob] += nodal_value * Coef_v[icomp][iel][iloc];
+                int iglob = elem_v[iel][iloc];
+                weights[iglob] += temp_weight;
+                element_value += value[iglob];
+            }
+            element_value /= (dim+1)*1.0;
+            for (int iloc = 0; iloc < dim+1; iloc++)
+            {
+                int iglob = elem_v[iel][iloc];
+                prec nodal_value = value[iglob];
+                for (int icomp = 0; icomp < dim; icomp++)
+                {
+                    if ((iglob == 2392))
+                    {
+                        std::cout << "\nicomp: " << icomp << "\n";
+                        std::cout << "iglob: " << iglob << "\n";
+                        std::cout << "pre-grad: " << gradient[icomp][iglob] << "\n";
+                        std::cout << "nodal: " << nodal_value << "\n";
+                        std::cout << "elem: " << element_value << "\n";
+                        std::cout << "coef: " << Coef_v[icomp][iel][iloc] << "\n";
+                        std::cout << "weight: " << temp_weight << "\n";
+                        std::cout << "INCREMENT: " << element_value * Coef_v[icomp][iel][iloc] * temp_weight << "\n";
+                    }
+                    gradient[icomp][iglob] += element_value * temp_weight * Coef_v[icomp][iel][iloc];
+                    if ((iglob == 2392))
+                    {
+                        std::cout << "post-grad: " << gradient[icomp][iglob] << "\n";
+                        // pause();
+
+                    }
+                }
+            }
+        }
+        std::cout << "mid_grad: " << gradient[0][2392] << "\n";
+        // pause();
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            for (int iglob = 0; iglob < nNodes_v; iglob++)
+            {
+                if ((iglob == 2392))
+                {
+                    std::cout << "\npre-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
+                }
+                gradient[icomp][iglob] /= weights[iglob];
+                if ((iglob == 2392))
+                {
+                    std::cout << "\npost-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
+                    // pause();
+                }
             }
         }
     }
+    else
+    {
+        throw_line("ERROR: not handled gradient reconstruction method\n");
+    }
 }
 
-void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient)
+void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient, int eval_method)
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[component][nodal_value]
@@ -242,50 +296,9 @@ void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gra
     for (int icomp = 0; icomp < n_comps; icomp++)
     {
         VECTOR comp_value = value.get_row(icomp);
-        eval_gradient(comp_value, gradient[icomp]);
+        eval_gradient(comp_value, gradient[icomp], eval_method);
     }
 }
-
-// void PHYSICS::eval_gradient_from_centroids(VECTOR &value, std::vector<VECTOR> &gradient)
-// {
-//     // suppose the value interpolated in the coord_v
-//     // value structure: value[nodal_value]
-//     // gradient structure: gradient[derivative_component][nodel_value]
-//     VECTOR voc(nElem_v); // voc: Value On Centroids
-//     eval_on_centroids_v(value, voc);
-//     std::vector<VECTOR> dist_weights(dim);
-//     gradient.resize(dim);
-//     for (int idim = 0 ; idim < dim; idim++)
-//     {
-//         dist_weights[idim].initialize(nNodes_v);
-//         gradient[idim].initialize(nNodes_v);
-//     }
-    
-//     for (int iel = 0; iel < nElem_v; iel++)
-//     {
-//         prec centroid_value = voc[iel];
-//         VECTOR centroid_coords = centroids_v[iel];
-//         for (int iloc = 0; iloc < dim+1; iloc++)
-//         {
-//             int iglob = elem_v[iel][iloc];
-//             VECTOR coords = coord_v.get_row(iglob);
-//             VECTOR dist = centroid_coords - coords;
-//             for (int icomp = 0; icomp < dim; icomp++)
-//             {
-//                 dist_weights[icomp][iglob] += dist[icomp];
-//                 gradient[icomp][iglob] += centroid_value - value[iglob];
-//             }
-//         }
-//     }
-    
-//     for (int icomp = 0; icomp < dim; icomp++)
-//     {
-//         dist_weights[icomp].printRowMatlab("dist");
-//         gradient[icomp].printRowMatlab("grad");
-//         pause();
-//         gradient[icomp].pointdiv(dist_weights[icomp], gradient[icomp]);
-//     }
-// }
 
 void PHYSICS::eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm)
 {

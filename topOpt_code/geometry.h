@@ -111,9 +111,8 @@ class PHYSICS
     void eval_on_elements_v(VECTOR &value, VECTOR &element_value);
     void eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value);
     static prec get_surface(MATRIX &matCoord, int dim);
-    void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient);
-    void eval_gradient_from_centroids(VECTOR &value, std::vector<VECTOR> &gradient);
-    void eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient);
+    void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 prokection method
+    void eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient, int eval_method = 0);// eval method means: gradient L2 prokection method
     void eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm);
     void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
 
