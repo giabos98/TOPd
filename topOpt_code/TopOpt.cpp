@@ -113,6 +113,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     physics.V0 = V0;
     physics.Vol = V0;
     physics.vol_fract = 1.0;
+    Vr = constraints.list[0].Vr;
     // std::cout << "V0: " << V0 << "\n";
     
     // USELESS BASE FUNCTINONALS
@@ -703,14 +704,7 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     {
         funcValues[loop-1][ifunc+2] = Optimizer.func_val[ifunc];
         no_weights_funcValues[loop-1][ifunc] = Optimizer.no_weighted_func_val[ifunc];
-    }
-
-    changes[loop-1] = change;
-    
-    if (Vol < Vr*V0) feasible = true;
-    else feasible = false;
-    valid[loop-1] = feasible;
-    
+    }        
     MATRIX temp_func_values(loop+1, Optimizer.fWeights.length+2);
     MATRIX temp_no_weights_func_values(loop, Optimizer.fWeights.length);
     temp_func_values[0][0] = Optimizer.f0Init;
@@ -731,14 +725,6 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
         }
     }
 
-    VECTOR temp_gamma_changes(loop);
-    VECTOR_INT temp_feasible_volume(loop);
-    for (int iloop = 1; iloop < loop+1; iloop++)
-    {
-        temp_gamma_changes[iloop-1] = changes[iloop-1];
-        temp_feasible_volume[iloop-1] = valid[iloop-1];
-    }
-
     evaluate_total_energy();
     physics.total_energy.append(temp_fluid_energy[0]);
     physics.fluid_energy.append_row(temp_fluid_energy);
@@ -749,8 +735,11 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     temp_no_weights_func_values.print((path + "/no_weight_func.txt").c_str());
     physics.total_energy.print((path + "/total_energy.txt").c_str());
     physics.fluid_energy.print((path + "/fluid_energy.txt").c_str());
-    temp_gamma_changes.print((path + "/changes.txt").c_str());
-    temp_feasible_volume.print((path + "/valid.txt").c_str());
+    changes.print((path + "/changes.txt").c_str());
+    valid.print((path + "/valid.txt").c_str());
+    changes.print();
+    valid.print();
+    pause();
 }
 
 void TOP_OPT::evaluate_total_energy()
@@ -1063,8 +1052,8 @@ void TOP_OPT::solve()
 
     MATRIX funcValues(maxIt, (Optimizer.fWeights.length + 2));
     MATRIX no_weights_funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    VECTOR changes(maxIt);
-    VECTOR_INT valid(maxIt);
+    VECTOR changes;
+    VECTOR_INT valid;
 
     temp_fluid_energy.setZeros(2);
 
@@ -1128,15 +1117,20 @@ void TOP_OPT::solve()
 
         change = (gamma-gammaNew).norm() / gamma.norm();
         physics.gamma_change = change;
+        changes.append(change);
         gamma = gammaNew;
         prec vol_fract = Vol / V0;
+        std::cout << "\nfrac: " << vol_fract << "\t Vr: " << Vr << "\n";
+        pause();
         if (vol_fract <= Vr)
         {
             feasible = true;
+            valid.append(1);
         }
         else
         {
             feasible = false;
+            valid.append(0);
         }
         physics.Vol = Vol;
         physics.vol_fract = vol_fract;

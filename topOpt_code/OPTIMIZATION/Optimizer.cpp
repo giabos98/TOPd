@@ -2551,20 +2551,71 @@ void OPTIMIZER::eval_J_alpha(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
 
     if (abs(fWeights[0]) > 1e-12)
     {
+        // prec temp_alpha = 0.0;
+        // for (int iel = 0; iel < nElem_v; iel++)
+        // {
+        //     for (int iloc = 0; iloc < dim+1; iloc++)
+        //     {
+        //         int iglob = elem_v[iel][iloc];
+        //         prec tempFactor = 0.0;
+        //         for (int icomp = 0; icomp < dim; icomp++)
+        //         {
+        //             prec Uval = U[icomp][iglob];
+        //             tempFactor += Uval*Uval;
+        //         }
+        //         prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
+        //         temp_alpha += alpha[iglob] * tempFactor * temp_integral; 
+        //     }
+        // }
+        // temp_no_weighted_func_val[0] = temp_alpha;
+        // temp_func_val[0] = fWeights[0]*temp_alpha;
+
+        // // get func in top opt box
+        // prec temp_f_alpha = 0.0;
+        // for (int iel = 0; iel < n_elems_in_dom; iel++)
+        // {
+        //     int globEl = elemInDom[iel];
+        //     for (int iloc = 0; iloc < dim+1; iloc++)
+        //     {
+        //         int iglob = elem_v[globEl][iloc];
+        //         // int optNode = optNodeFromGlobNode[iglob];
+        //         prec tempFactor = 0;
+        //         for (int icomp = 0; icomp < dim; icomp++)
+        //         {
+        //             prec Uval = U[icomp][iglob];
+        //             tempFactor += Uval*Uval;
+        //         }
+        //         prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
+        //         temp_f_alpha += alpha[iglob] * tempFactor * temp_integral;
+        //     }
+        // }
+        // temp_func_in_box += temp_f_alpha;
+
         prec temp_alpha = 0.0;
         for (int iel = 0; iel < nElem_v; iel++)
         {
+            prec const_integral_factor = (PHYSICS::factorial(dim) / (1.0*PHYSICS::factorial(dim+3))) * volume_v[iel]; // "+3" since the degree of the polynomial inside the integral will be 3
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
                 int iglob = elem_v[iel][iloc];
-                prec tempFactor = 0.0;
+                prec temp_factor_i = alpha[iglob];
                 for (int icomp = 0; icomp < dim; icomp++)
                 {
-                    prec Uval = U[icomp][iglob];
-                    tempFactor += Uval*Uval;
+                    for (int jloc = 0; jloc < dim+1; jloc++)
+                    {
+                        int jglob = elem_v[iel][jloc];
+                        prec temp_factor_j = temp_factor_i * U[icomp][jglob];
+                        for (int kloc = 0; kloc < dim+1; kloc++)
+                        {
+                            VECTOR_INT indices;
+                            indices.append(iloc); indices.append(jloc); indices.append(kloc);
+                            int kglob = elem_v[iel][kloc]; 
+                            prec temp_factor_k = temp_factor_j * U[icomp][kglob];
+                            int power_factor = PHYSICS::eval_elemental_integral_factor_by_indices(indices);
+                            temp_alpha += const_integral_factor * temp_factor_k * power_factor;
+                        }
+                    }
                 }
-                prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
-                temp_alpha += alpha[iglob] * tempFactor * temp_integral; 
             }
         }
         temp_no_weighted_func_val[0] = temp_alpha;
@@ -2575,18 +2626,30 @@ void OPTIMIZER::eval_J_alpha(MATRIX_INT &elem_v, VECTOR &volume_v, MATRIX &U)
         for (int iel = 0; iel < n_elems_in_dom; iel++)
         {
             int globEl = elemInDom[iel];
+            prec const_integral_factor = (PHYSICS::factorial(dim) / PHYSICS::factorial(dim+3)) * volume_v[globEl]; // "+3" since the degree of the polynomial inside the integral will be three
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
+                VECTOR_INT indices;
+                indices.append(iloc);
                 int iglob = elem_v[globEl][iloc];
-                // int optNode = optNodeFromGlobNode[iglob];
-                prec tempFactor = 0;
+                prec temp_factor_i = alpha[iglob];
                 for (int icomp = 0; icomp < dim; icomp++)
                 {
-                    prec Uval = U[icomp][iglob];
-                    tempFactor += Uval*Uval;
+                    for (int jloc = 0; jloc < dim+1; jloc++)
+                    {
+                        indices.append(jloc);
+                        int jglob = elem_v[iel][jloc];
+                        prec temp_factor_j = temp_factor_i * U[icomp][jglob];
+                        for (int kloc = 0; kloc < dim+1; kloc++)
+                        {
+                            indices.append(kloc);
+                            int kglob = elem_v[iel][kloc];
+                            prec temp_factor_k = temp_factor_j * U[icomp][kglob];
+                            int power_factor = PHYSICS::eval_elemental_integral_factor_by_indices(indices);
+                            temp_f_alpha += const_integral_factor * temp_factor_k * power_factor;
+                        }
+                    }
                 }
-                prec temp_integral = volume_v[iel] / ((dim+1)*(dim+2)/2); 
-                temp_f_alpha += alpha[iglob] * tempFactor * temp_integral;
             }
         }
         temp_func_in_box += temp_f_alpha;

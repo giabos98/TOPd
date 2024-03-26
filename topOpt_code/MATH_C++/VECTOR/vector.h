@@ -705,6 +705,53 @@ public:
         }
     }
 
+    void squared_root()
+    {
+        for (int i = 0; i < length; i++)
+        {
+            P[i] = sqrt(P[i]);
+        }
+    }
+
+    void squared_root(VECTOR &res)
+    {
+        if (res.length != length) 
+        {
+            throw_line("ERROR: vectors have different legnths\n");
+        }
+        else
+        {
+            for (int i = 0; i < length; i++)
+            {
+                res[i] = sqrt(P[i]);
+            }
+        }
+    }
+
+    void power(prec power)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            prec temp = P[i];
+            P[i] = std::pow(temp, power);
+        }
+    }
+
+    void power(int power, VECTOR &res)
+    {
+        if (res.length != length) 
+        {
+            throw_line("ERROR: vectors have different legnths\n");
+        }
+        else
+        {
+            for (int i = 0; i < length; i++)
+            {
+                res[i] = std::pow(P[i], power);
+            }
+        }
+    }
+
     // //---------------------------------------------------
     // // MULTIPLY TRANSPOSE VECTOR BY MATRIX
     // //---------------------------------------------------
@@ -1626,6 +1673,13 @@ public:
     // CLEAR VECTOR
     //--------------------------------------------
     void clear()
+    {
+        P.reset(); P = 0;
+        length = 0;
+    }
+    //---
+
+    void completeReset()
     {
         P.reset(); P = 0;
         length = 0;

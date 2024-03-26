@@ -14,6 +14,8 @@ void PHYSICS::initialize()
     //     bounds_elems_v[ibound].print();
     //     bounds_elems_surface_v[ibound].printRowMatlab(std::to_string(ibound));
     // }
+
+    build_centroids_v();
 }
 
 void PHYSICS::build_bounds_elems_v()
@@ -106,6 +108,215 @@ void PHYSICS::eval_solution_times()
         }
     }
 }
+
+//build elements centorids
+void PHYSICS::build_centroids_v()
+{
+    centroids_v.resize(nElem_v);
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        centroids_v[iel].initialize(dim);
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            VECTOR temp_coord = coord_v.get_row(iglob);
+            centroids_v[iel] += temp_coord;
+        }
+        prec n_nodes_x_el = (dim+1) * 1.0;
+        centroids_v[iel] /= n_nodes_x_el;
+    }
+}
+
+//eval a quantity on elements
+void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR &element_value)
+{
+    // with 1D schape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
+    // so it is fine to sum the nodal value for each element, and finally divide th ewhole vector by th number of nodes per element
+    // value is supposed known in the coord_v mesh
+    element_value.completeReset();
+    element_value.setZeros(nElem_v);
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            element_value[iel] += value[iglob];
+        }
+    }
+    prec n_nodes_x_el = (dim+1) * 1.0; // make dim+1 a prec variable to divide it to element_value
+    element_value /= n_nodes_x_el;
+}
+
+//eval a quantity on elements centroids
+void PHYSICS::eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value)
+{
+    // value is supposed known in the coord_v mesh
+    centroids_value.completeReset();
+    centroids_value.setZeros(nElem_v);
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        prec temp_weights_sum = 0.0;
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            VECTOR temp_coords = coord_v.get_row(iglob);
+            prec temp_dist = (centroids_v[iel] - temp_coords).norm();
+            temp_weights_sum += temp_dist;
+            centroids_value[iel] += value[iglob] * temp_dist;
+        }
+        centroids_value[iel] /= temp_weights_sum;
+    }
+}
+
+// static prec get_surface(MATRIX &matCoord, int dim);
+prec PHYSICS::get_surface(MATRIX &matCoord, int dim)
+{
+    if (dim != 2 && dim != 3) throw_line("ERROR: Getting area in a space different from 2D or 3D");
+    if (matCoord.nRow != dim || matCoord.nCol != dim) throw_line("ERROR: Getting area of coords incompatible with dim\n");
+    prec area;
+    switch (dim)
+    {
+        case 2:
+        {
+            std::shared_ptr<prec[]>  vec(new prec[dim]);
+            vec[0] = matCoord[0][0] - matCoord[1][0];
+            vec[1] = matCoord[0][1] - matCoord[1][1];
+            area = VECTOR::norm(vec,2);
+            break;
+        }
+        case 3:
+        {
+            VECTOR vec31(dim);
+            vec31[0] = matCoord[2][0] - matCoord[0][0];
+            vec31[1] = matCoord[2][1] - matCoord[0][1];
+            vec31[2] = matCoord[2][2] - matCoord[0][2];
+            VECTOR vec21(dim);
+            vec21[0] = matCoord[1][0] - matCoord[0][0];
+            vec21[1] = matCoord[1][1] - matCoord[0][1];
+            vec21[2] = matCoord[1][2] - matCoord[0][2];
+            // VECTOR tempVec; tempVec = vec31.cross(vec21);
+            // vec21 = tempVec;
+            VECTOR newVec;
+            VECTOR::cross(vec31, vec21, newVec);
+            
+            area = VECTOR::norm(newVec)/2;
+            break;
+        }
+    }
+    return area;
+}
+
+void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient)
+{
+    // suppose the value interpolated in the coord_v
+    // value structure: value[nodal_value]
+    // gradient structure: gradient[derivative_component][nodel_value]
+    gradient.resize(dim);
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        gradient[icomp].completeReset();
+        gradient[icomp].setZeros(value.length);
+    }
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            prec nodal_value = value[iglob];
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                gradient[icomp][iglob] += nodal_value * Coef_v[icomp][iel][iloc];
+            }
+        }
+    }
+}
+
+void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient)
+{
+    // suppose the value interpolated in the coord_v
+    // value structure: value[component][nodal_value]
+    // gradient structure: gradient[value_component][derivative_component][nodel_value]
+    //initialize solution
+    gradient.resize(dim);
+    int n_comps = value.nRow;
+    for (int icomp = 0; icomp < n_comps; icomp++)
+    {
+        VECTOR comp_value = value.get_row(icomp);
+        eval_gradient(comp_value, gradient[icomp]);
+    }
+}
+
+// void PHYSICS::eval_gradient_from_centroids(VECTOR &value, std::vector<VECTOR> &gradient)
+// {
+//     // suppose the value interpolated in the coord_v
+//     // value structure: value[nodal_value]
+//     // gradient structure: gradient[derivative_component][nodel_value]
+//     VECTOR voc(nElem_v); // voc: Value On Centroids
+//     eval_on_centroids_v(value, voc);
+//     std::vector<VECTOR> dist_weights(dim);
+//     gradient.resize(dim);
+//     for (int idim = 0 ; idim < dim; idim++)
+//     {
+//         dist_weights[idim].initialize(nNodes_v);
+//         gradient[idim].initialize(nNodes_v);
+//     }
+    
+//     for (int iel = 0; iel < nElem_v; iel++)
+//     {
+//         prec centroid_value = voc[iel];
+//         VECTOR centroid_coords = centroids_v[iel];
+//         for (int iloc = 0; iloc < dim+1; iloc++)
+//         {
+//             int iglob = elem_v[iel][iloc];
+//             VECTOR coords = coord_v.get_row(iglob);
+//             VECTOR dist = centroid_coords - coords;
+//             for (int icomp = 0; icomp < dim; icomp++)
+//             {
+//                 dist_weights[icomp][iglob] += dist[icomp];
+//                 gradient[icomp][iglob] += centroid_value - value[iglob];
+//             }
+//         }
+//     }
+    
+//     for (int icomp = 0; icomp < dim; icomp++)
+//     {
+//         dist_weights[icomp].printRowMatlab("dist");
+//         gradient[icomp].printRowMatlab("grad");
+//         pause();
+//         gradient[icomp].pointdiv(dist_weights[icomp], gradient[icomp]);
+//     }
+// }
+
+void PHYSICS::eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm)
+{
+    norm.completeReset();
+    norm.setZeros(nNodes_v);
+    for (int inod = 0; inod < nNodes_v; inod++)
+    {
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            norm[inod] += gradient[icomp][inod]*gradient[icomp][inod];
+        }
+    }
+    norm.squared_root();
+}
+
+void PHYSICS::eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm)
+{
+    norm.completeReset();
+    norm.setZeros(nNodes_v);
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        std::vector<VECTOR> comp_gradient = gradient[icomp];
+        VECTOR comp_norm(nNodes_v);
+        eval_gradient_norm(comp_gradient, comp_norm);
+        comp_norm.power(2);
+        norm += comp_norm;
+    }
+    norm.squared_root();
+}
+
+
 //--------------------------------------------
 // END PHYSICS CLASS
 //--------------------------------------------

@@ -38,6 +38,7 @@ class PHYSICS
     VECTOR h_v;
     MATRIX coord_v;
     MATRIX_INT elem_v;
+    std::vector<VECTOR> centroids_v;
     VECTOR_INT elem_geo_entities_ids_v; // note: the domains ids are scaled with c++ notation (starting from 0)
     std::vector<VECTOR_INT> elems_in_doms;
     int max_geo_entity_id; 
@@ -104,43 +105,52 @@ class PHYSICS
     void eval_solution_times();
     void build_bounds_elems_v();
     void build_bounds_elems_surfaces_v();
+    void build_centroids_v();
 
     // static prec get_surface(MATRIX &matCoord, int dim);
-    static prec get_surface(MATRIX &matCoord, int dim)
+    void eval_on_elements_v(VECTOR &value, VECTOR &element_value);
+    void eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value);
+    static prec get_surface(MATRIX &matCoord, int dim);
+    void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient);
+    void eval_gradient_from_centroids(VECTOR &value, std::vector<VECTOR> &gradient);
+    void eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient);
+    void eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm);
+    void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
+
+    static int factorial(int n)
     {
-        if (dim != 2 && dim != 3) throw_line("ERROR: Getting area in a space different from 2D or 3D");
-        if (matCoord.nRow != dim || matCoord.nCol != dim) throw_line("ERROR: Getting area of coords incompatible with dim\n");
-        prec area;
-        switch (dim)
+        if (n == 0)
         {
-            case 2:
-            {
-                std::shared_ptr<prec[]>  vec(new prec[dim]);
-                vec[0] = matCoord[0][0] - matCoord[1][0];
-                vec[1] = matCoord[0][1] - matCoord[1][1];
-                area = VECTOR::norm(vec,2);
-                break;
-            }
-            case 3:
-            {
-                VECTOR vec31(dim);
-                vec31[0] = matCoord[2][0] - matCoord[0][0];
-                vec31[1] = matCoord[2][1] - matCoord[0][1];
-                vec31[2] = matCoord[2][2] - matCoord[0][2];
-                VECTOR vec21(dim);
-                vec21[0] = matCoord[1][0] - matCoord[0][0];
-                vec21[1] = matCoord[1][1] - matCoord[0][1];
-                vec21[2] = matCoord[1][2] - matCoord[0][2];
-                // VECTOR tempVec; tempVec = vec31.cross(vec21);
-                // vec21 = tempVec;
-                VECTOR newVec;
-                VECTOR::cross(vec31, vec21, newVec);
-                
-                area = VECTOR::norm(newVec)/2;
-                break;
-            }
+            return 1;
         }
-        return area;
+        else
+        {
+            return n * factorial(n-1);
+        }
+        throw_line("ERROR: not handled case in factorial function\n");
+    }
+
+    static VECTOR_INT match_indices(VECTOR_INT index)
+    {
+        int max = index.max();
+        VECTOR_INT counter;
+        counter.setZeros(max+1);
+        for (int id = 0; id < index.length; id++)
+        {
+            counter[index[id]] += 1;
+        }
+        return counter;
+    }
+
+    static int eval_elemental_integral_factor_by_indices(VECTOR_INT index)
+    {
+        int factor = 1;
+        VECTOR_INT counter = match_indices(index);
+        for (int id = 0; id < counter.length; id++)
+        {
+            factor *= factorial(counter[id]);
+        }
+        return factor;
     }
 };
 
