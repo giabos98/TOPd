@@ -737,9 +737,6 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     physics.fluid_energy.print((path + "/fluid_energy.txt").c_str());
     changes.print((path + "/changes.txt").c_str());
     valid.print((path + "/valid.txt").c_str());
-    changes.print();
-    valid.print();
-    pause();
 }
 
 void TOP_OPT::evaluate_total_energy()
@@ -1120,8 +1117,6 @@ void TOP_OPT::solve()
         changes.append(change);
         gamma = gammaNew;
         prec vol_fract = Vol / V0;
-        std::cout << "\nfrac: " << vol_fract << "\t Vr: " << Vr << "\n";
-        pause();
         if (vol_fract <= Vr)
         {
             feasible = true;

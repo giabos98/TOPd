@@ -3,7 +3,7 @@ hole_problem_finer
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-0
+1
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 1
@@ -25,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1 //  rho
-1  //  mu
+3 //  rho
+0.3  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
