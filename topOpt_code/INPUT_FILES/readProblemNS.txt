@@ -1,5 +1,5 @@
 // PROBLEM NAME
-hole_problem_finer
+competitive_flow_p_top_finer
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -53,9 +53,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-4
+0
 // geomID
-5 10 12 19
+**
 
 // SYMMETRY WALLS
 //--------
@@ -76,21 +76,19 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+0
 //geomID
-0 23
-//functs
-100*[y+0.1]*[0.1-y] 0
--100*[y+0.1]*[0.1-y] 0
+**
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+3
 // geomID
-9 13
+2 4 8
 //functs
-0
+300
+300
 0
 
 // DIRICHLET - TIME DEPENDENT

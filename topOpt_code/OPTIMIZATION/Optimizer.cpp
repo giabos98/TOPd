@@ -2988,10 +2988,11 @@ void OPTIMIZER::eval_gamma_acc_and_derivative()
         {
             prec temp_change = (*physics).gamma_change;
             eval_beta_for_projection_filter(temp_change);
-            gamma_acc_mean_value = (*physics).gamma_max / 2;
+            gamma_acc_mean_value = (*physics).gamma_max / 2.0;
             prec gamma_acc_mean_value_min = 0.2;
-            if ((gamma_acc_mean_value < 0.0) || (gamma_acc_mean_value > 0.5))
+            if ((gamma_acc_mean_value < 0) || (gamma_acc_mean_value > 0.500001))
             {
+                std::cout << "gamma_max: " << (*physics).gamma_max << "\tgamma_acc_mean_value: " << gamma_acc_mean_value << "\n";
                 throw_line("ERROR: invalid mean value of the gamma projector.\n");
             }
             else if (gamma_acc_mean_value < gamma_acc_mean_value_min)

@@ -210,7 +210,7 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[nodal_value]
-    // gradient structure: gradient[derivative_component][nodel_value]
+    // gradient structure: gradient[derivative_component][nodal_value]
     //eval_method = 0: Lampeato. Other cases not implemented
     if (eval_method == 0) // Lampeato
     {
@@ -225,57 +225,59 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
         for (int iel = 0; iel < nElem_v; iel++)
         {
             prec temp_weight = Volume_v[iel];
-            prec element_value = 0.0;
+            VECTOR element_gradient_value; element_gradient_value.setZeros(dim);
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
                 int iglob = elem_v[iel][iloc];
                 weights[iglob] += temp_weight;
-                element_value += value[iglob];
+                for (int icomp = 0; icomp < dim; icomp++)
+                {
+                    element_gradient_value[icomp] += value[iglob]*Coef_v[icomp][iel][iloc];
+                }
             }
-            element_value /= (dim+1)*1.0;
             for (int iloc = 0; iloc < dim+1; iloc++)
             {
                 int iglob = elem_v[iel][iloc];
-                prec nodal_value = value[iglob];
+                // prec nodal_value = value[iglob];
                 for (int icomp = 0; icomp < dim; icomp++)
                 {
-                    if ((iglob == 2392))
-                    {
-                        std::cout << "\nicomp: " << icomp << "\n";
-                        std::cout << "iglob: " << iglob << "\n";
-                        std::cout << "pre-grad: " << gradient[icomp][iglob] << "\n";
-                        std::cout << "nodal: " << nodal_value << "\n";
-                        std::cout << "elem: " << element_value << "\n";
-                        std::cout << "coef: " << Coef_v[icomp][iel][iloc] << "\n";
-                        std::cout << "weight: " << temp_weight << "\n";
-                        std::cout << "INCREMENT: " << element_value * Coef_v[icomp][iel][iloc] * temp_weight << "\n";
-                    }
-                    gradient[icomp][iglob] += element_value * temp_weight * Coef_v[icomp][iel][iloc];
-                    if ((iglob == 2392))
-                    {
-                        std::cout << "post-grad: " << gradient[icomp][iglob] << "\n";
-                        // pause();
+                    // if ((iglob == 2392))
+                    // {
+                    //     std::cout << "\nicomp: " << icomp << "\n";
+                    //     std::cout << "iglob: " << iglob << "\n";
+                    //     std::cout << "pre-grad: " << gradient[icomp][iglob] << "\n";
+                    //     std::cout << "nodal: " << nodal_value << "\n";
+                    //     std::cout << "elem: " << element_value << "\n";
+                    //     std::cout << "coef: " << Coef_v[icomp][iel][iloc] << "\n";
+                    //     std::cout << "weight: " << temp_weight << "\n";
+                    //     std::cout << "INCREMENT: " << element_value * Coef_v[icomp][iel][iloc] * temp_weight << "\n";
+                    // }
+                    gradient[icomp][iglob] += element_gradient_value[icomp] * temp_weight;
+                    // if ((iglob == 2392))
+                    // {
+                    //     std::cout << "post-grad: " << gradient[icomp][iglob] << "\n";
+                    //     // pause();
 
-                    }
+                    // }
                 }
             }
         }
-        std::cout << "mid_grad: " << gradient[0][2392] << "\n";
+        // std::cout << "mid_grad: " << gradient[0][2392] << "\n";
         // pause();
         for (int icomp = 0; icomp < dim; icomp++)
         {
             for (int iglob = 0; iglob < nNodes_v; iglob++)
             {
-                if ((iglob == 2392))
-                {
-                    std::cout << "\npre-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
-                }
+                // if ((iglob == 2392))
+                // {
+                //     std::cout << "\npre-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
+                // }
                 gradient[icomp][iglob] /= weights[iglob];
-                if ((iglob == 2392))
-                {
-                    std::cout << "\npost-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
-                    // pause();
-                }
+                // if ((iglob == 2392))
+                // {
+                //     std::cout << "\npost-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
+                //     // pause();
+                // }
             }
         }
     }
@@ -289,7 +291,7 @@ void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gra
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[component][nodal_value]
-    // gradient structure: gradient[value_component][derivative_component][nodel_value]
+    // gradient structure: gradient[value_component][derivative_component][nodal_value]
     //initialize solution
     gradient.resize(dim);
     int n_comps = value.nRow;
@@ -297,6 +299,47 @@ void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gra
     {
         VECTOR comp_value = value.get_row(icomp);
         eval_gradient(comp_value, gradient[icomp], eval_method);
+    }
+}
+
+void PHYSICS::eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, VECTOR &dir_gradient)
+{
+    // suppose the value interpolated in the coord_v
+    // value structure: value[nodal_value]
+    // nodes structure: nodes[specific_node] = global_node
+    // directions structure: directions[specific_node][direction]
+    // dir_gradient structure: gradient[specific_nodal_value]
+    // N.B.: specific node means it belongs to [0,nodes-length-1]
+    dir_gradient.completeReset();
+    dir_gradient.setZeros(nodes.length);
+    std::vector<VECTOR> gradient;
+    eval_gradient(value, gradient);
+    for (int inod = 0; inod < nodes.length; inod++)
+    {
+        int iglob = nodes[inod];
+        VECTOR temp_dir = directions[inod];
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            dir_gradient[inod] += gradient[icomp][iglob] * temp_dir[icomp];
+        }
+    }
+}
+
+void PHYSICS::eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient)
+{  
+    // suppose the value interpolated in the coord_v
+    // value structure: value[component][nodal_value]
+    // nodes structure: nodes[specific_node] = global_node
+    // directions structure: directions[specific_node][direction]
+    // dir_gradient structure: gradient[value_component][specific_nodal_value]
+    // N.B.: specific node means it belongs to [0,nodes-length-1]
+
+    dir_gradient.resize(dim);
+    int n_comps = value.nRow;
+    for (int icomp = 0; icomp < n_comps; icomp++)
+    {
+        VECTOR comp_value = value.get_row(icomp);
+        eval_directional_gradient(comp_value, nodes, directions, dir_gradient[icomp]);
     }
 }
 
@@ -329,6 +372,58 @@ void PHYSICS::eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VEC
     norm.squared_root();
 }
 
+void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS)
+{
+    // value structure: value[component][nodal_value]
+    // normals structure: normals[node][component]
+    if (nodes.length != int(normals.size()))
+    {
+        throw_line("ERROR: the nodes and the normals for the WSS evaluation are defined in a different number of points\n");
+    }
+    int n_nodes = nodes.length;
+    std::vector<std::vector<VECTOR>> gradient;
+    eval_gradient(value, gradient);
+    int n_tan = dim-1;
+    std::vector<std::vector<VECTOR>> tangent_vectors(n_nodes);
+    for (int inod = 0; inod < n_nodes; inod++)
+    {
+        tangent_vectors[inod].resize(n_tan);
+        VECTOR temp_normal = normals[inod];
+        switch (n_tan)
+        {
+            case 1: // 2D
+            {
+                tangent_vectors[inod][0].setZeros(dim);
+                tangent_vectors[inod][0][0] = -temp_normal[1];
+                tangent_vectors[inod][0][1] = temp_normal[0];
+                tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
+                break;
+            }
+            case 2: // 3D
+            {
+                tangent_vectors[inod][0].setZeros(dim);
+                tangent_vectors[inod][0][0] = -temp_normal[1];
+                tangent_vectors[inod][0][1] = temp_normal[0];
+                tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
+
+                tangent_vectors[inod][1].setZeros(dim);
+                tangent_vectors[inod][1][0] = -temp_normal[2];
+                tangent_vectors[inod][1][2] = temp_normal[0];
+                tangent_vectors[inod][1] /= tangent_vectors[inod][1].norm();
+                break;
+            }   
+            default:
+            {
+                throw_line("ERROR with dimensions\n");
+                break;
+            }
+        }
+    }
+    // for (int itan = 0; itan < n_tan; itan+++)
+    // {
+    //     for 
+    // }
+}
 
 //--------------------------------------------
 // END PHYSICS CLASS

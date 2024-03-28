@@ -102,6 +102,14 @@ public:
         for (int i = 0; i < length; i++) P[i] = 0;
     }
     //---
+    void enumerate(int N)
+    {
+        P.reset(); P = 0;
+        length = N;
+        P = std::shared_ptr<int[]>(new int[N]);
+        for (int i = 0; i < length; i++) P[i] = i;
+    }
+    //---
     void reset(int coef)
     {
         for (int i = 0; i < length; i++) P[i] = coef;

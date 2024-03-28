@@ -687,14 +687,25 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             VECTOR U_magnitude(nNodes_v);
             VECTOR P_print(nNodes_v);
             prepare_solution_print(U_print, P, U_magnitude, P_print);
+            MATRIX U_print_T = U_print.transpose();
 
+            VECTOR_INT nodes; nodes.enumerate(nNodes_v);
+            std::vector<VECTOR> directions(nNodes_v);
+            VECTOR dir(dim); dir[0] = 1.0; dir[1] = 0.0;
+            for (int inod = 0; inod < nNodes_v; inod++)
+            {
+                directions[inod].initialize(2);
+                directions[inod] = dir;
+            }
             // std::vector<VECTOR> U_magnitude_gradient;
             // physics.eval_gradient(U_magnitude, U_magnitude_gradient);
-            // VECTOR U_magnitude_norm;
-            // physics.eval_gradient_norm(U_magnitude_gradient, U_magnitude_norm);
+            // std::vector<VECTOR> U_dir_gradient;
+            // physics.eval_directional_gradient(U_print_T, nodes, directions, U_dir_gradient);
+            // VECTOR U_x_dir_gradient = U_dir_gradient[0];
             
-             VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-            // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", U_magnitude_norm, 1, "Grad");
+            //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
+            VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+            // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
             
             currLoopPrint += deltaPrint;
         }
@@ -1070,6 +1081,8 @@ void TOP_OPT::solve()
         {
             alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
         }
+        // alpha.printRowMatlab("alpha");
+        // pause();
 
         // SOLVE NS
         NS.resetPrint(loop);
@@ -1142,10 +1155,10 @@ void TOP_OPT::solve()
         // }
         // save_gammaOpt_in_gammaFull(grad_gamma_opt_norm, grad_gamma_norm);
 
-        // std::vector<VECTOR> gamma_gradient;
-        // physics.eval_gradient(gamma_print, gamma_gradient);
+        std::vector<VECTOR> gamma_gradient;
+        physics.eval_gradient(gamma_print, gamma_gradient);
         VECTOR gamma_gradient_norm;
-        // physics.eval_gradient_norm(gamma_gradient, gamma_gradient_norm);
+        physics.eval_gradient_norm(gamma_gradient, gamma_gradient_norm);
     
         print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, printNSSol, gamma_print, feasible, funcValues, no_weights_funcValues, changes, valid, gamma_gradient_norm);
         // pause();

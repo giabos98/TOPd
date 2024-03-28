@@ -115,6 +115,9 @@ class PHYSICS
     void eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient, int eval_method = 0);// eval method means: gradient L2 prokection method
     void eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm);
     void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
+    void eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
+    void eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, VECTOR &dir_gradient);
+    void eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient);
 
     static int factorial(int n)
     {
