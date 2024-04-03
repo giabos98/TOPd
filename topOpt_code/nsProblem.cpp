@@ -2594,7 +2594,7 @@ void PROBLEM_NS::StatSolver()
     deltaT = (*physics).deltaT;
     globIter = 0;
 
-    oneStepSolver(1e-3, 200);
+    oneStepSolver(1e-3, 5);
     simulation_times_solution.append_row(lastSol);
     print_sol_in_VTK((*physics).NS_solution);
 
@@ -2610,15 +2610,15 @@ void PROBLEM_NS::StatSolverIterative()
     time = 0;
     globIter = 0;
     prec convergence_toll = 1e-2;
-    prec convergence_it = 20;
+    prec convergence_it = 5;
     while (time < t_end)
     {
         oneStepSolver(convergence_toll, convergence_it);
         if (time+deltaT > t_end) 
         {
             deltaT = t_end-time;
-            convergence_toll = 1e-4;
-            convergence_it = 100;
+            // convergence_toll = 1e-4;
+            // convergence_it = 20;
         }
     }
     // std::cout << "\nNS_las_sol_norm: " << lastSol.norm() << "\n";
@@ -2769,8 +2769,8 @@ void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
     VECTOR oldSol;
     oldSol = lastSol;
     VECTOR sol(nDof);
-    itMax = 5;
-    if (time > 0.005) itMax = 2;
+    // itMax = 5;
+    // if (time > 0.005) itMax = 2;
     prec tolRes = 1e-6;
     prec finalRes = tolRes+1;
 
@@ -2782,7 +2782,7 @@ void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
     startTime = omp_get_wtime();
     while (!converged)
     {
-        while (!(scarto < toll && finalRes < tolRes) && it < itMax)
+        while (!((scarto <= toll) && (finalRes <= tolRes)) && it < itMax)
         {
             rhs_final = rhs;
             SYSMAT_final = SYSMAT;
@@ -2827,22 +2827,32 @@ void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
             PARALLEL::copy(sol, lastSol);
             scarto = evalErrRelV(oldSol.P, sol.P);
             //printf("TIME INNER |SIMPLE| SOLVER: %" format ", scarto: %e\n", endTime-startTime, scarto);
-            // printf("scarto it %d è : %" format_e "\n", it, sol);
+            // printf("scarto inner it %d è : %" format_e "\n", it, scarto);
+            // printf("res inner it %d è : %" format_e "\n", it, finalRes);
 
             PARALLEL::copy(lastSol, oldSol);
             it = it+1;
             if (it == 1) scarto = toll+1;            
         }
         //----------------------------------------------------
-        if (scarto <= toll || finalRes > tolRes) 
+        if (scarto <= toll) // convective term converged || finalRes > tolRes) 
         {
+            if ((deltaT < deltaT_base) && (converged == false)) // rescale the time-step ONCE when the convective term convergence is reached
+            {
+                deltaT /= 0.8; 
+                if (deltaT > deltaT_base)
+                {
+                    deltaT = deltaT_base;
+                } 
+            }
             converged = true;
-            if (deltaT < deltaT_base) deltaT /= convergence_scale_factor; 
-            if (deltaT > deltaT_base) deltaT = deltaT_base;
         }
         else 
         {
             deltaT *= convergence_scale_factor;
+            std::cout << "|NS| Convective Term Not Converged. Trial_deltaT = " << deltaT << "\n";
+            std::cout << "|---> sol_change: " << scarto << "\tchange_toll: " << toll << "\n";
+            std::cout << "|---> residual: " << finalRes << "\tres_toll: " << tolRes << "\n";
             scarto = toll + 1;
             it = 0;
             if (deltaT < deltaT_min) 

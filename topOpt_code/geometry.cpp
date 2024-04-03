@@ -14,8 +14,66 @@ void PHYSICS::initialize()
     //     bounds_elems_v[ibound].print();
     //     bounds_elems_surface_v[ibound].printRowMatlab(std::to_string(ibound));
     // }
-
+    parse_bounds();
     build_centroids_v();
+}
+
+void PHYSICS::parse_bounds()
+{
+    std::string folderPath = name;
+    folderPath = "PREPRO/PROBLEM_DATA/" + folderPath;
+    bound_elems_v_path = folderPath + "/BoundElems_v.txt";
+    bound_nodes_v_path = folderPath + "/BoundNodes_v.txt";
+
+    // BEGIN NODES_V STREAMING
+    std::ifstream bound_nodes_v_stream;
+    bound_nodes_v_stream.open(bound_nodes_v_path);
+    if (!bound_nodes_v_stream.is_open()) throw_line("ERROR, can't open input data file");
+    std::string line;
+    std::istringstream iss;
+
+    VECTOR_INT general_info(2);
+    STREAM::getRowVector(bound_nodes_v_stream, line, iss, general_info);
+    int n_bounds = general_info[1];
+    bound_nodes_v.resize(n_bounds);
+
+    for (int ibound = 0; ibound < n_bounds; ibound++)
+    {
+        VECTOR_INT temp_info(2);
+        STREAM::getRowVector(bound_nodes_v_stream, line, iss, temp_info);
+        int temp_n_nodes = temp_info[1];
+        bound_nodes_v[ibound].initialize(temp_n_nodes);
+        VECTOR_INT temp_bound_nodes(temp_n_nodes);
+        STREAM::getColVector(bound_nodes_v_stream, line, iss, temp_bound_nodes, temp_bound_nodes.length);
+        bound_nodes_v[ibound] = temp_bound_nodes;
+        getline(bound_nodes_v_stream, line);
+    }  
+    bound_nodes_v_stream.close();
+    // CLOSE NODES_V STREAMING
+
+    // BEGIN ELEMS_V STREAMING
+    std::ifstream bound_elems_v_stream;
+    bound_elems_v_stream.open(bound_elems_v_path);
+    if (!bound_elems_v_stream.is_open()) throw_line("ERROR, can't open input data file");
+    // std::string line;
+    // std::istringstream iss;
+
+    getline(bound_elems_v_stream, line); // skip general info
+    bound_elems_v.resize(n_bounds);
+
+    for (int ibound = 0; ibound < n_bounds; ibound++)
+    {
+        VECTOR_INT temp_info(2);
+        STREAM::getRowVector(bound_elems_v_stream, line, iss, temp_info);
+        int temp_n_elem = temp_info[1];
+        bound_elems_v[ibound].initialize(temp_n_elem, dim);
+        MATRIX_INT temp_bound_elems(temp_n_elem, dim);
+        STREAM::getMatrix(bound_elems_v_stream, line, iss, temp_bound_elems);
+        bound_elems_v[ibound] = temp_bound_elems;
+        getline(bound_elems_v_stream, line);
+    } 
+    bound_elems_v_stream.close();
+    // CLOSE ELEMS_V STREAMING   
 }
 
 void PHYSICS::build_bounds_elems_v()
@@ -374,17 +432,24 @@ void PHYSICS::eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VEC
 
 void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS)
 {
+    // suppose the value interpolated in the coord_v
     // value structure: value[component][nodal_value]
     // normals structure: normals[node][component]
+    // WSS structure: WSS[specific_nodal_value]
+    
     if (nodes.length != int(normals.size()))
     {
         throw_line("ERROR: the nodes and the normals for the WSS evaluation are defined in a different number of points\n");
     }
     int n_nodes = nodes.length;
-    std::vector<std::vector<VECTOR>> gradient;
-    eval_gradient(value, gradient);
+    WSS.completeReset(); 
+    WSS.setZeros(nodes.length);
+    std::vector<VECTOR> normal_gradient;
+    eval_directional_gradient(value, nodes, normals, normal_gradient);
     int n_tan = dim-1;
     std::vector<std::vector<VECTOR>> tangent_vectors(n_nodes);
+
+    // build tangent vectors
     for (int inod = 0; inod < n_nodes; inod++)
     {
         tangent_vectors[inod].resize(n_tan);
@@ -401,13 +466,17 @@ void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &no
             }
             case 2: // 3D
             {
+                // first tangent vector
                 tangent_vectors[inod][0].setZeros(dim);
                 tangent_vectors[inod][0][0] = -temp_normal[1];
                 tangent_vectors[inod][0][1] = temp_normal[0];
-                tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
+                prec first_tan_norm = tangent_vectors[inod][0].norm();
+                tangent_vectors[inod][0] /= first_tan_norm;
 
+                // second tangent vector, orthogonal to the first one
                 tangent_vectors[inod][1].setZeros(dim);
-                tangent_vectors[inod][1][0] = -temp_normal[2];
+                tangent_vectors[inod][1][0] = -temp_normal[2] + (temp_normal[1]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
+                tangent_vectors[inod][1][1] = -(temp_normal[0]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
                 tangent_vectors[inod][1][2] = temp_normal[0];
                 tangent_vectors[inod][1] /= tangent_vectors[inod][1].norm();
                 break;
@@ -419,10 +488,38 @@ void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &no
             }
         }
     }
-    // for (int itan = 0; itan < n_tan; itan+++)
-    // {
-    //     for 
-    // }
+
+    // project normal gradient into tangent direction(2D)/plane(3D)
+    for (int inod = 0; inod < n_nodes; inod++)
+    {
+        prec temp_shear_rate_norm = 0;
+        VECTOR nodal_grad(dim);
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            nodal_grad[icomp] = normal_gradient[icomp][inod];
+        } 
+        for (int itan = 0; itan < n_tan; itan++)
+        {
+            prec temp_grad_proj = nodal_grad.dot(tangent_vectors[inod][itan]);
+            temp_shear_rate_norm += temp_grad_proj*temp_grad_proj;
+        }
+        temp_shear_rate_norm = sqrt(temp_shear_rate_norm);
+        WSS[inod] = mu * temp_shear_rate_norm;
+    }
+}
+
+void PHYSICS::eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS)
+{
+    // the function evaluates the WSS in the nodes belonging to a given bound_id, considering as the fixed normal to each of the nodes the provided one
+    // WSS structure : WSS[specific_nodal_value_in_bound_id]
+    VECTOR_INT nodes = bound_nodes_v[bound_id]; 
+    // !! MISSING NODES RECONSTRUCTION !!
+    std::vector<VECTOR> normals(nodes.length);
+    for (int inod = 0; inod < nodes.length; inod++)
+    {
+        normals[inod] = normal;
+    }
+    eval_WSS(value, nodes, normals, WSS);
 }
 
 //--------------------------------------------

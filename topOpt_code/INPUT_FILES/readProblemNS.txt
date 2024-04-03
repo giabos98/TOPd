@@ -1,5 +1,5 @@
 // PROBLEM NAME
-competitive_flow_p_top_finer
+channel_extremely_fine
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -18,7 +18,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.8
 // Time Dependence (not relevant in stationay solution)
 // final time
-0.4
+1
 // time step
 0.1
 // minimum time step
@@ -26,7 +26,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // FLUID PROPERTIES
 1 //  rho
-1  //  mu
+1 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -76,19 +76,19 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-0
+1
 //geomID
-**
+0
+//func
+4*y*[1-y]
 
 // NEUMANN
 //--------
 // # NEUMANN
-3
+1
 // geomID
-2 4 8
+3
 //functs
-300
-300
 0
 
 // DIRICHLET - TIME DEPENDENT

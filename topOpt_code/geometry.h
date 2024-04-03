@@ -56,6 +56,13 @@ class PHYSICS
     MATRIX_INT elem;
     MATRIX Bloc; MATRIX Cloc; MATRIX Dloc;
     VECTOR Volume;
+
+    //--- BOUNDS INFO ---
+    std::string bound_nodes_v_path;
+    std::string bound_elems_v_path;
+    std::vector<VECTOR_INT> bound_nodes_v;
+    std::vector<MATRIX_INT> bound_elems_v;
+
     //Inlet Bound
     int n_inlet_bounds_elems;
     VECTOR_INT inlet_bounds;
@@ -99,6 +106,7 @@ class PHYSICS
     PHYSICS(){};
 
     void initialize();
+    void parse_bounds();
 
     void print();
 
@@ -116,6 +124,7 @@ class PHYSICS
     void eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm);
     void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
     void eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
+    void eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS);
     void eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, VECTOR &dir_gradient);
     void eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient);
 

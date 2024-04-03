@@ -236,6 +236,10 @@ void TOP_OPT::importParameters(std::string inputFile)
     //
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, write_on_velocity_mesh);
+    if (write_on_velocity_mesh == 0)
+    {
+        throw_line("ERROR: not handled mesh print case\n");
+    }
 
     // CLOSE STREAMING
     ParameterFile.close();
@@ -689,14 +693,11 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             prepare_solution_print(U_print, P, U_magnitude, P_print);
             MATRIX U_print_T = U_print.transpose();
 
-            VECTOR_INT nodes; nodes.enumerate(nNodes_v);
-            std::vector<VECTOR> directions(nNodes_v);
-            VECTOR dir(dim); dir[0] = 1.0; dir[1] = 0.0;
-            for (int inod = 0; inod < nNodes_v; inod++)
-            {
-                directions[inod].initialize(2);
-                directions[inod] = dir;
-            }
+            VECTOR WSS;
+            VECTOR normal(dim);
+            normal[0] = 0.0; normal[1] = -1.0;
+            physics.eval_WSS(U_print_T, 1, normal, WSS);
+            WSS.print();
             // std::vector<VECTOR> U_magnitude_gradient;
             // physics.eval_gradient(U_magnitude, U_magnitude_gradient);
             // std::vector<VECTOR> U_dir_gradient;
