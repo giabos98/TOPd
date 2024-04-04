@@ -20,7 +20,6 @@ public:
 
     int funcId = 1;
     bool binPrint;
-    int flagPrint;
     int deltaPrint;
     int minIt;
     int maxIt;
@@ -80,7 +79,8 @@ public:
     // PRINT
     //------------------
     VTK VTKWriter;
-    int write_on_velocity_mesh;
+    int write_on_velocity_mesh = 0;
+    int write_inital_condition = 0;
 
     //------------------
     // STATISTICS
@@ -128,11 +128,11 @@ public:
     void evaluate_U_magnitude(MATRIX &U_print, VECTOR &U_magnitude);
     void get_pressure_in_nodes_v(VECTOR &P, VECTOR &P_print);
     
-    void print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, bool &printNSSol, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid, VECTOR &grad_gamma_norm);
+    void print_optimization_results(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, prec &obj, prec &change, VECTOR &gamma, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid, VECTOR &grad_gamma_norm);
     
     void print_results_in_console(int &loop, prec &obj, prec &change);
 
-    void print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, bool &printNSSol, VECTOR &gamma, VECTOR &grad_gamma_norm);
+    void print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &loop, int &currLoopPrint, VECTOR &gamma, VECTOR &grad_gamma_norm);
     
     void print_for_matlab_interface(int &loop, prec &obj, prec &change, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid);
     

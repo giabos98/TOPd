@@ -1,9 +1,9 @@
 // PROBLEM NAME
-competitive_flow_p_reg0.02
+piezometer_test_finer
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-1
+0
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 1
@@ -25,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1 //  rho
-1 //  mu
+1000 //  rho
+0.001 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -53,16 +53,16 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-0
+4
 // geomID
-**
+4 5 6 7
 
 // SYMMETRY WALLS
 //--------
 // # SYMMETRY PLANES
-0
+2
 // geomID
-**
+1 2
 
 // flagWall: 0 insert all boundID, 1 set to Wall boundIDs not inserted in any BC
 1
@@ -76,19 +76,19 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-0
+1
 //geomID
-**
+0
+//funcID
+0.0005 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-3
+1
 // geomID
-2 4 8
+3
 //functs
-300
-300
 0
 
 // DIRICHLET - TIME DEPENDENT

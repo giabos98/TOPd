@@ -141,7 +141,7 @@ void PHYSICS::eval_solution_times()
     {
         case 1: // stationary solution
         {
-            t_end = 1e16;
+            t_end = 1e10;
             deltaT = t_end;
             deltaT_min = 1e-5;
             solution_times.append(t_end);

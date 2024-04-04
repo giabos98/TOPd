@@ -18,6 +18,7 @@ public:
     int counter = 0;
     int counterPDE = 0;
     int max_opt_it = 0;
+    int opt_initial_cond_rescale = 0;
 
     prec currPrintTime;
     prec deltaT;
@@ -161,7 +162,7 @@ public:
     template <class... Types>
     void write(MATRIX &coord, MATRIX_INT &elems, prec time, Types... args)
     {
-        int curr_it = counter+1;
+        int curr_it = counter + 1 - opt_initial_cond_rescale;
         int delta_len = std::to_string(max_opt_it).length() - std::to_string(curr_it).length();
         std::string count_str = "";
         for (int ichar = 0; ichar < delta_len; ichar++)

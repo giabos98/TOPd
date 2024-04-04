@@ -1048,7 +1048,7 @@ void OPTIMIZER::check_gamma(VECTOR &gamma_value)
     {
         if (std::isnan(gamma_value[i])) 
         {
-            std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + "is NaN\n";
+            std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " is NaN\n";
             throw_line(err); 
         }
         else if (gamma_value[i] < 0)

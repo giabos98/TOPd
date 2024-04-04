@@ -2609,11 +2609,9 @@ void PROBLEM_NS::StatSolverIterative()
     deltaT = (*physics).deltaT; // fixed value defined in the geometry.h time settings method
     time = 0;
     globIter = 0;
-    prec convergence_toll = 1e-2;
-    prec convergence_it = 5;
     while (time < t_end)
     {
-        oneStepSolver(convergence_toll, convergence_it);
+        oneStepSolver();
         if (time+deltaT > t_end) 
         {
             deltaT = t_end-time;
@@ -2683,7 +2681,7 @@ void PROBLEM_NS::oneStepSolverStokes()
     VECTOR rhs_final;
     CSRMAT SYSMAT_final;
     prec finalRes = 0.0;
-    prec scarto = 0.0;
+    // prec scarto = 0.0;
 
     VECTOR oldSol;
     oldSol = lastSol;
@@ -2726,7 +2724,7 @@ void PROBLEM_NS::oneStepSolverStokes()
     }
     // update last sol
     PARALLEL::copy(sol, lastSol);
-    scarto = evalErrRelV(oldSol.P, sol.P);
+    // scarto = evalErrRelV(oldSol.P, sol.P);
     //printf("TIME INNER |SIMPLE| SOLVER: %" format ", scarto: %e\n", endTime-startTime, scarto);
     // printf("scarto it %d è : %" format_e "\n", it, sol);
 
@@ -2734,8 +2732,7 @@ void PROBLEM_NS::oneStepSolverStokes()
 
     endTime = omp_get_wtime();
 
-    printf("|S| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", non-linear toll: %e\n", (globIter+1), trialTime, endTime-startTime, scarto);
-    
+    printf("|NS| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", residual: %e\n", (globIter+1), trialTime, endTime-startTime, finalRes);    
     time = trialTime;
     real_solution_times.append(time);
     prec t_end = (*physics).t_end;  
@@ -2869,7 +2866,7 @@ void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
     }
     endTime = omp_get_wtime();
 
-    printf("|NS| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", non-linear toll: %e\n", (globIter+1), trialTime, endTime-startTime, scarto);
+    printf("|NS| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", non-linear toll: %e, residual: %e\n", (globIter+1), trialTime, endTime-startTime, scarto, finalRes);
     
     time = trialTime;
     real_solution_times.append(time);
