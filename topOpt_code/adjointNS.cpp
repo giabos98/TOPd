@@ -1292,8 +1292,8 @@ void ADJOINT_NS::updateRHS(VECTOR &nsSol)
         }
     }
 
-// std::cout << "alphaL: " << alpha.length << "\tnDof: " << nDof << "\n"; 
-// std::cout << "here\n";
+    // std::cout << "alphaL: " << alpha.length << "\tnDof: " << nDof << "\n"; 
+    // std::cout << "here\n";
     for (int i = 0; i < nNodes_v; i++) 
     {
         if (!(abs(alpha[i]) < 1e16)) 

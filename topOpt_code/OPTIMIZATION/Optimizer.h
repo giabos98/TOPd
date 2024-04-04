@@ -241,6 +241,7 @@ public:
     void decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
     // void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     // void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);
+    void check_gamma(VECTOR &gamma_value);
 
     //------------------------------------------------
     // GOC

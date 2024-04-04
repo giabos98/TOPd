@@ -1042,6 +1042,28 @@ void OPTIMIZER::update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECT
     update_constraints_derivative(dg);
 }
 
+void OPTIMIZER::check_gamma(VECTOR &gamma_value)
+{
+    for (int i = 0; i < gamma_value.length; i++) 
+    {
+        if (std::isnan(gamma_value[i])) 
+        {
+            std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + "is NaN\n";
+            throw_line(err); 
+        }
+        else if (gamma_value[i] < 0)
+        {
+            std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " < 0\n";
+            throw_line(err); 
+        }
+        else if (gamma_value[i] > 1)
+        {
+            std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " > 1\n";
+            throw_line(err); 
+        }
+    }
+}
+
 void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
 {
     obj_functional = 0.0;
@@ -1054,14 +1076,18 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
     d_obj_functional.resetZeros();
 
     gamma = x; // copy the optimzation procedure value in gamma
+    check_gamma(gamma);
 
     topology_optimization_diffusive_filter();
+    check_gamma(gamma_filter);
 
     eval_gamma_acc_and_derivative();
+    check_gamma(gamma_acc);
     // gamma_acc.printRowMatlab("acc");
     // pause();
 
     x = gamma_acc; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
+    check_gamma(x);
 
     MATRIX_INT elem_v((*physics).nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
     VECTOR Volume_v = (*physics).Volume_v;
