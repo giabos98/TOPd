@@ -236,10 +236,10 @@ void TOP_OPT::importParameters(std::string inputFile)
     //
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, write_on_velocity_mesh);
-    if (write_on_velocity_mesh == 0)
-    {
-        throw_line("ERROR: not handled mesh print case\n");
-    }
+    // if (write_on_velocity_mesh == 0)
+    // {
+    //     throw_line("ERROR: not handled mesh print case\n");
+    // }
 
     // CLOSE STREAMING
     ParameterFile.close();
@@ -247,11 +247,11 @@ void TOP_OPT::importParameters(std::string inputFile)
     std::string folderName = NS.name + "/" + name;
     if (write_on_velocity_mesh == 0)
     {
-        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes, (physics).nElem, deltaPrint, binPrint);
+        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes, (physics).nElem, deltaPrint, maxIt, binPrint);
     }
     else if (write_on_velocity_mesh == 1)
     {
-        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes_v, (physics).nElem_v, deltaPrint, binPrint);
+        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes_v, (physics).nElem_v, deltaPrint, maxIt, binPrint);
     }
     else
     {
@@ -261,7 +261,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     fs::copy_file("INPUT_FILES/readProblemNS.txt", "results/" + folderName + "/readProblemNS.txt", fs::copy_options::overwrite_existing);
     fs::copy_file("INPUT_FILES/TopOptInput.txt", "results/" + folderName + "/TopOptInput.txt", fs::copy_options::overwrite_existing);
     
-
     NS.VTKWriter.binWrite = binPrint;
 }
 
@@ -693,21 +692,34 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             prepare_solution_print(U_print, P, U_magnitude, P_print);
             MATRIX U_print_T = U_print.transpose();
 
-            VECTOR WSS;
-            VECTOR normal(dim);
-            normal[0] = 0.0; normal[1] = -1.0;
-            physics.eval_WSS(U_print_T, 1, normal, WSS);
-            WSS.print();
+            // VECTOR WSS;
+            // VECTOR normal(dim);
+            // normal[0] = 0.0; normal[1] = -1.0;
+            // physics.eval_WSS(U_print_T, 1, normal, WSS);
+            // WSS.print();
             // std::vector<VECTOR> U_magnitude_gradient;
             // physics.eval_gradient(U_magnitude, U_magnitude_gradient);
             // std::vector<VECTOR> U_dir_gradient;
             // physics.eval_directional_gradient(U_print_T, nodes, directions, U_dir_gradient);
             // VECTOR U_x_dir_gradient = U_dir_gradient[0];
             
-            //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-            VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
-            // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
-            
+            switch (write_on_velocity_mesh)
+            {
+                case 0: // pressure nodes
+                {
+                    //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
+                    VTKWriter.write(physics.coord, physics.elem, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                    // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
+                    break;
+                }
+                case 1: // velocity nodes
+                {
+                    //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
+                    VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                    // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
+                    break;
+                }
+            }
             currLoopPrint += deltaPrint;
         }
 }

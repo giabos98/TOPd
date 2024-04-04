@@ -17,6 +17,7 @@ public:
     int nPrint;
     int counter = 0;
     int counterPDE = 0;
+    int max_opt_it = 0;
 
     prec currPrintTime;
     prec deltaT;
@@ -48,7 +49,7 @@ public:
         else frmt = "ascii";
     }
     //-------------
-    void initializeForTopOpt(std::string name, int dim_in, int nNodes, int nElems, int deltaPrint, bool bin)
+    void initializeForTopOpt(std::string name, int dim_in, int nNodes, int nElems, int deltaPrint, int maxIt, bool bin)
     {
         nNode = nNodes; nElem = nElems; dim = dim_in;
         path = "results/" + name;
@@ -63,7 +64,7 @@ public:
         else frmt = "ascii";
 
         deltaT = deltaPrint;
-
+        max_opt_it = maxIt;
 
         openTSeriesFile();
         currPrintTime = 1;
@@ -160,7 +161,15 @@ public:
     template <class... Types>
     void write(MATRIX &coord, MATRIX_INT &elems, prec time, Types... args)
     {
-        std::string currFileName = std::to_string(100+counter) + ".vtu";
+        int curr_it = counter+1;
+        int delta_len = std::to_string(max_opt_it).length() - std::to_string(curr_it).length();
+        std::string count_str = "";
+        for (int ichar = 0; ichar < delta_len; ichar++)
+        {
+            count_str += "0";
+        }
+        count_str += std::to_string(curr_it);
+        std::string currFileName = "it" + count_str + ".vtu";
         currFilePath = path + "/" + currFileName;
         std::ofstream file;
         if (binWrite) file.open(currFilePath, std::ios::out | std::ios::binary);
