@@ -1075,19 +1075,34 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
 
     d_obj_functional.resetZeros();
 
-    gamma = x; // copy the optimzation procedure value in gamma
-    check_gamma(gamma);
+    check_gamma(x);
+    if (smooth_gamma_flag == 0)
+    {
+        // copy the optimzation procedure value
+        gamma = x; 
+    }
+    else if (smooth_gamma_flag == 1)
+    {
+        // copy the optimzation procedure value, smoothed between the elems in dom, in gamma
+        (*physics).smooth_between_elements(x, optNodeFromGlobNode, elemInDom, gamma);
+    }
+    else
+    {
+        throw_line("ERROR: invalid smooth gamma flag value\n");
+    }
+    
+    // check_gamma(gamma);
 
     topology_optimization_diffusive_filter();
-    check_gamma(gamma_filter);
+    // check_gamma(gamma_filter);
 
     eval_gamma_acc_and_derivative();
-    check_gamma(gamma_acc);
+    // check_gamma(gamma_acc);
     // gamma_acc.printRowMatlab("acc");
     // pause();
 
     x = gamma_acc; // copy the filtered and projected value of gamma into the optimization procedure (called gammaOpt in TopOpt.cpp)
-    check_gamma(x);
+    
 
     MATRIX_INT elem_v((*physics).nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
     VECTOR Volume_v = (*physics).Volume_v;

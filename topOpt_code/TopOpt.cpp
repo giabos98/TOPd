@@ -207,18 +207,21 @@ void TOP_OPT::importParameters(std::string inputFile)
     
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, enableDiffusionFilter);
+    getline(ParameterFile, line);
+    STREAM::getValue(ParameterFile, line, iss, diffusionRadiusPercentage);
+    getline(ParameterFile, line);
+    STREAM::getValue(ParameterFile, line, iss, diffusionFilterWeight);
+
+    STREAM::getLines(ParameterFile, line, 2);
+    STREAM::getValue(ParameterFile, line, iss, smooth_gamma_between_element);
     if (customFunc == 1)
     {
-        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter, constraints);
+        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter, constraints, smooth_gamma_between_element);
     }
     else
     {
         throw_line("\nERROR: customFunc != 1\n");
     }
-    getline(ParameterFile, line);
-    STREAM::getValue(ParameterFile, line, iss, diffusionRadiusPercentage);
-    getline(ParameterFile, line);
-    STREAM::getValue(ParameterFile, line, iss, diffusionFilterWeight);
     
     //------------------------------
     // READ PRINT INFO

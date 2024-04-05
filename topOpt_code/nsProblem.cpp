@@ -2832,7 +2832,7 @@ void PROBLEM_NS::oneStepSolverNavierStokes(prec toll, int itMax)
             if (it == 1) scarto = toll+1;            
         }
         //----------------------------------------------------
-        if (scarto <= toll) // convective term converged || finalRes > tolRes) 
+        if (scarto <= toll || finalRes > tolRes) 
         {
             if ((deltaT < deltaT_base) && (converged == false)) // rescale the time-step ONCE when the convective term convergence is reached
             {

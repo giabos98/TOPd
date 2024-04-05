@@ -1283,25 +1283,25 @@ void ADJOINT_NS::updateRHS(VECTOR &nsSol)
     // // }
     // // pause();
     // rhs = test_rhs;
-    for (int i = 0; i < nDof; i++) 
-    {
-        if (!(abs(nsSol[i]) < 1e16)) 
-        {
-            std::string err = "\ni:" + std::to_string(i) + "\n";
-            throw_line(err); 
-        }
-    }
+    // for (int i = 0; i < nDof; i++) 
+    // {
+    //     if (!(abs(nsSol[i]) < 1e16)) 
+    //     {
+    //         std::string err = "\ni:" + std::to_string(i) + "\n";
+    //         throw_line(err); 
+    //     }
+    // }
 
     // std::cout << "alphaL: " << alpha.length << "\tnDof: " << nDof << "\n"; 
     // std::cout << "here\n";
-    for (int i = 0; i < nNodes_v; i++) 
-    {
-        if (!(abs(alpha[i]) < 1e16)) 
-        {
-            std::string err = "\ni:" + std::to_string(i) + "\n";
-            throw_line(err); 
-        }
-    }
+    // for (int i = 0; i < nNodes_v; i++) 
+    // {
+    //     if (!(abs(alpha[i]) < 1e16)) 
+    //     {
+    //         std::string err = "\ni:" + std::to_string(i) + "\n";
+    //         throw_line(err); 
+    //     }
+    // }
 
     //--------------------
     for (int icomp = 0; icomp < dim; icomp++)

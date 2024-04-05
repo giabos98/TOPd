@@ -76,6 +76,9 @@ public:
     VECTOR alpha;
     VECTOR dAlpha;
 
+    //smooth gamma using elemental values
+    int smooth_gamma_flag = 0;
+
     // accelerated gamma
     int gamma_acc_case = 0;
     prec gamma_acc_mean_value = 0.5;
@@ -142,7 +145,7 @@ public:
         temp_func_val.setZeros(3);
     }
     //---
-    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case, CONSTRAINTS &constraints_input)
+    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case, CONSTRAINTS &constraints_input, int smooth_gamma_between_element)
     {
         physics = physIn;
         nodeInDom = nodeInDom_In;
@@ -175,6 +178,7 @@ public:
         d_obj_functional.setZeros(nNodes_v);
         alpha.setZeros(nNodes_v);
         dAlpha.setZeros(nNodes_v);
+        smooth_gamma_flag = smooth_gamma_between_element;
         gamma_acc_case = opt_acceleration_case;
         gamma_acc.setZeros(n_nodes_in_dom);
         dgamma_acc.setZeros(n_nodes_in_dom);
@@ -242,7 +246,6 @@ public:
     // void updateVal(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     // void updateJustVal(VECTOR &x, prec &f0, VECTOR &g);
     void check_gamma(VECTOR &gamma_value);
-
     //------------------------------------------------
     // GOC
     //------------------------------------------------

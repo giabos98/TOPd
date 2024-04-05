@@ -185,11 +185,11 @@ void PHYSICS::build_centroids_v()
     }
 }
 
-//eval a quantity on elements
+//eval a quantity on the elements of the velocity mesh
 void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR &element_value)
 {
-    // with 1D schape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
-    // so it is fine to sum the nodal value for each element, and finally divide th ewhole vector by th number of nodes per element
+    // with 1D shape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
+    // so it is fine to sum the nodal value for each element, and finally divide the whole vector by th number of nodes per element
     // value is supposed known in the coord_v mesh
     element_value.completeReset();
     element_value.setZeros(nElem_v);
@@ -199,6 +199,29 @@ void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR &element_value)
         {
             int iglob = elem_v[iel][iloc];
             element_value[iel] += value[iglob];
+        }
+    }
+    prec n_nodes_x_el = (dim+1) * 1.0; // make dim+1 a prec variable to divide it to element_value
+    element_value /= n_nodes_x_el;
+}
+
+//eval a quantity on a given subset 
+void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &element_value)
+{
+    // with 1D shape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
+    // so it is fine to sum the nodal value for each element, and finally divide the whole vector by th number of nodes per element
+    // value is supposed known in the coord_v mesh nodes belonging to the given elements, therefore its length will be the number of different nodes in the given subset of elements
+    // nodesFromNodes_v is used to recall the 'id' of a subset node from its global one
+    element_value.completeReset();
+    element_value.setZeros(elems.length);
+    for (int iel = 0; iel < elems.length; iel++)
+    {
+        int glob_el = elems[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int glob_id = elem_v[glob_el][iloc];
+            int sub_glob_id = nodesFromNodes_v[glob_id];
+            element_value[iel] += value[sub_glob_id];
         }
     }
     prec n_nodes_x_el = (dim+1) * 1.0; // make dim+1 a prec variable to divide it to element_value
@@ -224,6 +247,65 @@ void PHYSICS::eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value)
         }
         centroids_value[iel] /= temp_weights_sum;
     }
+}
+
+// smooth a value between the elements of the velocity mesh
+void PHYSICS::smooth_between_elements(VECTOR &value, VECTOR &smoothed_value)
+{
+    // value is supposed know in all the velocity mesh nodes
+    smoothed_value.completeReset();
+    smoothed_value.setZeros(nNodes_v);
+
+    VECTOR value_on_elems;
+    value_on_elems.setZeros(nElem_v);
+    eval_on_elements_v(value, value_on_elems);
+
+    VECTOR nodal_weights;
+    nodal_weights.setZeros(nNodes_v);
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        prec temp_volume = Volume_v[iel];
+        prec temp_elem_value = value_on_elems[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[iel][iloc];
+            smoothed_value[iglob] += temp_elem_value * temp_volume;
+            nodal_weights[iglob]  += temp_volume;
+        }
+    }
+    smoothed_value *= nodal_weights;
+}
+
+// smooth a value between a given subset of elements of the velocity mesh
+void PHYSICS::smooth_between_elements(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &smoothed_value)
+{
+    // value is supposed known in the coord_v mesh nodes belonging to the given elements, therefore its length will be the number of different nodes in the given subset of elements
+    // nodesFromNodes_v is used to recall the 'id' of a subset node from its global one
+    smoothed_value.completeReset();
+    smoothed_value.setZeros(value.length);
+
+    VECTOR value_on_elems;
+    value_on_elems.setZeros(elems.length);
+    eval_on_elements_v(value, nodesFromNodes_v, elems, value_on_elems);
+    // value_on_elems.printRowMatlab("elems");
+
+    VECTOR nodal_weights;
+    nodal_weights.setZeros(value.length);
+    for (int iel = 0; iel < elems.length; iel++)
+    {
+        int glob_el = elems[iel];
+        prec temp_volume = Volume_v[glob_el];
+        prec temp_elem_value = value_on_elems[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int glob_id = elem_v[glob_el][iloc];
+            int sub_glob_id = nodesFromNodes_v[glob_id];
+            smoothed_value[sub_glob_id] += temp_elem_value * temp_volume;
+            nodal_weights[sub_glob_id]  += temp_volume;
+        }
+    }
+    smoothed_value /= nodal_weights;
+    // smoothed_value.printRowMatlab("smooth");
 }
 
 // static prec get_surface(MATRIX &matCoord, int dim);

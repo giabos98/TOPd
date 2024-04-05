@@ -36,6 +36,7 @@ public:
     prec Vr;
     prec Vol;
     VECTOR alpha;
+    int smooth_gamma_between_element = 0;
 
     //--- PHYSICS PARAMETERS ---
     PHYSICS physics;

@@ -1,25 +1,25 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_p[projectionFilter]_m[meshToPrint]
-test_S_a1e2_p_do
+test_NS_Re[1]_a1e4_opt_smooth
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-2
+3
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-0.0 1.0
+1.0 1.0 1.0
 //n opt subdomains
-1
+3
 // optimization subdomains
-1
+0 1 2
 
 // BRINKMAN PENALIZATION DEFINITION
-// [αmin h=half_domain_thickness] (h = 0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
+// [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1e2
+1e4
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 
@@ -45,7 +45,7 @@ test_S_a1e2_p_do
 // min iter
 0
 // maxIter
-3
+100
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -83,6 +83,9 @@ test_S_a1e2_p_do
 // DIFFUSION FILTER WEIGHT
 0.5
 
+// SMOOTHING BETWEEN ELEMENTS (0: no smooth, 1: smooth)
+1
+
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (0: false, 1: true)
 0
@@ -90,6 +93,6 @@ test_S_a1e2_p_do
 // deltaPrint: print optimization solution after each deltaPrint iterations
 1
 // write on finer mesh (0: pressure mesh, 1: velocity mesh)
-0
+1
 // write initial condition in vtk (0: don't write, 1:write)
 1
