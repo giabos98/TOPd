@@ -115,6 +115,10 @@ class PHYSICS
     void build_bounds_elems_surfaces_v();
     void build_centroids_v();
 
+    void decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
+
+    void eval_mean_solution_over_time(MATRIX &solution_over_times, VECTOR &time_avg_sol);
+
     // static prec get_surface(MATRIX &matCoord, int dim);
     void eval_on_elements_v(VECTOR &value, VECTOR &element_value);
     void eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &element_value);
@@ -128,6 +132,7 @@ class PHYSICS
     void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
     void eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
     void eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS);
+    void eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
     void eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, VECTOR &dir_gradient);
     void eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient);
 
@@ -199,6 +204,11 @@ class CONSTRAINT
     //discretizing constraint
     prec discretization_toll = -1.0;
     prec discretization_res  = -1.0;
+
+    // WSS constraint
+    prec critical_WSS = -1.0;
+    prec actual_WSS = -1.0;
+
     //---------------
     // END PARAMETERS
     //---------------
@@ -246,6 +256,8 @@ class CONSTRAINT
     void initialize_bound_constraint(int constr_type, int bound, prec bound_fraction);
 
     void initialize_discretizing_constraint(int constr_type, prec discretization_tollerance);
+
+    void initialize_WSS_constraint(int constr_type, prec crit_WSS);
     //-----------------
     // END CONSTRUCTORS
     //-----------------
@@ -265,7 +277,7 @@ class CONSTRAINTS
     // PARAMETERS
     //-------------
     int n_constr;
-    int max_constraint_type = 3;
+    int max_constraint_type = 4;
     int max_parameters_length = 2;
     VECTOR_INT types;
     std::vector<CONSTRAINT> list;

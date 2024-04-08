@@ -1,5 +1,5 @@
 // PROBLEM NAME
-brinkman_rect_0.025
+brinkman_rect_0.01
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)

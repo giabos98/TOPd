@@ -922,8 +922,8 @@ void OPTIMIZER::getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, 
 //         MATRIX Ua(dim, nNode_v);
 //         VECTOR Pa(n_node);
 
-//         decompose_solution(temp_NS_sol, U, P);
-//         decompose_solution(temp_ADJ_sol, Ua, Pa);
+//         (*physics).decompose_NS_solution(temp_NS_sol, U, P);
+//         (*physics).decompose_NS_solution(temp_ADJ_sol, Ua, Pa);
 
 //         temp_obj_functional = 0.0;
 //         temp_func_val.resetZeros();
@@ -1161,8 +1161,8 @@ void OPTIMIZER::update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol)
                 // MATRIX Ua(dim, nNode_v);
                 // VECTOR Pa(n_node);
 
-                // decompose_solution(temp_NS_sol, U, P);
-                // decompose_solution(temp_ADJ_sol, Ua, Pa);
+                // (*physics).decompose_NS_solution(temp_NS_sol, U, P);
+                // (*physics).decompose_NS_solution(temp_ADJ_sol, Ua, Pa);
 
                 // temp_obj_functional = 0.0;
                 // temp_func_val.resetZeros();
@@ -1270,6 +1270,10 @@ void OPTIMIZER::update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume
             {
                 update_discretizing_constraint(g, icons, constraints.list[icons], elem_v, Volume_v);
                 break;
+            }
+            case 4:
+            {
+
             }
             default:
             {
@@ -1490,24 +1494,34 @@ void OPTIMIZER::update_edge_size_constraint_derivative(MATRIX &dg, int iconstr, 
     }
 }
 
-void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
+void OPTIMIZER::update_WSS_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr)
 {
-    int nNnodes_v = (*physics).nNodes_v;
-    int nNodes    = (*physics).nNodes;
-    for (int icomp = 0; icomp < dim; icomp++)
-    {
-        int start_v_comp_id = icomp * nNodes_v;
-        for (int inode = 0; inode < nNodes_v; inode++)
-        {
-            U_sol[icomp][inode] = sol[start_v_comp_id + inode];
-        }
-    }
-    int start_p_sol_id = dim*nNnodes_v;
-    for (int inode = 0; inode < nNodes; inode++)
-    {
-        P_sol[inode] = sol[start_p_sol_id + inode];
-    }
+
 }
+
+void OPTIMIZER::update_WSS_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
+{
+
+}
+
+// void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
+// {
+//     int nNnodes_v = (*physics).nNodes_v;
+//     int nNodes    = (*physics).nNodes;
+//     for (int icomp = 0; icomp < dim; icomp++)
+//     {
+//         int start_v_comp_id = icomp * nNodes_v;
+//         for (int inode = 0; inode < nNodes_v; inode++)
+//         {
+//             U_sol[icomp][inode] = sol[start_v_comp_id + inode];
+//         }
+//     }
+//     int start_p_sol_id = dim*nNnodes_v;
+//     for (int inode = 0; inode < nNodes; inode++)
+//     {
+//         P_sol[inode] = sol[start_p_sol_id + inode];
+//     }
+// }
 
 //-------------------------------------------------------
 // GOC
@@ -2540,8 +2554,8 @@ void OPTIMIZER::get_time_functional(int solution_time, MATRIX_INT &elem_v, VECTO
     MATRIX Ua(dim, (*physics).nNodes_v);
     VECTOR Pa((*physics).nNodes);
 
-    decompose_solution(temp_NS_sol, U, P);
-    decompose_solution(temp_ADJ_sol, Ua, Pa);
+    (*physics).decompose_NS_solution(temp_NS_sol, U, P);
+    (*physics).decompose_NS_solution(temp_ADJ_sol, Ua, Pa);
 
     temp_obj_functional = 0.0;
     temp_func_val.resetZeros();
