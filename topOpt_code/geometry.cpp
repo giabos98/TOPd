@@ -177,7 +177,7 @@ void PHYSICS::decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
             U_sol[icomp][inode] = sol[start_v_comp_id + inode];
         }
     }
-    int start_p_sol_id = dim*nNnodes_v;
+    int start_p_sol_id = dim*nNodes_v;
     for (int inode = 0; inode < nNodes; inode++)
     {
         P_sol[inode] = sol[start_p_sol_id + inode];
@@ -188,30 +188,21 @@ void PHYSICS::eval_mean_solution_over_time(MATRIX &solution_over_times, VECTOR &
 {
     time_avg_sol.completeReset();
     time_avg_sol.initialize(solution_over_times.nCol);
-    switch (isStationary)
+    if (isStationary)
     {
-        case 1: // stationary solution
-            {
-                time_avg_sol = solution_over_times.get_row(0);
-                break;
-            }  
-        case 0:
-        {
-            for (int itime = 0; itime < solution_times.length-1; itime++)
-            {
-                VECTOR time_sol_i = solution_over_times.get_row(itime);
-                VECTOR time_sol_j = solution_over_times.get_row(itime+1);
-                VECTOR mean_time_sol = (time_sol_i+time_sol_j) / 2.0;
-                time_avg_sol += mean_time_sol * solution_deltaT[itime];
-            }
-            time_avg_sol /= solution_times.get_last() - solution_times[0];
-        }    
-        default:
-        {
-            throw_line("ERROR: non valid time solution case\n");
-            break;
-        } 
+        time_avg_sol = solution_over_times.get_row(0);
     }
+    else
+    {
+        for (int itime = 0; itime < solution_times.length-1; itime++)
+        {
+            VECTOR time_sol_i = solution_over_times.get_row(itime);
+            VECTOR time_sol_j = solution_over_times.get_row(itime+1);
+            VECTOR mean_time_sol = (time_sol_i+time_sol_j) / 2.0;
+            time_avg_sol += mean_time_sol * solution_deltaT[itime];
+        }
+        time_avg_sol /= solution_times.get_last() - solution_times[0];
+    }    
 }
 
 //build elements centorids
