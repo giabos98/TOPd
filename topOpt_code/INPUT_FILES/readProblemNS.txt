@@ -1,5 +1,5 @@
 // PROBLEM NAME
-brinkman_rect_0.01
+brinkman_rect_0.025
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -79,8 +79,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 1
 //geomID
 0
-//
-10 0
+// functional
+4*[0.25-y*y] 0
 
 // NEUMANN
 //--------

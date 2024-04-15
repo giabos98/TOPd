@@ -115,7 +115,10 @@ class PHYSICS
     void build_bounds_elems_surfaces_v();
     void build_centroids_v();
 
-    void decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol);
+    void invert_sizes(std::vector<VECTOR> &vec, std::vector<VECTOR> &inverted_vec);
+
+    void decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol, int transpose_U = 0);
+    void decompose_NS_solution_over_time(MATRIX &sol, std::vector<MATRIX> &U_sol, std::vector<VECTOR> &P_sol);
 
     void eval_mean_solution_over_time(MATRIX &solution_over_times, VECTOR &time_avg_sol);
 
@@ -207,7 +210,9 @@ class CONSTRAINT
 
     // WSS constraint
     prec critical_WSS = -1.0;
+    int sign = 1; // sign=-1: <, sign=1: >
     prec actual_WSS = -1.0;
+    prec value_WSS = 0.0;
 
     //---------------
     // END PARAMETERS
@@ -257,7 +262,7 @@ class CONSTRAINT
 
     void initialize_discretizing_constraint(int constr_type, prec discretization_tollerance);
 
-    void initialize_WSS_constraint(int constr_type, prec crit_WSS);
+    void initialize_WSS_constraint(int constr_type, prec crit_WSS, int sign_value);
     //-----------------
     // END CONSTRUCTORS
     //-----------------

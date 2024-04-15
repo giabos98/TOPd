@@ -892,6 +892,24 @@ public:
         return res;
     }
 
+    bool check_nan(bool stop = false)
+    {
+        bool there_are_nan = false;
+        for (int i = 0; i < length; i++)
+        {
+            if (std::isnan(P[i]))
+            {
+                std::cout << "\ni: " << i << " is nan";
+                there_are_nan = true;
+            }
+        }
+        if (stop && there_are_nan)
+        {
+            throw_line("ERROR: vector contains not wanted nan values\n");
+        }
+        return there_are_nan;
+    }
+
     //------------------------------------------------------
     // CHECK IF THERE IS AN ELEMENT IN A VECTOR
     //------------------------------------------------------
@@ -1694,5 +1712,14 @@ public:
         length = 0;
     }
     //---
+
+    void complete_reset()
+    {
+        P.reset(); P = 0;
+        length = 0;
+    }
+    //---
+
+
 
 };

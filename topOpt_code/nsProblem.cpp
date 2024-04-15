@@ -2577,7 +2577,6 @@ void PROBLEM_NS::resetPrint(int iter)
     {
         std::string newFolderName = "iter" + std::to_string(iter);
         VTKWriter.resetForNS(newFolderName);
-    
         printRes = true;
     }
 }

@@ -7,8 +7,8 @@ class MATRIX
     public:
     std::shared_ptr<prec*[]> PP = 0;
     std::shared_ptr<prec[]> P = 0;
-    int nRow;
-    int nCol;
+    int nRow = 0;
+    int nCol = 0;
 
     //------------------------------------------------
     // CONSTRUCTORS
@@ -77,6 +77,13 @@ public:
     }
     //---
     void zeros(int nRows, int nCols)
+    {
+        nRow = nRows;
+        nCol = nCols;
+        allocateZero(nRows, nCols, PP, P);
+    }
+    //---
+    void setZeros(int nRows, int nCols)
     {
         nRow = nRows;
         nCol = nCols;
@@ -722,6 +729,26 @@ public:
             }            
         }
         return res;
+    }
+
+    bool check_nan(bool stop = false)
+    {
+        bool there_are_nan = false;
+        for (int i = 0; i < nRow; i++)
+        {
+            VECTOR temp_row = get_row(i);
+            bool there_is_nan = temp_row.check_nan();
+            if (there_is_nan)
+            {
+                std::cout << "\nrow: " << i << " contains a nan\n\n";
+                there_are_nan = there_is_nan;
+            }
+        }
+        if (stop && there_are_nan)
+        {
+            throw_line("ERROR: vector contains not wanted nan values\n");
+        }
+        return there_are_nan;
     }
 
     //--------------------------------------------------------------------------

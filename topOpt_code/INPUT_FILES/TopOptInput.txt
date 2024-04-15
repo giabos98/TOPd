@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha]_[beta2/beta3]_[beta2/beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_r[diffusionRadius]_D[diffusionCoefficient]_p[projectionFilter]_m[meshToPrint]
-test_NS_Re[1]_a1e4_opt_smooth
+test_channel_wss_NS_Re[1]_a1e4_2
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -25,15 +25,17 @@ test_NS_Re[1]_a1e4_opt_smooth
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
-1
+2
 // constraints (id: description [parameters]) 
 // --| 0: max volume fraction [prescribed_volume_fraction]
 // --| 1: max subdomain volume fraction [domain_id, prescribed_volume_fraction]
 // --| 2: max surface size fraction [bound_id, prescribed_surface_fraction]
 // --| 3: inhance discretization of solution [discretization_tollerance]
-0
+// --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
+0 4
 // parameters
-0.3
+0.8
+2 1
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -93,6 +95,6 @@ test_NS_Re[1]_a1e4_opt_smooth
 // deltaPrint: print optimization solution after each deltaPrint iterations
 1
 // write on finer mesh (0: pressure mesh, 1: velocity mesh)
-1
+0
 // write initial condition in vtk (0: don't write, 1:write)
 1

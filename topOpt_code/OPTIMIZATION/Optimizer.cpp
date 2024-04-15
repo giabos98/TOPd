@@ -1273,7 +1273,8 @@ void OPTIMIZER::update_constraints(VECTOR &g, MATRIX_INT &elem_v, VECTOR &Volume
             }
             case 4:
             {
-
+                update_WSS_constraint(g, icons, constraints.list[icons]);
+                break;
             }
             default:
             {
@@ -1496,12 +1497,118 @@ void OPTIMIZER::update_edge_size_constraint_derivative(MATRIX &dg, int iconstr, 
 
 void OPTIMIZER::update_WSS_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr)
 {
+    VECTOR complete_gamma(nNodes_v);
+    complete_gamma.reset(1.0);
+    for (int inod = 0; inod < n_nodes_in_dom; inod++)
+    {
+        int iglob = nodeInDom[inod];
+        complete_gamma[iglob] = gamma[inod];
+    }
+    std::vector<MATRIX> U_sol;
+    std::vector<VECTOR> P_sol;
+    (*physics).decompose_NS_solution_over_time((*physics).NS_solution, U_sol, P_sol);
+    for (int itime = 0; itime < (*physics).solution_times.length; itime++)
+    {
+        bool is_nan = U_sol[itime].check_nan();
+        if (is_nan)
+        {
+            throw_line("ERROR: nan value in NS sol decomposition over time\n");
+        }
+    }
+    std::vector<VECTOR> gamma_gradient;
+    (*physics).eval_gradient(complete_gamma, gamma_gradient);
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        bool is_nan = gamma_gradient[icomp].check_nan();
+        if (is_nan)
+        {
+            std::cout << "comp: " << icomp << "\n";
+            throw_line("ERROR: nan value in gamma gradient comp\n");
+        }
+    }
+    VECTOR gamma_gradient_norm;
+    (*physics).eval_gradient_norm(gamma_gradient, gamma_gradient_norm);
+    bool is_nan = gamma_gradient_norm.check_nan();
+    if (is_nan)
+    {
+        throw_line("ERROR: nan value in gamma gradient norm\n");
+    }
+    std::vector<VECTOR> gamma_grad_as_normals;
+    (*physics).invert_sizes(gamma_gradient, gamma_grad_as_normals);
+    for (int inode = 0; inode < nNodes_v; inode++)
+    {
+        bool is_nan = gamma_grad_as_normals[inode].check_nan();
+        if (is_nan)
+        {
+            std::cout << "node: " << inode << "\n";
+            throw_line("ERROR: nan value in gamma gradient as normal node\n");
+        }
+    }
+    prec gamma_grad_as_weight = 0.0;
+    int n_nodes_x_el = dim+1;
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        prec temp_factor = (*physics).Volume_v[iel] / (n_nodes_x_el * 1.0);
+        for (int inod = 0; inod < n_nodes_x_el; inod++)
+        {
+            int iglob = (*physics).elem_v[iel][inod];
+            gamma_grad_as_weight += gamma_gradient_norm[iglob] * temp_factor;
+        }
+    }
+    if (std::isnan(gamma_grad_as_weight))
+    {
+        throw_line("ERROR: nan value of gamma as weigth\n");
+    }
 
+    // prepare nodes vector for WSS eval
+    VECTOR_INT nodes(nNodes_v);
+    for (int inod = 0; inod < nNodes_v; inod++)
+    {
+        nodes[inod] = inod;
+    }
+
+    // eval constraint value
+    VECTOR WSS(nNodes_v);
+    (*physics).eval_WSS_avg_over_time(U_sol, nodes, gamma_grad_as_normals, WSS); 
+    is_nan = WSS.check_nan();
+    if (is_nan)
+    {
+        throw_line("ERROR: nan value in WSS\n");
+    }
+    prec WSS_integral = 0.0;
+    for (int iel = 0; iel < nElem_v; iel++)
+    {
+        prec temp_factor = (*physics).Volume_v[iel] / (n_nodes_x_el * 1.0);
+        for (int inod = 0; inod < n_nodes_x_el; inod++)
+        {
+            int iglob = (*physics).elem_v[iel][inod];
+            WSS_integral += WSS[iglob] * temp_factor;
+        }
+    }
+    if (std::isnan(WSS_integral))
+    {
+        throw_line("ERROR: nan value of gamma as weigth\n");
+    }
+
+    constr.actual_WSS = WSS_integral;
+    constr.value_WSS = (constr.critical_WSS - constr.actual_WSS) * (constr.sign * 1.0);
+    g[iconstr] = 0; //constr.value_WSS;
 }
 
 void OPTIMIZER::update_WSS_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)
 {
-
+    MATRIX_INT elem_v(nElem_v, dim+1, (*physics).elem_v.PP, (*physics).elem_v.P);
+    VECTOR Volume_v = (*physics).Volume_v;
+    for (int iel = 0; iel < n_elems_in_dom; iel++)
+    {
+        int globEl = elemInDom[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem_v[globEl][iloc];
+            int optNode = optNodeFromGlobNode[iglob];
+            dg[iconstr][optNode] += 0;
+        }
+    }
 }
 
 // void OPTIMIZER::decompose_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
@@ -2055,7 +2162,10 @@ void OPTIMIZER::subsolv(VECTOR &xmma, VECTOR &ymma, prec &zmma, VECTOR &lamma, V
             steg *= 2;
             
         }
-        if (ittt > 198) printf("MMA WARNING: ittt > 198\n");
+        if (ittt > 199*int(constraints.list.size()))
+        {
+            printf("MMA WARNING: ittt > 199*n_constr(%d)\n", 199*int(constraints.list.size()));
+        } 
         epsi *= 0.1;
     }
     xmma   =   x;

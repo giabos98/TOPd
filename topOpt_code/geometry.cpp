@@ -167,8 +167,11 @@ void PHYSICS::eval_solution_times()
     }
 }
 
-void PHYSICS::decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
+void PHYSICS::decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol, int transpose_U)
 {
+    U_sol.complete_reset(); P_sol.complete_reset();
+    U_sol.setZeros(dim, nNodes_v);
+    P_sol.setZeros(nNodes);
     for (int icomp = 0; icomp < dim; icomp++)
     {
         int start_v_comp_id = icomp * nNodes_v;
@@ -181,6 +184,18 @@ void PHYSICS::decompose_NS_solution(VECTOR &sol, MATRIX &U_sol, VECTOR &P_sol)
     for (int inode = 0; inode < nNodes; inode++)
     {
         P_sol[inode] = sol[start_p_sol_id + inode];
+    }
+}
+
+void PHYSICS::decompose_NS_solution_over_time(MATRIX &sol, std::vector<MATRIX> &U_sol, std::vector<VECTOR> &P_sol)
+{
+    int n_times = sol.nRow;
+    U_sol.clear(); P_sol.clear();
+    U_sol.resize(n_times); P_sol.resize(n_times);
+    for (int itime = 0; itime < n_times; itime++)
+    {
+        VECTOR temp_sol = sol.get_row(itime);
+        decompose_NS_solution(temp_sol, U_sol[itime], P_sol[itime]);
     }
 }
 
@@ -384,12 +399,34 @@ prec PHYSICS::get_surface(MATRIX &matCoord, int dim)
     return area;
 }
 
+// invert std::vector<VECTOR> sizes
+void PHYSICS::invert_sizes(std::vector<VECTOR> &vec, std::vector<VECTOR> &inverted_vec)
+{
+    inverted_vec.clear();
+    int n_comp = int(vec.size());
+    int n_val = vec[0].length;
+    inverted_vec.resize(n_val);
+    for (int ival = 0; ival < n_val; ival++)
+    {
+        inverted_vec[ival].setZeros(n_comp);
+    }
+    for (int icomp = 0; icomp < n_comp; icomp++)
+    {
+        for (int ival = 0; ival < n_val; ival++)
+        {
+            inverted_vec[ival][icomp] = vec[icomp][ival];
+        }
+    }
+}
+
 void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method)
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[nodal_value]
     // gradient structure: gradient[derivative_component][nodal_value]
     //eval_method = 0: Lampeato. Other cases not implemented
+    gradient.clear();
+    gradient.resize(dim);
     if (eval_method == 0) // Lampeato
     {
         gradient.resize(dim);
@@ -559,13 +596,22 @@ void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &no
     
     if (nodes.length != int(normals.size()))
     {
-        throw_line("ERROR: the nodes and the normals for the WSS evaluation are defined in a different number of points\n");
+        throw_line("ERROR: the nodes and the normals for the WSS evaluation are defined in a different number of points, or in a uncompatible format\n");
     }
     int n_nodes = nodes.length;
     WSS.completeReset(); 
     WSS.setZeros(nodes.length);
     std::vector<VECTOR> normal_gradient;
     eval_directional_gradient(value, nodes, normals, normal_gradient);
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        bool is_nan = normal_gradient[icomp].check_nan();
+        if (is_nan)
+        {
+            std::cout << "comp: " << icomp << "\n";
+            throw_line("ERROR: nan value eval_directional_gradient for the WSS\n");
+        }
+    }
     int n_tan = dim-1;
     std::vector<std::vector<VECTOR>> tangent_vectors(n_nodes);
 
@@ -574,37 +620,47 @@ void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &no
     {
         tangent_vectors[inod].resize(n_tan);
         VECTOR temp_normal = normals[inod];
-        switch (n_tan)
+        prec temp_normal_norm = temp_normal.norm();
+        for (int itan = 0; itan < n_tan; itan++)
         {
-            case 1: // 2D
+            tangent_vectors[inod][itan].setZeros(dim);
+        }
+        if (temp_normal_norm > 1e-12)
+        {
+            switch (n_tan)
             {
-                tangent_vectors[inod][0].setZeros(dim);
-                tangent_vectors[inod][0][0] = -temp_normal[1];
-                tangent_vectors[inod][0][1] = temp_normal[0];
-                tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
-                break;
-            }
-            case 2: // 3D
-            {
-                // first tangent vector
-                tangent_vectors[inod][0].setZeros(dim);
-                tangent_vectors[inod][0][0] = -temp_normal[1];
-                tangent_vectors[inod][0][1] = temp_normal[0];
-                prec first_tan_norm = tangent_vectors[inod][0].norm();
-                tangent_vectors[inod][0] /= first_tan_norm;
+                case 1: // 2D
+                {
+                    // tangent_vectors[inod][0].setZeros(dim);
 
-                // second tangent vector, orthogonal to the first one
-                tangent_vectors[inod][1].setZeros(dim);
-                tangent_vectors[inod][1][0] = -temp_normal[2] + (temp_normal[1]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
-                tangent_vectors[inod][1][1] = -(temp_normal[0]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
-                tangent_vectors[inod][1][2] = temp_normal[0];
-                tangent_vectors[inod][1] /= tangent_vectors[inod][1].norm();
-                break;
-            }   
-            default:
-            {
-                throw_line("ERROR with dimensions\n");
-                break;
+                    tangent_vectors[inod][0][0] = -temp_normal[1];
+                    tangent_vectors[inod][0][1] = temp_normal[0];
+                    tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
+                    break;
+                }
+                case 2: // 3D
+                {
+                    // tangent_vectors[inod][0].setZeros(dim);
+                    // tangent_vectors[inod][1].setZeros(dim);
+
+                    // first tangent vector
+                    tangent_vectors[inod][0][0] = -temp_normal[1];
+                    tangent_vectors[inod][0][1] = temp_normal[0];
+                    prec first_tan_norm = tangent_vectors[inod][0].norm();
+                    tangent_vectors[inod][0] /= first_tan_norm;
+
+                    // second tangent vector, orthogonal to the first one
+                    tangent_vectors[inod][1][0] = -temp_normal[2] + (temp_normal[1]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
+                    tangent_vectors[inod][1][1] = -(temp_normal[0]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
+                    tangent_vectors[inod][1][2] = temp_normal[0];
+                    tangent_vectors[inod][1] /= tangent_vectors[inod][1].norm();
+                    break;
+                }   
+                default:
+                {
+                    throw_line("ERROR with dimensions\n");
+                    break;
+                }
             }
         }
     }
@@ -645,10 +701,18 @@ void PHYSICS::eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS)
 void PHYSICS::eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS)
 {
     MATRIX WSS_over_times;
+    WSS_over_times.complete_reset();
     for (int itime = 0; itime < int(value.size()); itime++)
     {
+        bool is_nan = value[itime].check_nan(true);
         VECTOR temp_WSS;
         eval_WSS(value[itime], nodes, normals, temp_WSS);
+        is_nan = temp_WSS.check_nan();
+        if (is_nan)
+        {
+            std::cout << "\ntime: " << itime << " contains nan\n\n";
+            throw_line("ERROR in eval_WSS_avg_over_time\n");
+        }
         WSS_over_times.append_row(temp_WSS);
     }
     eval_mean_solution_over_time(WSS_over_times, WSS);
@@ -711,10 +775,16 @@ void CONSTRAINT::initialize_discretizing_constraint(int constr_type, prec discre
     discretization_toll = discretization_tollerance;
 }
 
-void CONSTRAINT::initialize_WSS_constraint(int constr_type, prec crit_WSS)
+void CONSTRAINT::initialize_WSS_constraint(int constr_type, prec crit_WSS, int sign_value)
 {
     initialize(constr_type);
     critical_WSS = crit_WSS;
+    if ((sign_value != -1) && (sign_value != 1))
+    {
+        std::cout << "sign: " << sign_value << "\n";
+        throw_line("ERROR: not valid sign value initializing WSS constraint\n");
+    }
+    sign = sign_value;
 }
 //--------------------------------------------
 // END BASE CONSTRAINT CLASS
@@ -809,7 +879,8 @@ void CONSTRAINTS::build_constraints_list(std::vector<VECTOR> constraints_paramet
             {
                 prec crit_WSS = constraints_parameters[icons][0];
                 CONSTRAINT WSS_constraint;
-                WSS_constraint.initialize_WSS_constraint(type, crit_WSS);
+                int sign_value = int(constraints_parameters[icons][1]);
+                WSS_constraint.initialize_WSS_constraint(type, crit_WSS, sign_value);
                 list[icons] = WSS_constraint;
                 break;
             }

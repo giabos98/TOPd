@@ -89,7 +89,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 3);
     int n_constr;
     STREAM::getValue(ParameterFile, line, iss, n_constr);
-    STREAM::getLines(ParameterFile, line, 5);
+    STREAM::getLines(ParameterFile, line, 6);
     VECTOR_INT constraints_types_list(n_constr);
     STREAM::getRowVector(ParameterFile, line, iss, constraints_types_list);
     std::vector<VECTOR> constraints_parameters(n_constr);
@@ -465,6 +465,7 @@ void TOP_OPT::print_stats(prec totalTime)
 {
     std::cout << "\n   ----------------------------------------------------";
     std::cout << "\n   | TOPOLOGY OPTIMIZATION PROBLEM EXECUTED CORRECTLY |";
+    std::cout << "\n   |---> Name: " << NS.name + " / " + name;
     std::cout << "\n   |---> Import Time: " << import_time;
     std::cout << "\n   |---> Solution Time: " << solution_time;
     std::cout << "\n   |---> Total Time: " << totalTime;
@@ -631,6 +632,20 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
             {
                 prec discratization_res = Optimizer.constraints.list[iconstr].discretization_res;
                 std::cout << "--| DISCRET RES. | res: " << discratization_res << "\n";
+                break;
+            }
+            case 4:
+            {
+                prec WSS = Optimizer.constraints.list[iconstr].actual_WSS;
+                prec crit_WSS = Optimizer.constraints.list[iconstr].critical_WSS;
+                int sign = Optimizer.constraints.list[iconstr].sign;
+                std::string WSS_str = "(>";
+                if (sign == -1)
+                {
+                    WSS_str = "(<";
+                }
+                WSS_str +=  std::to_string(crit_WSS) + ")";
+                std::cout << "--| WSS " << WSS_str << " | WSS: " << WSS << "\n";
                 break;
             }
             default:
