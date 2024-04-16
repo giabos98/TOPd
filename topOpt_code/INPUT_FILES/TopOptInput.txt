@@ -1,19 +1,19 @@
 // OPTIMIZATION PARAMETERS
-// TOP OPT NAME: vel[peak_vel]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_time[stat]_tend[endTime]_[deltaT]__q[q_value]_[normalV]_[optBox]_[parabolicInlet]_f[diffisuveFilterCazse_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-test_channel_wss_NS_Re[1]_a1e4_2
+// TOP OPT NAME: vel[peak_vel]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_f[diffisuveFilterCazse_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
+vel[1]_NS_Re[0.1]_Vr[0.36]_goc_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
-0
+1
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-3
+5
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0
+1.0 1.0 1.0 1.0 1.0
 //n opt subdomains
-3
+1
 // optimization subdomains
-0 1 2
+1
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
@@ -25,17 +25,16 @@ test_channel_wss_NS_Re[1]_a1e4_2
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
-2
+1
 // constraints (id: description [parameters]) 
 // --| 0: max volume fraction [prescribed_volume_fraction]
 // --| 1: max subdomain volume fraction [domain_id, prescribed_volume_fraction]
 // --| 2: max surface size fraction [bound_id, prescribed_surface_fraction]
 // --| 3: inhance discretization of solution [discretization_tollerance]
 // --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
-0 4
+0
 // parameters
-0.8
-2 1
+0.36
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -47,7 +46,7 @@ test_channel_wss_NS_Re[1]_a1e4_2
 // min iter
 0
 // maxIter
-100
+500
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -95,6 +94,6 @@ test_channel_wss_NS_Re[1]_a1e4_2
 // deltaPrint: print optimization solution after each deltaPrint iterations
 1
 // write on finer mesh (0: pressure mesh, 1: velocity mesh)
-0
+1
 // write initial condition in vtk (0: don't write, 1:write)
 1

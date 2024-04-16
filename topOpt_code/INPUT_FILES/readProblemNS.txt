@@ -1,5 +1,5 @@
 // PROBLEM NAME
-brinkman_rect_0.025
+hole_regular_0.01
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -53,9 +53,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-2
+4
 // geomID
-3 6
+5 10 12 19
 
 // SYMMETRY WALLS
 //--------
@@ -76,19 +76,21 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-1
+2
 //geomID
-0
+0 23
 // functional
-4*[0.25-y*y] 0
+1*100*[0.01-y*y] 0
+1*100*[0.01-y*y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-1
+2
 // geomID
-9
+9 13
 //functs
+0
 0
 
 // DIRICHLET - TIME DEPENDENT
