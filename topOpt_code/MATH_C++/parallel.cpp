@@ -1532,7 +1532,6 @@ void PARALLEL::createBlockMatrix(std::vector<std::vector<CSRMAT*>> &refMat, CSRM
                     coefRes[posGlob] = tempCoef[pos];
                     // std::cout << "rowGlob: " << rowGlob << "\tposGlob: " << posGlob << "\n";
                     posGlob++;
-                    
                 }
             }
             rowGlob++;

@@ -201,7 +201,7 @@ void PHYSICS::decompose_NS_solution_over_time(MATRIX &sol, std::vector<MATRIX> &
 
 void PHYSICS::eval_mean_solution_over_time(MATRIX &solution_over_times, VECTOR &time_avg_sol)
 {
-    time_avg_sol.completeReset();
+    time_avg_sol.complete_reset();
     time_avg_sol.initialize(solution_over_times.nCol);
     if (isStationary)
     {
@@ -244,7 +244,7 @@ void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR &element_value)
     // with 1D shape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
     // so it is fine to sum the nodal value for each element, and finally divide the whole vector by th number of nodes per element
     // value is supposed known in the coord_v mesh
-    element_value.completeReset();
+    element_value.complete_reset();
     element_value.setZeros(nElem_v);
     for (int iel = 0; iel < nElem_v; iel++)
     {
@@ -265,7 +265,7 @@ void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VE
     // so it is fine to sum the nodal value for each element, and finally divide the whole vector by th number of nodes per element
     // value is supposed known in the coord_v mesh nodes belonging to the given elements, therefore its length will be the number of different nodes in the given subset of elements
     // nodesFromNodes_v is used to recall the 'id' of a subset node from its global one
-    element_value.completeReset();
+    element_value.complete_reset();
     element_value.setZeros(elems.length);
     for (int iel = 0; iel < elems.length; iel++)
     {
@@ -285,7 +285,7 @@ void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VE
 void PHYSICS::eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value)
 {
     // value is supposed known in the coord_v mesh
-    centroids_value.completeReset();
+    centroids_value.complete_reset();
     centroids_value.setZeros(nElem_v);
     for (int iel = 0; iel < nElem_v; iel++)
     {
@@ -306,7 +306,7 @@ void PHYSICS::eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value)
 void PHYSICS::smooth_between_elements(VECTOR &value, VECTOR &smoothed_value)
 {
     // value is supposed know in all the velocity mesh nodes
-    smoothed_value.completeReset();
+    smoothed_value.complete_reset();
     smoothed_value.setZeros(nNodes_v);
 
     VECTOR value_on_elems;
@@ -334,7 +334,7 @@ void PHYSICS::smooth_between_elements(VECTOR &value, VECTOR_INT &nodesFromNodes_
 {
     // value is supposed known in the coord_v mesh nodes belonging to the given elements, therefore its length will be the number of different nodes in the given subset of elements
     // nodesFromNodes_v is used to recall the 'id' of a subset node from its global one
-    smoothed_value.completeReset();
+    smoothed_value.complete_reset();
     smoothed_value.setZeros(value.length);
 
     VECTOR value_on_elems;
@@ -423,19 +423,19 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[nodal_value]
-    // gradient structure: gradient[derivative_component][nodal_value]
+    // gradient structure: gradient[node][gradient_component]
     //eval_method = 0: Lampeato. Other cases not implemented
+    int n_val = value.length;
     gradient.clear();
-    gradient.resize(dim);
+    gradient.resize(n_val);
     if (eval_method == 0) // Lampeato
     {
-        gradient.resize(dim);
         VECTOR weights; 
         weights.setZeros(nNodes_v);
-        for (int icomp = 0; icomp < dim; icomp++)
+        for (int inod = 0; inod < n_val; inod++)
         {
-            gradient[icomp].completeReset();
-            gradient[icomp].setZeros(value.length);
+            gradient[inod].complete_reset();
+            gradient[inod].setZeros(dim);
         }
         for (int iel = 0; iel < nElem_v; iel++)
         {
@@ -467,7 +467,7 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
                     //     std::cout << "weight: " << temp_weight << "\n";
                     //     std::cout << "INCREMENT: " << element_value * Coef_v[icomp][iel][iloc] * temp_weight << "\n";
                     // }
-                    gradient[icomp][iglob] += element_gradient_value[icomp] * temp_weight;
+                    gradient[iglob][icomp] += element_gradient_value[icomp] * temp_weight;
                     // if ((iglob == 2392))
                     // {
                     //     std::cout << "post-grad: " << gradient[icomp][iglob] << "\n";
@@ -479,15 +479,15 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
         }
         // std::cout << "mid_grad: " << gradient[0][2392] << "\n";
         // pause();
-        for (int icomp = 0; icomp < dim; icomp++)
+        for (int inod = 0; inod < n_val; inod++)
         {
-            for (int iglob = 0; iglob < nNodes_v; iglob++)
+            for (int icomp = 0; icomp < dim; icomp++)
             {
                 // if ((iglob == 2392))
                 // {
                 //     std::cout << "\npre-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
                 // }
-                gradient[icomp][iglob] /= weights[iglob];
+                gradient[inod][icomp] /= weights[inod];
                 // if ((iglob == 2392))
                 // {
                 //     std::cout << "\npost-comp " << icomp << ": " << gradient[icomp][iglob] << "\n";
@@ -502,18 +502,67 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
     }
 }
 
-void PHYSICS::eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient, int eval_method)
+void PHYSICS::eval_gradient(MATRIX &value, std::vector<MATRIX> &gradient, int eval_method)
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[component][nodal_value]
-    // gradient structure: gradient[value_component][derivative_component][nodal_value]
+    // gradient structure: gradient[node][value_component][derivative_component]
     //initialize solution
-    gradient.resize(dim);
+    int n_val = value.nCol;
     int n_comps = value.nRow;
+    gradient.clear();
+    gradient.resize(n_val);
+    for (int inod = 0; inod < n_val; inod++)
+    {
+        gradient[inod].complete_reset();
+    }
+    
     for (int icomp = 0; icomp < n_comps; icomp++)
     {
         VECTOR comp_value = value.get_row(icomp);
-        eval_gradient(comp_value, gradient[icomp], eval_method);
+        std::vector<VECTOR> temp_grad;
+        eval_gradient(comp_value, temp_grad, eval_method);
+        for (int inod = 0; inod < n_val; inod++)
+        {
+            VECTOR temp_nodal_grad = temp_grad[inod];
+            gradient[inod].append_row(temp_nodal_grad);
+        }
+    }
+}
+
+void PHYSICS::eval_divergence(VECTOR &value, VECTOR &divergence)
+{
+    int n_val = value.length;
+    std::vector<VECTOR> gradient;
+    divergence.complete_reset();
+    divergence.setZeros(n_val);
+    eval_gradient(value, gradient);
+    for (int inod = 0; inod < n_val; inod++)
+    {
+        divergence[inod] = gradient[inod].sum_comps();
+    }
+}
+
+void PHYSICS::eval_divergence(MATRIX &value, std::vector<VECTOR> &divergence)
+{
+    int n_val = value.nCol;
+    int n_comps = value.nRow;
+    divergence.resize(n_val);
+    for (int inod = 0; inod < n_val; inod++)
+    {
+        divergence[inod].complete_reset();
+        divergence[inod].setZeros(n_comps);
+    }
+    std::vector<MATRIX> gradient;
+    eval_gradient(value, gradient);
+    for (int inod = 0; inod < n_val; inod++)
+    {
+        MATRIX temp_grad = gradient[inod];
+        for (int icomp = 0; icomp < n_comps; icomp++)
+        {
+            VECTOR temp_comp_grad = temp_grad.get_row(icomp);
+            divergence[inod][icomp] = temp_comp_grad.sum_comps();
+        }
     }
 }
 
@@ -525,7 +574,7 @@ void PHYSICS::eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::v
     // directions structure: directions[specific_node][direction]
     // dir_gradient structure: gradient[specific_nodal_value]
     // N.B.: specific node means it belongs to [0,nodes-length-1]
-    dir_gradient.completeReset();
+    dir_gradient.complete_reset();
     dir_gradient.setZeros(nodes.length);
     std::vector<VECTOR> gradient;
     eval_gradient(value, gradient);
@@ -533,6 +582,7 @@ void PHYSICS::eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::v
     {
         int iglob = nodes[inod];
         VECTOR temp_dir = directions[inod];
+        dir_gradient[inod] = gradient[iglob].dot(directions[inod]);
         for (int icomp = 0; icomp < dim; icomp++)
         {
             dir_gradient[inod] += gradient[icomp][iglob] * temp_dir[icomp];
@@ -546,61 +596,67 @@ void PHYSICS::eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::v
     // value structure: value[component][nodal_value]
     // nodes structure: nodes[specific_node] = global_node
     // directions structure: directions[specific_node][direction]
-    // dir_gradient structure: gradient[value_component][specific_nodal_value]
+    // dir_gradient structure: gradient[node][value_component_derivative]
     // N.B.: specific node means it belongs to [0,nodes-length-1]
-
-    dir_gradient.resize(dim);
     int n_comps = value.nRow;
+    dir_gradient.resize(nodes.length);
+    for (int inod = 0; inod < nodes.length; inod++)
+    {
+        dir_gradient[inod].complete_reset();
+        dir_gradient[inod].setZeros(n_comps);
+    }
     for (int icomp = 0; icomp < n_comps; icomp++)
     {
         VECTOR comp_value = value.get_row(icomp);
-        eval_directional_gradient(comp_value, nodes, directions, dir_gradient[icomp]);
+        VECTOR temp_dir_grad;
+        eval_directional_gradient(comp_value, nodes, directions, temp_dir_grad);
+        for (int inod = 0; inod < nodes.length; inod++)
+        {
+            dir_gradient[inod][icomp] = temp_dir_grad[inod];
+        }
     }
 }
 
 void PHYSICS::eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm)
 {
-    norm.completeReset();
+    norm.complete_reset();
     norm.setZeros(nNodes_v);
     for (int inod = 0; inod < nNodes_v; inod++)
     {
         for (int icomp = 0; icomp < dim; icomp++)
         {
-            norm[inod] += gradient[icomp][inod]*gradient[icomp][inod];
+            norm[inod] += gradient[inod][icomp]*gradient[inod][icomp];
         }
     }
     norm.squared_root();
 }
 
-void PHYSICS::eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm)
+void PHYSICS::eval_gradient_norm(std::vector<MATRIX> &gradient, VECTOR &norm)
 {
-    norm.completeReset();
-    norm.setZeros(nNodes_v);
-    for (int icomp = 0; icomp < dim; icomp++)
+    int n_val = int(gradient.size());
+    norm.complete_reset();
+    norm.setZeros(n_val);
+    for (int inod = 0; inod < n_val; inod++)
     {
-        std::vector<VECTOR> comp_gradient = gradient[icomp];
-        VECTOR comp_norm(nNodes_v);
-        eval_gradient_norm(comp_gradient, comp_norm);
-        comp_norm.power(2);
-        norm += comp_norm;
+        MATRIX nodal_gradient = gradient[inod];
+        norm[inod] = nodal_gradient.normFro();
     }
-    norm.squared_root();
 }
 
-void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS)
+void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, std::vector<VECTOR> &WSS)
 {
     // suppose the value interpolated in the coord_v
     // value structure: value[component][nodal_value]
-    // normals structure: normals[node][component]
-    // WSS structure: WSS[specific_nodal_value]
-    
-    if (nodes.length != int(normals.size()))
+    // normals structure: normals[node][normal_component]
+    // WSS structure: 
+    //                  WSS[0][node] WSS at node
+    //                  WSS[i!=0][node] mu*(grad(U)*normal)*tangent_i ("ith tangential component contributing to WSS")
+    int n_nodes = nodes.length;
+    if (n_nodes != int(normals.size()))
     {
         throw_line("ERROR: the nodes and the normals for the WSS evaluation are defined in a different number of points, or in a uncompatible format\n");
     }
-    int n_nodes = nodes.length;
-    WSS.completeReset(); 
-    WSS.setZeros(nodes.length);
+
     std::vector<VECTOR> normal_gradient;
     eval_directional_gradient(value, nodes, normals, normal_gradient);
     for (int icomp = 0; icomp < dim; icomp++)
@@ -613,78 +669,38 @@ void PHYSICS::eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &no
         }
     }
     int n_tan = dim-1;
-    std::vector<std::vector<VECTOR>> tangent_vectors(n_nodes);
-
+    std::vector<std::vector<VECTOR>> tangent_vectors;
     // build tangent vectors
-    for (int inod = 0; inod < n_nodes; inod++)
+    build_tangents_from_normals(normals, tangent_vectors);
+
+    WSS.clear();
+    WSS.resize(dim);
+    for (int icomp = 0; icomp < dim; icomp++)
     {
-        tangent_vectors[inod].resize(n_tan);
-        VECTOR temp_normal = normals[inod];
-        prec temp_normal_norm = temp_normal.norm();
-        for (int itan = 0; itan < n_tan; itan++)
-        {
-            tangent_vectors[inod][itan].setZeros(dim);
-        }
-        if (temp_normal_norm > 1e-12)
-        {
-            switch (n_tan)
-            {
-                case 1: // 2D
-                {
-                    // tangent_vectors[inod][0].setZeros(dim);
-
-                    tangent_vectors[inod][0][0] = -temp_normal[1];
-                    tangent_vectors[inod][0][1] = temp_normal[0];
-                    tangent_vectors[inod][0] /= tangent_vectors[inod][0].norm();
-                    break;
-                }
-                case 2: // 3D
-                {
-                    // tangent_vectors[inod][0].setZeros(dim);
-                    // tangent_vectors[inod][1].setZeros(dim);
-
-                    // first tangent vector
-                    tangent_vectors[inod][0][0] = -temp_normal[1];
-                    tangent_vectors[inod][0][1] = temp_normal[0];
-                    prec first_tan_norm = tangent_vectors[inod][0].norm();
-                    tangent_vectors[inod][0] /= first_tan_norm;
-
-                    // second tangent vector, orthogonal to the first one
-                    tangent_vectors[inod][1][0] = -temp_normal[2] + (temp_normal[1]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
-                    tangent_vectors[inod][1][1] = -(temp_normal[0]*temp_normal[1]*temp_normal[2])/(first_tan_norm*first_tan_norm);
-                    tangent_vectors[inod][1][2] = temp_normal[0];
-                    tangent_vectors[inod][1] /= tangent_vectors[inod][1].norm();
-                    break;
-                }   
-                default:
-                {
-                    throw_line("ERROR with dimensions\n");
-                    break;
-                }
-            }
-        }
+        WSS[icomp].complete_reset();
+        WSS[icomp].setZeros(n_nodes);
     }
-
     // project normal gradient into tangent direction(2D)/plane(3D)
     for (int inod = 0; inod < n_nodes; inod++)
     {
-        prec temp_shear_rate_norm = 0;
-        VECTOR nodal_grad(dim);
-        for (int icomp = 0; icomp < dim; icomp++)
-        {
-            nodal_grad[icomp] = normal_gradient[icomp][inod];
-        } 
+        VECTOR nodal_grad = normal_gradient[inod]; 
         for (int itan = 0; itan < n_tan; itan++)
         {
-            prec temp_grad_proj = nodal_grad.dot(tangent_vectors[inod][itan]);
-            temp_shear_rate_norm += temp_grad_proj*temp_grad_proj;
-        }
-        temp_shear_rate_norm = sqrt(temp_shear_rate_norm);
-        WSS[inod] = mu * temp_shear_rate_norm;
+            prec temp_grad_proj = mu * nodal_grad.dot(tangent_vectors[inod][itan]); // containts the mu for the WSS
+            WSS[itan+1][inod] = temp_grad_proj*temp_grad_proj;
+        }        
+    }
+    for (int itan = 0; itan < n_tan; itan++)
+    {
+        WSS[0] += WSS[itan+1];
+    }
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        WSS[icomp].squared_root();
     }
 }
 
-void PHYSICS::eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS)
+void PHYSICS::eval_WSS(MATRIX &value, int bound_id, VECTOR normal, std::vector<VECTOR> &WSS)
 {
     // the function evaluates the WSS in the nodes belonging to a given bound_id, considering as the fixed normal to each of the nodes the provided one
     // WSS structure : WSS[specific_nodal_value_in_bound_id]
@@ -698,24 +714,113 @@ void PHYSICS::eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS)
     eval_WSS(value, nodes, normals, WSS);
 }
 
-void PHYSICS::eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS)
+void PHYSICS::eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, std::vector<VECTOR> &WSS)
 {
-    MATRIX WSS_over_times;
-    WSS_over_times.complete_reset();
+    // WSS structure: 
+    //                  WSS[0][node] WSS at node
+    //                  WSS[i!=0][node] (grad(U)*normal)*tangent_i ("ith tangential component contributing to WSS")
+    WSS.clear();
+    WSS.resize(dim);
+    std::vector<MATRIX> WSS_over_times(dim);
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        WSS_over_times[icomp].complete_reset();
+    }
     for (int itime = 0; itime < int(value.size()); itime++)
     {
         bool is_nan = value[itime].check_nan(true);
-        VECTOR temp_WSS;
+        std::vector<VECTOR> temp_WSS;
         eval_WSS(value[itime], nodes, normals, temp_WSS);
-        is_nan = temp_WSS.check_nan();
-        if (is_nan)
+        for (int icomp = 0; icomp < dim; icomp++)
         {
-            std::cout << "\ntime: " << itime << " contains nan\n\n";
-            throw_line("ERROR in eval_WSS_avg_over_time\n");
+            VECTOR WSS_comp = temp_WSS[icomp];
+            is_nan = WSS_comp.check_nan();
+            if (is_nan)
+            {
+                std::cout << "\ntime: " << itime << " contains nan\n\n";
+                throw_line("ERROR in eval_WSS_avg_over_time\n");
+            }
+            WSS_over_times[icomp].append_row(WSS_comp);
         }
-        WSS_over_times.append_row(temp_WSS);
+        
     }
-    eval_mean_solution_over_time(WSS_over_times, WSS);
+
+    // integral average over times
+    for (int icomp = 0; icomp < dim; icomp++)
+    {
+        eval_mean_solution_over_time(WSS_over_times[icomp], WSS[icomp]);
+    } 
+}
+
+void PHYSICS::build_tangents_from_normal(VECTOR &normal, std::vector<VECTOR> &tangent_vectors)
+{
+    // normal structure: normal[component]
+    // tangents structure: tangent_vectors[tangent_id][tangent_component]
+
+    if (normal.length != dim)
+    {
+        throw_line("ERROR: normal has a size different from the dimension\n");
+    }
+    tangent_vectors.clear();
+    int n_tan = dim-1;
+    tangent_vectors.resize(n_tan);
+    for (int icomp = 0; icomp < n_tan; icomp++)
+    {
+        tangent_vectors[icomp].complete_reset();
+        tangent_vectors[icomp].setZeros(dim);
+    }
+    if (normal.norm() > 1e-12)
+    {
+        switch (n_tan)
+        {
+            case 1: // 2D
+            {
+                // tangent_vectors[inod][0].setZeros(dim);
+
+                tangent_vectors[0][0] = -normal[1];
+                tangent_vectors[0][1] = normal[0];
+                // normalize the tangent vector
+                tangent_vectors[0] /= tangent_vectors[0].norm();
+                break;
+            }
+            case 2: // 3D
+            {
+                // first tangent vector
+                tangent_vectors[0][0] = -normal[1];
+                tangent_vectors[0][1] = normal[0];
+                // normalize the tangent vector
+                prec first_tan_norm = tangent_vectors[0].norm();
+                tangent_vectors[0] /= first_tan_norm;
+
+                // second tangent vector, orthogonal to the first one
+                tangent_vectors[1][0] = -normal[2] + (normal[1]*normal[1]*normal[2])/(first_tan_norm*first_tan_norm);
+                tangent_vectors[1][1] = -(normal[0]*normal[1]*normal[2])/(first_tan_norm*first_tan_norm);
+                tangent_vectors[1][2] = normal[0];
+                tangent_vectors[1] /= tangent_vectors[1].norm();
+                break;
+            }   
+            default:
+            {
+                throw_line("ERROR with dimensions and number of tangents\n");
+                break;
+            }
+        }
+    }
+}
+    
+void PHYSICS::build_tangents_from_normals(std::vector<VECTOR> &normals, std::vector<std::vector<VECTOR>> &tangent_vectors)
+{
+    // normals structure: normals[node][component]
+    // tangents structure: tangent_vectors[node][tangent_id][tangent_component]
+
+    int n_nodes = int(normals.size());
+    tangent_vectors.clear();
+    tangent_vectors.resize(n_nodes);
+    for (int inod = 0; inod < n_nodes; inod++)
+    {
+        VECTOR nodal_normal = normals[inod];
+        build_tangents_from_normal(nodal_normal, tangent_vectors[inod]); 
+    }
 }
 //--------------------------------------------
 // END PHYSICS CLASS

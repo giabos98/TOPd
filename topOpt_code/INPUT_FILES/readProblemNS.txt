@@ -1,9 +1,9 @@
 // PROBLEM NAME
-hole_regular_0.01
+channel_3D_extra_coarse
 // DIMENSION (2 or 3)
-2
+3
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-1
+0
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 1
@@ -34,7 +34,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // FORCING:
 0
 0
+0
 // FORCING - TIME DEPENDENT:
+0
 0
 0
 
@@ -55,7 +57,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # INNER
 4
 // geomID
-5 10 12 19
+4 5 9 10
 
 // SYMMETRY WALLS
 //--------
@@ -76,21 +78,19 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+1
 //geomID
-0 23
+6
 // functional
-1*100*[0.01-y*y] 0
-1*100*[0.01-y*y] 0
+0 0 5/3*10/3*10/3*[0.3*0.3-x*x-y*y]
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+1
 // geomID
-9 13
+7
 //functs
-0
 0
 
 // DIRICHLET - TIME DEPENDENT

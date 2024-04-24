@@ -129,15 +129,19 @@ class PHYSICS
     void smooth_between_elements(VECTOR &value, VECTOR &smoothed_value);
     void smooth_between_elements(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &smoothed_value);
     static prec get_surface(MATRIX &matCoord, int dim);
-    void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 prokection method
-    void eval_gradient(MATRIX &value, std::vector<std::vector<VECTOR>> &gradient, int eval_method = 0);// eval method means: gradient L2 prokection method
+    void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
+    void eval_gradient(MATRIX &value, std::vector<MATRIX> &gradient, int eval_method = 0);// eval method means: gradient L2 projection method
+    void eval_divergence(VECTOR &value, VECTOR &divergence);
+    void eval_divergence(MATRIX &value, std::vector<VECTOR> &divergence);
     void eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm);
-    void eval_gradient_norm(std::vector<std::vector<VECTOR>> &gradient, VECTOR &norm);
-    void eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
-    void eval_WSS(MATRIX &value, int bound_id, VECTOR normal, VECTOR &WSS);
-    void eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, VECTOR &WSS);
+    void eval_gradient_norm(std::vector<MATRIX> &gradient, VECTOR &norm);
+    void eval_WSS(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, std::vector<VECTOR> &WSS);
+    void eval_WSS(MATRIX &value, int bound_id, VECTOR normal, std::vector<VECTOR> &WSS);
+    void eval_WSS_avg_over_time(std::vector<MATRIX> &value, VECTOR_INT &nodes, std::vector<VECTOR> &normals, std::vector<VECTOR> &WSS);
     void eval_directional_gradient(VECTOR &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, VECTOR &dir_gradient);
     void eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient);
+    void build_tangents_from_normal(VECTOR &normal, std::vector<VECTOR> &tangent_vectors);
+    void build_tangents_from_normals(std::vector<VECTOR> &normals, std::vector<std::vector<VECTOR>> &tangent_vectors);
 
     static int factorial(int n)
     {

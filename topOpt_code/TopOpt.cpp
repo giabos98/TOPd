@@ -11,7 +11,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     PHYSICS* tempP = &physics;
     NS.initialize(tempP, inputFile, alpha, false);
 
-    printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
+    printf("\n-------\n--| INITIALIZING PHYSICS |-- \n-------\n");
     physics.initialize();
 
     printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
@@ -723,14 +723,16 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             case 0: // pressure nodes
             {
                 //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-                VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                // VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
                 // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
                 break;
             }
             case 1: // velocity nodes
             {
                 //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-                VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
                 // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
                 break;
             }

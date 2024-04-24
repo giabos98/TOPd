@@ -1242,67 +1242,6 @@ void ADJOINT_NS::updateRHS(VECTOR &nsSol)
         }
     }
 
-    // VECTOR test_rhs;
-    // test_rhs.setZeros(vecLength);
-    // prec beta_g  = 2*fWeights[1] + fWeights[2];
-    // prec beta_gt = 2*fWeights[1] - fWeights[2];
-    // for (int iel = 0; iel < nElem_v; iel++)
-    // {
-    //     for (int iloc = 0; iloc < dim+1; iloc++)
-    //     {
-    //         int iglob = elem_v[iel][iloc];
-    //         for (int icomp = 0; icomp < dim; icomp++)
-    //         {
-    //             prec coef_icomp_iloc = (*physics).Coef_v[icomp][iel][iloc];
-    //             int iglob_icomp = iglob + icomp*nNodes_v;
-
-    //             prec temp_value = 0.0;
-    //             for (int jloc = 0; jloc < dim+1; jloc++)
-    //             {
-    //                 int jglob = elem_v[iel][jloc];
-    //                 int jglob_icomp = jglob + icomp*nNodes_v;
-                    
-    //                 prec coef_icomp_jloc = (*physics).Coef_v[icomp][iel][jloc];
-    //                 for (int jcomp = 0; jcomp < dim; jcomp++)
-    //                 {
-    //                     int jglob_jcomp = jglob + jcomp*nNodes_v;
-    //                     prec coef_jcomp_jloc = (*physics).Coef_v[jcomp][iel][jloc];
-
-    //                     temp_value += beta_g  * coef_icomp_jloc * nsSol[jglob_jcomp];
-    //                     temp_value += beta_gt * coef_jcomp_jloc * nsSol[jglob_icomp];
-    //                 }
-    //             }
-    //             test_rhs[iglob_icomp] = coef_icomp_iloc * temp_value * Volume_v[iel];
-    //         }
-    //     }
-    // }
-    // test_rhs *= -1*(*physics).mu;
-    // // for (int i = 0; i < nDof_v; i++)
-    // // {
-    // //     std::cout << rhs[i] << "\t" << test_rhs[i] << "\t" << (rhs[i] == test_rhs[i]) << "\n";
-    // // }
-    // // pause();
-    // rhs = test_rhs;
-    // for (int i = 0; i < nDof; i++) 
-    // {
-    //     if (!(abs(nsSol[i]) < 1e16)) 
-    //     {
-    //         std::string err = "\ni:" + std::to_string(i) + "\n";
-    //         throw_line(err); 
-    //     }
-    // }
-
-    // std::cout << "alphaL: " << alpha.length << "\tnDof: " << nDof << "\n"; 
-    // std::cout << "here\n";
-    // for (int i = 0; i < nNodes_v; i++) 
-    // {
-    //     if (!(abs(alpha[i]) < 1e16)) 
-    //     {
-    //         std::string err = "\ni:" + std::to_string(i) + "\n";
-    //         throw_line(err); 
-    //     }
-    // }
-
     //--------------------
     for (int icomp = 0; icomp < dim; icomp++)
     {

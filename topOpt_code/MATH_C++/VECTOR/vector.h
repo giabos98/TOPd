@@ -448,6 +448,13 @@ public:
         return res;
     }
     //---
+    prec sum_comps()
+    {
+        prec res = 0;
+        for (int i = 0; i < length; i++) res += P[i];
+        return res;
+    }
+    //---
     void sum(std::shared_ptr<prec[]> &inVec, VECTOR &res)
     {
         for (int i = 0; i < length; i++)
