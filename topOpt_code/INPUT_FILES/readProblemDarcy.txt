@@ -1,0 +1,94 @@
+// PROBLEM NAME
+channel_3D_extra_coarse
+// DIMENSION (2 or 3)
+3
+
+// Time Settings
+// stationary flag (0:time_dependent, 1:stationary)
+1
+// convergence scale factor
+0.8
+// Time Dependence (not relevant in stationay solution)
+// final time
+1
+// time step
+0.1
+// minimum time step
+0.00001
+
+// FLUID PROPERTIES
+1 //  rho
+1 //  mu
+
+// MATERIAL PROPERTIES
+// n_domains
+1
+// PERMEABILITY VALUES (must be long as n_domains)
+1000
+
+//FORCING FUNCTIONS
+// flag Forcing: 0 constant, 1 time dependent
+1
+// FORCING:
+0
+0
+0
+// FORCING - TIME DEPENDENT:
+0
+0
+0
+
+// BOUNDARY CONDITIONS
+// flagBC: 0 penalty, 1 lifting functions
+1
+
+// INNER WALLS
+//--------
+// # INNER
+4
+// geomID
+4 5 9 10
+
+// SYMMETRY WALLS
+//--------
+// # SYMMETRY PLANES
+0
+// geomID
+**
+
+// flagNoFlux: 0 insert all boundID, 1 set to NoFlux boundIDs not inserted in any BC
+1
+
+// WALL
+//--------
+// # WALL
+0
+// geomID
+**
+
+// DIRICHLET
+// # DIRICHLET
+1
+//geomID
+6
+// prescribed pressure
+10
+
+// NEUMANN
+//--------
+// # NEUMANN
+1
+// geomID
+7
+// prescribed flux
+0
+
+// DIRICHLET - TIME DEPENDENT
+//--------
+// # DIRICHLET - TIME DEPENDENT
+0
+
+// NEUMANN - TIME DEPENDENT
+//--------
+// # NEUMANN - TIME DEPENDENT
+0
