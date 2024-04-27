@@ -6,8 +6,11 @@ int main()
 {    
     prec startTime = omp_get_wtime();
 
-    std::string inputFileNS = "INPUT_FILES/readProblemNS.txt";
-    TOP_OPT topOpt(inputFileNS);
+    // std::string inputFileNS = "INPUT_FILES/readProblemNS.txt";
+    // TOP_OPT topOpt(inputFileNS);
+    std::string inputFileDARCY = "INPUT_FILES/readProblemDarcy.txt";
+    TOP_OPT topOpt(inputFileDARCY);
+    
 
     //*-*-*--*-*-*-*-*-*-*
     topOpt.solve();

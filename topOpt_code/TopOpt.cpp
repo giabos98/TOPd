@@ -6,17 +6,20 @@ TOP_OPT::TOP_OPT(std::string InputFile)
 {
     prec startTime = omp_get_wtime();
     inputFile = InputFile;
-    printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
-
+    
     PHYSICS* tempP = &physics;
-    NS.initialize(tempP, inputFile, alpha, false);
+
+    // printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
+    // NS.initialize(tempP, inputFile, alpha, false);
+
+    printf("\n-------\n--| INITIALIZING DARCY PROBLEM |--\n-------\n");
+    DARCY.initialize(tempP, inputFile, alpha, false);
 
     printf("\n-------\n--| INITIALIZING PHYSICS |-- \n-------\n");
     physics.initialize();
 
-    printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
-    ADJ.initialize(NS, alpha);
-
+    // printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
+    // ADJ.initialize(NS, alpha);
 
     // initialize TopOpt parameters
     printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");

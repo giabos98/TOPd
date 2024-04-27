@@ -110,7 +110,7 @@ public:
     CSRMAT J;
     
     //- Wall BC --- (priority: 5)
-    int        nWallBound;
+    int        nNoFluxBound;
     VECTOR_INT wallBound;
     VECTOR_INT wallNod; 
     VECTOR_INT wallIdCount;
@@ -199,19 +199,7 @@ public:
         (*physics).dim = dimension;
     }
     //---
-    void initialize(PHYSICS *&Physics, std::string probRefFile, VECTOR &alphaIn, bool print = true)
-    {
-        printRes = print;
-        physics = Physics;
-        importParameters(probRefFile);
-        checkImportParameters();
-        importPREPRO();
-        alphaIn.initialize((*physics).nNodes_v);
-        alpha.length = alphaIn.length;
-        alpha.P = alphaIn.P;
-        if (abs(time) < 1e-16) time = 0;
-        localBasis();
-    }
+    void initialize(PHYSICS *&Physics, std::string probRefFile, VECTOR &alphaIn, bool print = true);
 
     //-----------------------------------------
     // IMPORT PRE-PRO

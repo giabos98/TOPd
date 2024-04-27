@@ -3,6 +3,7 @@
 #include "CODE_HEADERS/codeHeader.h"
 #include "OPTIMIZATION/Optimizer.h"
 #include "problemNSHeader.h"
+#include "problemDarcyHeader.h"
 #include "geometry.h"
 // #include <sys/time.h>
 
@@ -56,6 +57,7 @@ public:
 
     //--- EQUATIONS ---
     PROBLEM_NS NS;
+    PROBLEM_DARCY DARCY;
     ADJOINT_NS ADJ;
     OPTIMIZER Optimizer;
 

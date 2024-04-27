@@ -1,8 +1,26 @@
 #include "CODE_HEADERS/codeHeader.h"
 #include "problemDarcyHeader.h"
 
+
 //----------------------------------------------------
-// NS PROBLEM import parmeters
+// INITIALIZE a DARCY PROBLEM
+//----------------------------------------------------
+void PROBLEM_DARCY::initialize(PHYSICS *&Physics, std::string probRefFile, VECTOR &alphaIn, bool print)
+    {
+        printRes = print;
+        physics = Physics;
+        importParameters(probRefFile);
+        checkImportParameters();
+        importPREPRO();
+        alphaIn.initialize((*physics).nNodes_v);
+        alpha.length = alphaIn.length;
+        alpha.P = alphaIn.P;
+        if (abs(time) < 1e-16) time = 0;
+        localBasis();
+    }
+
+//----------------------------------------------------
+// DARCY PROBLEM import parmeters
 //----------------------------------------------------
 void PROBLEM_DARCY::importParameters(std::string readFile)
 {
@@ -60,7 +78,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, n_domains);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getRowVector(ParameterFile, line, iss, domains_permeability)
+    STREAM::getRowVector(ParameterFile, line, iss, domains_permeability);
 
     STREAM::getLines(ParameterFile, line, 3);
     // flag Forcing
@@ -89,9 +107,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     
     // Inner Walls
     STREAM::getValue(ParameterFile, line, iss, nInnerBound);
-
     getline(ParameterFile, line);
-
     innerBound.initialize(nInnerBound);
     if (nInnerBound == 0) getline(ParameterFile, line);
     else 
@@ -99,14 +115,11 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
         int *tempInnerP = &(innerBound[0]);
         STREAM::getRowVector(ParameterFile, line, iss, tempInnerP, nInnerBound);
     }
-    // if (nInnerBound != 0) getline(ParameterFile, line);
     //-----------------------------------------
     // SYMMETRIES
     STREAM::getLines(ParameterFile, line, 4);
     STREAM::getValue(ParameterFile, line, iss, nSymmBound);
-
     getline(ParameterFile, line);
-
     symmBound.initialize(nSymmBound);
     if (nSymmBound == 0) getline(ParameterFile, line);
     else 
@@ -124,17 +137,17 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 4);
 
     // BOUNDARY CONDITIONS
-    // # Wall boundaries
-    STREAM::getValue(ParameterFile, line, iss, nWallBound);
+    // # No-Flux boundaries
+    STREAM::getValue(ParameterFile, line, iss, nNoFluxBound);
 
     getline(ParameterFile, line);
 
     // Wall boundaries
-    wallBound.initialize(nWallBound);
+    wallBound.initialize(nNoFluxBound);
     int* tempP = &(wallBound.P[0]);
-    STREAM::getRowVector(ParameterFile, line, iss, tempP, nWallBound);
+    STREAM::getRowVector(ParameterFile, line, iss, tempP, nNoFluxBound);
 
-    for (int ibound = 0; ibound < nWallBound; ibound ++)
+    for (int ibound = 0; ibound < nNoFluxBound; ibound ++)
     {
         if (innerBound.hasIn(wallBound[ibound])) throw_line("ERROR: Repeated Inenr Bound ID in Wall bound\n");
         if (symmBound.hasIn(wallBound[ibound])) throw_line("ERROR: Repeated Symmetry Bound ID in Wall bound\n");
@@ -168,7 +181,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     dirFunc.resize(nDirBound);
     for (int ifunc = 0; ifunc < nDirBound; ifunc++) 
     {
-        dirFunc[ifunc].resize(dim);
+        dirFunc[ifunc].resize(1);
         STREAM::getRowVector(ParameterFile, line, iss, dirFunc[ifunc]);
     }
 
@@ -215,7 +228,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     getline(ParameterFile, line);
     for (int ibound = 0; ibound < nDirTimeBound; ibound++)
     {
-        STREAM::getDirTime(ParameterFile, line, iss, dim, dirTimeBound[ibound], nIdDirTimeCases[ibound], dirTimeFunc[ibound]);
+        STREAM::getDirTime(ParameterFile, line, iss, 1, dirTimeBound[ibound], nIdDirTimeCases[ibound], dirTimeFunc[ibound]);
         getline(ParameterFile, line);
     }
 
@@ -266,7 +279,7 @@ void PROBLEM_DARCY::importPREPRO()
     // velocity and pressure ELEMENTS
     // only velocity BOUND INFO
 
-    if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS IMPORT PREPRO |--\n----------\n";
+    if ((*physics).completeLog == 0) std::cout << "\n----------\n--| DARCY IMPORT PREPRO |--\n----------\n";
     std::string folderPath    = name;
     folderPath = "PREPRO/PROBLEM_DATA/" + folderPath;
     std::string NodeFilePath  = folderPath + "/Nodes.txt";
@@ -575,7 +588,7 @@ void PROBLEM_DARCY::setBC()
 {
     if (completeLog < 2) std::cout << "\n----------\n--| SET BC |--\n----------\n";
     // check BC conditions
-    for (int i = 0; i < nWallBound; i++)
+    for (int i = 0; i < nNoFluxBound; i++)
     {
         int bound = wallBound[i];
         if (bound > nBound-1) throw_line("USAGE ERROR: Wall geometry index out of bounds.\n");
@@ -631,8 +644,8 @@ void PROBLEM_DARCY::setBC()
     }
     else if (flagWall == 1)
     {
-        nWallBound = nBound - nDirBound - nNeuBound - nDirTimeBound - nNeuTimeBound - nInnerBound - nSymmBound;
-        wallBound.setZeros(nWallBound);
+        nNoFluxBound = nBound - nDirBound - nNeuBound - nDirTimeBound - nNeuTimeBound - nInnerBound - nSymmBound;
+        wallBound.setZeros(nNoFluxBound);
         int count = 0;
         for (int ibound = 0; ibound < nBound; ibound++)
         {
@@ -680,7 +693,7 @@ void PROBLEM_DARCY::setBC()
     }
     //--- ITERATE ON THE WALL BOUNDARIES ----
     int sum = 0; 
-    for (int iwall = 0; iwall < nWallBound; iwall++)
+    for (int iwall = 0; iwall < nNoFluxBound; iwall++)
     {
         int ibound = wallBound[iwall];
         sum += nBoundIdNodes[ibound];
@@ -688,8 +701,8 @@ void PROBLEM_DARCY::setBC()
     wallNod.initialize(sum); //initialize wallNod with max possible dim
     nWall = 0;
 
-    wallIdCount.initialize(nWallBound);
-    for (int iwall = 0; iwall < nWallBound; iwall++)
+    wallIdCount.initialize(nNoFluxBound);
+    for (int iwall = 0; iwall < nNoFluxBound; iwall++)
     {
         int ibound = wallBound[iwall];
         for (int inode = 0; inode < nBoundIdNodes[ibound]; inode++)
@@ -2605,24 +2618,25 @@ void PROBLEM_DARCY::checkImportParameters()
     std::cout << "\n.-=| PHYSICS PARAMETERS |=-. \n";
     std::cout << " rho: "<< (*physics).rho << "\n";
     std::cout << " mu: " << (*physics).mu << "\n" ;
+    // PHYSICS PARAMETERS
+    std::cout << "\n.-=| PERMEABILITY |=-. \n";
+    std::cout << " n_domains: "<< n_domains << "\n";
+    domains_permeability.printRowMatlab(" Domains Permeability");
     
-    // FORCING & COMPRESSIBILITY
-    std::cout << "\n.-=| FORCING & COMPRESSIBILITY |=-. \n";
+    // FORCING
+    std::cout << "\n.-=| FORCING |=-. \n";
     // forcing
     CUSTOM::printRowStd(statForcing, " STATIC Forcing: ");
     if (flagForcing == 1) CUSTOM::printRowStd(timeForcing, " TIME DEPENDENT Forcing: ");
-    // compressibility G
-    std::cout << " STATIC Compressibility G: " << statG << "\n";
-    if (flagG == 1) std::cout << " TIME DEPENDENT Compressibility G: " << timeG << "\n";
 
     // BOUNDARY CONDITIONS
     std::cout << "\n.-=| BOUNDARY CONDITIONS |=-. \n";
     std::cout << " Flag BC: " << (*physics).flagBC << "\n";
-    std::cout << " Flag Wall: " << flagWall << "\n";
+    std::cout << " Flag No-Flux: " << flagWall << "\n";
     // Wall
-    std::cout << "\n--| WALL:  ";
-    std::cout << "\n # Wall Bound ID: " << nWallBound << "\n";
-    wallBound.printRowMatlab(" Wall Bound ID");
+    std::cout << "\n--| NO-FLUX:  ";
+    std::cout << "\n # NO-FLUX Bound ID: " << nNoFluxBound << "\n";
+    wallBound.printRowMatlab(" NO-FLUX Bound ID");
     // Inner 
     std::cout << "\n--| INNER:  ";
     std::cout << "\n # Inner Bound ID: " << nInnerBound << "\n";
