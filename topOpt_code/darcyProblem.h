@@ -161,7 +161,7 @@ public:
     //- Static Neumann BC --- (priority: 1)
     int        nNeuBound;
     VECTOR_INT neuBound;
-    VECTOR neuMeanP;
+    VECTOR neuMeanFlux;
 
     VECTOR_INT   neuNod;
     VECTOR_INT neuIdCount;
@@ -273,7 +273,7 @@ public:
     //-------------------------------
     // PRINT ONE STEP SOLUTION IN VTK
     //-------------------------------
-    void print_one_step_sol_in_VTK(int dim, int nNodes, int nNodes_v, prec time);
+    void print_one_step_sol_in_VTK(int dim, int nNodes, prec time);
     void print_sol_in_VTK(MATRIX &requested_sol);
     //------------------------------
     // CHECK CORRECT PROBLEM SETTING

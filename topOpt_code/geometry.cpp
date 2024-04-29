@@ -6,16 +6,16 @@
 void PHYSICS::initialize()
 {
     eval_solution_times();
-    build_bounds_elems_v();
-    build_bounds_elems_surfaces_v();
+    // build_bounds_elems_v();
+    // build_bounds_elems_surfaces_v();
 
     // for (int ibound = 0; ibound < nBounds; ibound++)
     // {
     //     bounds_elems_v[ibound].print();
     //     bounds_elems_surface_v[ibound].printRowMatlab(std::to_string(ibound));
     // }
-    parse_bounds();
-    build_centroids_v();
+    // parse_bounds();
+    // build_centroids_v();
 }
 
 void PHYSICS::parse_bounds()

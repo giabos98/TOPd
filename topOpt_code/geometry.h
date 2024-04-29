@@ -54,6 +54,8 @@ class PHYSICS
     int nNodes;
     MATRIX coord;
     MATRIX_INT elem;
+    std::vector<VECTOR> centroids;
+    VECTOR_INT elem_geo_entities_ids;
     MATRIX Bloc; MATRIX Cloc; MATRIX Dloc;
     std::vector<MATRIX> Coef;
     VECTOR Volume;
