@@ -10,24 +10,12 @@ void PROBLEM_DARCY::localBasis()
     std::shared_ptr<int*[]> elem = (*physics).elem.PP;
     (*physics).Volume.initialize(nElem);
     std::shared_ptr<prec[]> Volume = (*physics).Volume.P;
-    // int nElem_v = (*physics).nElem_v;
-    // std::shared_ptr<prec*[]> coord_v = (*physics).coord_v.PP;
-    // std::shared_ptr<int*[]> elem_v = (*physics).elem_v.PP;
-    // (*physics).Volume_v.initialize(nElem_v);
-    // std::shared_ptr<prec[]> Volume_v = (*physics).Volume_v.P;
     
     (*physics).Bloc.initialize(nElem, dim+1);
     std::shared_ptr<prec*[]> Bloc = (*physics).Bloc.PP;
     (*physics).Cloc.initialize(nElem, dim+1);
     std::shared_ptr<prec*[]> Cloc = (*physics).Cloc.PP;
-
-    // VELOCITY
-    // (*physics).Bloc_v.initialize(nElem_v, dim+1);
-    // std::shared_ptr<prec*[]> Bloc_v = (*physics).Bloc_v.PP;
-    // (*physics).Cloc_v.initialize(nElem_v, dim+1);
-    // std::shared_ptr<prec*[]> Cloc_v = (*physics).Cloc_v.PP;
     
-
     switch (dim)
     {
         case 2: // 3 nodes for triangles
@@ -130,5 +118,171 @@ void PROBLEM_DARCY::localBasis()
     }
 }
 
+void PROBLEM_DARCY::assemble() // i: usually refers to rows; j: usually refers to columns
+{
+    std::cout << "\n----------\n--| ASSEMBLE |--\n----------\n";
+    // SYSMAT_DARCY::
+    /*
+       K + M/dT
+    */
+
+   // SYSMAT_DARCY BASE
+   /*
+       K
+   */
+
+    int dim = (*physics).dim;
+    int nElem = (*physics).nElem;
+    int nNodes = (*physics).nNodes;
+    prec mu = (*physics).mu;
+    std::shared_ptr<prec[]> Volume = (*physics).Volume.P;
+    std::shared_ptr<int*[]> elem = (*physics).elem.PP;
+    std::shared_ptr<int[]> elem_domain_id = (*physics).elem_geo_entities_ids.P;
+    std::shared_ptr<prec*[]> Bloc = (*physics).Bloc.PP;
+    std::shared_ptr<prec*[]> Cloc = (*physics).Cloc.PP;
+    std::shared_ptr<prec*[]> Dloc = (*physics).Dloc.PP;
+
+    nEvals = (dim+1)*(dim+1)*nElem;
+    iSparse.initialize(nEvals);
+    jSparse.initialize(nEvals);
+    realPos.initialize(nEvals);
+    
+    std::shared_ptr<prec[]> coefH    = 0; 
+    std::shared_ptr<prec[]> coefM    = 0;
+
+    std::shared_ptr<int[]> i_sparse = VECTOR_INT::makePointer(nEvals);
+    std::shared_ptr<int[]> j_sparse = VECTOR_INT::makePointer(nEvals);
+    coefH     = VECTOR::makePointer(nEvals);
+    coefM     = VECTOR::makePointer(nEvals);
+    
+    switch(dim)
+    {
+        case 2:  //  TWO DIMENSIONAL CASE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!             2D                 
+        {
+            //---
+            int count = 0;
+
+            for (int iel = 0; iel < nElem; iel++) //enter the triangle
+            {
+                int temp_domain_id = elem_domain_id[iel];
+                prec temp_permeability = domains_permeability[temp_domain_id];
+                prec tempHFactor = Volume[iel] * temp_permeability / mu;
+
+                int* tempElem = elem[iel];
+                for (int iloc = 0; iloc < 3; iloc++) // select node i of the triangle
+                {
+                    int iglob = tempElem[iloc];
+                    prec b_i = Bloc[iel][iloc];
+                    prec c_i = Cloc[iel][iloc];
+                    //----------------------------
+                    for (int jloc = 0; jloc < 3; jloc++) // select node j of the triangle
+                    {
+                        int jglob = tempElem[jloc];
+                        
+                        // MASS term
+                        if (iglob == jglob) coefM[count] = Volume[iel]/6;
+                        else coefM[count] = Volume[iel]/12;
+
+                        prec b_j = Bloc[iel][jloc];
+                        prec c_j = Cloc[iel][jloc];
+                        // add DIFFUSION term
+                        coefH[count] = (b_i*b_j + c_i*c_j) * tempHFactor;
+                        i_sparse[count] = iglob; 
+                        j_sparse[count] = jglob; 
+                        count++;
+                    } // end jloc
+                } // end iloc
+            } // end iel
+            //--------------------
+            // BUILD SPARSE MATRIX
+            //--------------------
+            iSparse = i_sparse;
+            jSparse = j_sparse;
+            
+            // build H matrix
+            H.initialize(nNodes, nNodes, count, i_sparse, j_sparse, coefH);
+            nTerms = H.nTerm;
+            #pragma omp parallel for num_threads(PARALLEL::nThread)
+            for (int ieval = 0; ieval < nEvals; ieval++)
+            {
+                realPos[ieval] = H.getPos(iSparse[ieval], jSparse[ieval]);
+            }
+            H.copyPattTo(M);
+
+            // define M matrix
+            M.defineZero(nNodes, nNodes);
+            // #pragma omp parallel for num_threads(PARALLEL::nThread)
+            for (int i = 0; i < nEvals; i++)
+            {
+                int iglob = i_sparse[i]; int jglob = j_sparse[i];
+                M(iglob, jglob) += coefM[i];
+            }
+            break;
+        }
+        case 3:
+        {
+            //---
+            int count = 0;
+            for (int iel = 0; iel < nElem; iel++) //enter the triangle
+            {
+                int temp_domain_id = elem_domain_id[iel];
+                prec temp_permeability = domains_permeability[temp_domain_id];
+                prec tempHFactor = Volume[iel] * temp_permeability / mu;
+
+                int* tempElem = elem[iel];
+                
+                for (int iloc = 0; iloc < 4; iloc++) // select node i of the tetra
+                {
+                    int iglob = tempElem[iloc];
+                    prec b_i = Bloc[iel][iloc];
+                    prec c_i = Cloc[iel][iloc];
+                    prec d_i = Dloc[iel][iloc];
+                    //----------------------------
+                    for (int jloc = 0; jloc < 4; jloc++) // select node j of the tetra
+                    {
+                        int jglob = tempElem[jloc];
+                        
+                        // MASS term
+                        if (iglob == jglob) coefM[count] = Volume[iel]/10;
+                        else coefM[count] = Volume[iel]/20;
+
+                        prec b_j = Bloc[iel][jloc];
+                        prec c_j = Cloc[iel][jloc];
+                        prec d_j = Dloc[iel][jloc];
+                        // add DIFFUSION term
+                        coefH[count] = (b_i*b_j + c_i*c_j + d_i*d_j) * tempHFactor;
+                        i_sparse[count] = iglob; 
+                        j_sparse[count] = jglob; 
+                        count++;
+                    } // end jloc
+                } // end iloc
+            } // end iel
+
+            //--------------------
+            // BUILD SPARSE MATRIX
+            //--------------------
+            iSparse = i_sparse;
+            jSparse = j_sparse;
+            H.initialize(nNodes, nNodes, count, i_sparse, j_sparse, coefH);
+            nTerms = H.nTerm;
+            #pragma omp parallel for num_threads(PARALLEL::nThread)
+            for (int ieval = 0; ieval < nEvals; ieval++)
+            {
+                realPos[ieval] = H.getPos(iSparse[ieval], jSparse[ieval]);
+            }
+            H.copyPattTo(M);
+            M.defineZero(nNodes, nNodes);
+            // #pragma omp parallel for num_threads(PARALLEL::nThread)
+            for (int i = 0; i < nEvals; i++)
+            {
+                int iglob = i_sparse[i]; int jglob = j_sparse[i];
+                M(iglob, jglob) += coefM[i];
+            }
+            break;
+        }
+    }
+    std::cout << "\n assemble done\n";
+    pause();
+}
 
 

@@ -27,6 +27,7 @@ class PHYSICS
     prec rho;
     prec mu;
     prec ni;
+    VECTOR domains_permeability;
 
     //---  SOLVER FLAGS ---
     bool isStationary = true;

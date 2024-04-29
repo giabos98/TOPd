@@ -12,9 +12,6 @@ void PROBLEM_DARCY::initialize(PHYSICS *&Physics, std::string probRefFile, VECTO
         importParameters(probRefFile);
         checkImportParameters();
         importPREPRO();
-        alphaIn.initialize((*physics).nNodes);
-        alpha.length = alphaIn.length;
-        alpha.P = alphaIn.P;
         if (abs(time) < 1e-16) time = 0;
         localBasis();
     }
@@ -78,7 +75,8 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_domains);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getRowVector(ParameterFile, line, iss, domains_permeability);
+    STREAM::getRowVector(ParameterFile, line, iss, (*physics).domains_permeability);
+    domains_permeability = (*physics).domains_permeability;
 
     STREAM::getLines(ParameterFile, line, 3);
     // flag Forcing
@@ -1632,7 +1630,7 @@ void PROBLEM_DARCY::prepareSolver()
 {
     std::cout << "\n PREPARE SOLVER IMPLENTATION TO BE DONE \n";
     pause();
-    // assemble();
+    assemble();
     // applyStatForcing();
     // // prepare BC update in case of lifting functions imposition
     // int dim = (*physics).dim;
