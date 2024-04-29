@@ -107,6 +107,8 @@ public:
     //-------
     void prepareNS();
     void solveNS();
+    void prepareDarcy();
+    void solveDarcy();
     void prepareADJ();
     void solveADJ();
     void handle_optimization_domain();

@@ -55,6 +55,7 @@ class PHYSICS
     MATRIX coord;
     MATRIX_INT elem;
     MATRIX Bloc; MATRIX Cloc; MATRIX Dloc;
+    std::vector<MATRIX> Coef;
     VECTOR Volume;
 
     //--- BOUNDS INFO ---
@@ -87,6 +88,7 @@ class PHYSICS
     // PDE solution matrices for the current iteration
     MATRIX NS_solution;
     MATRIX ADJ_solution;
+    MATRIX Darcy_solution;
 
     VECTOR total_energy;
     MATRIX fluid_energy; //kinetic energy - pressure energy

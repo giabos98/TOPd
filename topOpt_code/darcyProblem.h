@@ -59,7 +59,7 @@ public:
     //--------------------------------------------------------------
     //BOUNDARY CONDITIONS
     //--------------------------------------------------------------
-    int flagWall;
+    int flagNoFlux;
     bool statBCAlreadyApplied = false;
     //---- BOUND INFORMATIONS ---- ALL WITH REFERENCE TO THE VELOCITY MESH
     int nBoundNodes; //# of total boundary nodes
@@ -109,14 +109,14 @@ public:
     VECTOR_INT symmBound;
     CSRMAT J;
     
-    //- Wall BC --- (priority: 5)
+    //- NoFlux BC --- (priority: 5)
     int        nNoFluxBound;
-    VECTOR_INT wallBound;
-    VECTOR_INT wallNod; 
-    VECTOR_INT wallIdCount;
-    int  nWall;
+    VECTOR_INT noFluxBound;
+    VECTOR_INT noFluxNod; 
+    VECTOR_INT noFluxIdCount;
+    int  nNoFlux;
 
-    VECTOR_INT wallPosToZero; VECTOR_INT wallPosToOne;
+    VECTOR_INT noFluxPosToZero; VECTOR_INT noFluxPosToOne;
 
     //- Temporal Dirichlet BC --- (priority: 4)
     int        nDirTimeBound;

@@ -18,18 +18,6 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     printf("\n-------\n--| INITIALIZING PHYSICS |-- \n-------\n");
     physics.initialize();
 
-    // printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
-    // ADJ.initialize(NS, alpha);
-
-    // initialize TopOpt parameters
-    printf("\n-------\n-| INITIALIZING TOP OPT PROBLEM |--\n-------\n");
-    importParameters("INPUT_FILES/TopOptInput.txt");
-    if (enableDiffusionFilter > 0) 
-    {
-        Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
-        //diffusionFilter.printNeighbourhood();
-    }
-    
     prec endTime = omp_get_wtime();
     import_time = endTime - startTime;
 }
@@ -315,6 +303,32 @@ void TOP_OPT::prepareNS() // prepare NS solver
 }
 //---
 void TOP_OPT::solveNS() // NS solver
+{
+    printf("\n-------\n-| NAVIER-STOKES SOLVER |--\n-------\n\n");
+    if (physics.isStationary == 1)
+    {
+        NS.StatSolverIterative();
+    } 
+    else 
+    {
+        NS.Solver();
+    }
+    lastSolNS = physics.NS_solution.get_row(physics.solution_times.length-1);
+}
+
+//-----------------------
+// DARCY SOLVER
+//-----------------------
+void TOP_OPT::prepareDarcy() // prepare Darcy solver
+{
+    printf("\n-------\n-| PREPARE DARCY |--\n-------\n");
+    DARCY.setBC();
+    DARCY.prepareSolver();
+    physics.Darcy_solution.complete_reset();
+    physics.Darcy_solution.initialize(physics.solution_times.length, physics.nDof);
+}
+//---
+void TOP_OPT::solveDarcy() // Darcy solver
 {
     printf("\n-------\n-| NAVIER-STOKES SOLVER |--\n-------\n\n");
     if (physics.isStationary == 1)
@@ -1045,164 +1059,23 @@ void TOP_OPT::solve()
     std::cout << "\n----------| GEOMETRIC CONFIGURATION: ";
     std::cout << "\n-------------| dimension: " << physics.dim;
     std::cout << "\n-------------| n° nodes: " << physics.nNodes;
-    std::cout << "\n-------------| n° velocity nodes: " << physics.nNodes_v;
     std::cout << "\n-------------| n° elements: " << physics.nElem;
-    std::cout << "\n-------------| n° velocity elements: " << physics.nElem_v;
     std::cout << "\n-------------| n° d.o.f.: " << physics.nDof;
     std::cout << "\n----------| PARALLEL CONFIGURATION: " << PARALLEL::nThread << " threads\n\n";
     //------------------------------
 
-    int nNodes_v = physics.nNodes_v;
-    int nNodes = physics.nNodes;
-    int dim = physics.dim;
+    int loop = 0;
     
-    //---------------------
-    // Preapre TopOpt
-    int loop  = 0;
-    prec change = change_toll + 1;
-    prec obj = 1000;
-    int currLoopPrint = 1;
-    if (write_inital_condition == 1)
-    {
-        currLoopPrint = 0; // loop(=0) != currLoopPrint(=1)
-        VTKWriter.opt_initial_cond_rescale = 1;
-    }
-    bool feasible = false;
-    
-    // Prepare Physics Solver
-    prepareNS();
-    // Prepare Adjoint Solver
-    prepareADJ();
-
-    // Prepare Gamma
-    VECTOR gamma;
-    gamma.setZeros(nNodes_v);
-    gamma += 1;
-    VECTOR gammaNew;
-    VECTOR gammaOpt(nNodeInDom);
-    handle_gamma_initial_condition(gammaOpt, gamma);
-    gammaNew = gamma;
-    MATRIX grad_gamma(nNodes_v, dim);
-    VECTOR grad_gamma_norm;
-    grad_gamma_norm.setZeros(nNodes_v);
-    VECTOR grad_gamma_opt_norm(nNodeInDom);
-    VECTOR gamma_print = (gamma-1.0)*(-1.0);
-
-    // Print Initial Conditions
-    print_results_in_vtk(nNodes_v, dim, nNodes, loop, currLoopPrint, gamma_print, grad_gamma_norm);
-
-    MATRIX U(dim, nNodes_v);
-    MATRIX Ua(dim, nNodes_v);
-
-    MATRIX funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    MATRIX no_weights_funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    VECTOR changes;
-    VECTOR_INT valid;
-
-    temp_fluid_energy.setZeros(2);
-
-    //UNTILL GAMMA CONVERGENCE DO:
-    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
-    {
-        loop++;
-        //-------------------------------
-        // UPDATE ALPHA GIVEN GAMMA
-        //-------------------------------
-        prec factor = q*(alpha_max - alpha_min);
-        for (int inod = 0; inod < nNodes_v; inod++)
-        {
-            alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
-        }
-        // alpha.printRowMatlab("alpha");
-        // pause();
-
-        // SOLVE NS
-        NS.resetPrint(loop);
-
-        prec startNStime = omp_get_wtime();
-        solveNS();
-        prec endNStime = omp_get_wtime();
-        std::cout << "|PHYSICS| TOTAL SOLUTION TIME: " << endNStime-startNStime << "\n";
-
-        // SOLVE ADJOINT
-        ADJ.resetPrint(loop);
-        prec startADJtime = omp_get_wtime();
-        solveADJ();
-        prec endADJtime = omp_get_wtime();
-        std::cout << "|ADJOINT| TOTAL SOLUTION TIME: " << endADJtime-startADJtime << "\n";
-
-        // if (NS.completeLog < 2) printf("\n-------\n-| OPTIMIZER UPDATE PARAMETERS |--\n-------\n");
-        // Optimizer.updateSol(NS.globIter);
-
-        printf("\n-------\n-| OPTIMIZER SOLVER |--\n-------\n");
-
-        switch (optimization_scheme)
-        {
-            case 0: // MMA
-            {
-                Optimizer.solveMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-            case 1: // GOC
-            {
-                Optimizer.solveGOC(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-            case 2: // GCMMA
-            {
-                Optimizer.solveGCMMA(gammaOpt, Vol, obj); // the filterd and projected value of gamma is saved in the optimized solution in the updateVal method
-                break;
-            }
-        }
-        
-        save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
-
-        change = (gamma-gammaNew).norm() / gamma.norm();
-        physics.gamma_change = change;
-        changes.append(change);
-        gamma = gammaNew;
-        gamma_print = (gamma-1.0)*(-1.0);
-        prec vol_fract = Vol / V0;
-        if (vol_fract <= Vr)
-        {
-            feasible = true;
-            valid.append(1);
-        }
-        else
-        {
-            feasible = false;
-            valid.append(0);
-        }
-        physics.Vol = Vol;
-        physics.vol_fract = vol_fract;
-        physics.gamma_max = gamma.max();
-
-        // if (enableDiffusionFilter > 0)
-        // {
-        //     eval_gamma_gradient_norm_with_filter(gammaOpt, grad_gamma_opt_norm);
-        // }
-        // save_gammaOpt_in_gammaFull(grad_gamma_opt_norm, grad_gamma_norm);
-
-        std::vector<VECTOR> gamma_gradient;
-        physics.eval_gradient(gamma_print, gamma_gradient);
-        VECTOR gamma_gradient_norm;
-        physics.eval_gradient_norm(gamma_gradient, gamma_gradient_norm);
-    
-        print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, gamma_print, feasible, funcValues, no_weights_funcValues, changes, valid, gamma_gradient_norm);
-        // pause();
-    }
-
-    // -----------------------------------
-    // EXPORT OPTIMIZAED GEOMETRY NODES
-    // -----------------------------------
-    prec gammaMinOptMesh = 0.85; // minimum value of gamma to save node coords in the optimized mesh
-    MATRIX_INT optElem(physics.nElem_v, dim + 1);
-    exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
-    VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
-    // VTKWriter.closeTFile();
+    prepareDarcy();
+    loop++;
+    DARCY.resetPrint(loop);
+    std::cout << "\n Start Solution \n";
+    pause();
+    solveDarcy();
+    std::cout << "\n Darcy Solved \n";
+    pause();
 
     prec endTime = omp_get_wtime();
-
     solution_time = endTime - startTime;
 }
 //-------------------------

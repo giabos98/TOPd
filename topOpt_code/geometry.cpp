@@ -220,7 +220,7 @@ void PHYSICS::eval_mean_solution_over_time(MATRIX &solution_over_times, VECTOR &
     }    
 }
 
-//build elements centorids
+//build elements centroids
 void PHYSICS::build_centroids_v()
 {
     centroids_v.resize(nElem_v);

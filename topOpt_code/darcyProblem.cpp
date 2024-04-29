@@ -75,7 +75,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     (*physics).ni = (*physics).mu/(*physics).rho;
 
     // MATERIAL PROPERTIES: permeability
-    STREAM::getLines(ParameterFile, line, 2);
+    STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_domains);
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getRowVector(ParameterFile, line, iss, domains_permeability);
@@ -130,9 +130,9 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
 
     STREAM::getLines(ParameterFile, line, 2);
 
-    // flag Wall    
-    STREAM::getValue(ParameterFile, line, iss, flagWall);
-    if (flagWall != 0 && flagWall != 1) throw_line("ERROR: flagWall different from 0 or 1\n"); 
+    // flag noFlux    
+    STREAM::getValue(ParameterFile, line, iss, flagNoFlux);
+    if (flagNoFlux != 0 && flagNoFlux != 1) throw_line("ERROR: flagNoFlux different from 0 or 1\n"); 
 
     STREAM::getLines(ParameterFile, line, 4);
 
@@ -142,15 +142,15 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
 
     getline(ParameterFile, line);
 
-    // Wall boundaries
-    wallBound.initialize(nNoFluxBound);
-    int* tempP = &(wallBound.P[0]);
+    // noFlux boundaries
+    noFluxBound.initialize(nNoFluxBound);
+    int* tempP = &(noFluxBound.P[0]);
     STREAM::getRowVector(ParameterFile, line, iss, tempP, nNoFluxBound);
 
     for (int ibound = 0; ibound < nNoFluxBound; ibound ++)
     {
-        if (innerBound.hasIn(wallBound[ibound])) throw_line("ERROR: Repeated Inenr Bound ID in Wall bound\n");
-        if (symmBound.hasIn(wallBound[ibound])) throw_line("ERROR: Repeated Symmetry Bound ID in Wall bound\n");
+        if (innerBound.hasIn(noFluxBound[ibound])) throw_line("ERROR: Repeated Inenr Bound ID in noFlux bound\n");
+        if (symmBound.hasIn(noFluxBound[ibound])) throw_line("ERROR: Repeated Symmetry Bound ID in noFlux bound\n");
     }
 
     STREAM::getLines(ParameterFile, line, 3);
@@ -171,7 +171,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     if (nDirBound != 0) getline(ParameterFile, line);
     for (int ibound = 0; ibound < nDirBound; ibound ++)
     {
-        if (wallBound.hasIn(dirBound[ibound])) throw_line("ERROR: Repeated Wall Bound ID in Static Dirichlet\n");
+        if (noFluxBound.hasIn(dirBound[ibound])) throw_line("ERROR: Repeated noFlux Bound ID in Static Dirichlet\n");
         if (innerBound.hasIn(dirBound[ibound])) throw_line("ERROR: Repeated Inner Bound ID in Static Dirichlet\n");
         if (symmBound.hasIn(dirBound[ibound])) throw_line("ERROR: Repeated Symmetry Bound ID in Static Dirichlet\n");
     }
@@ -201,7 +201,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     } else getline(ParameterFile, line);
     for (int ibound = 0; ibound < nNeuBound; ibound ++)
     {
-        if (wallBound.hasIn(neuBound[ibound])) throw_line("ERROR: Repeated Wall Bound ID in Static Neumann\n");
+        if (noFluxBound.hasIn(neuBound[ibound])) throw_line("ERROR: Repeated noFlux Bound ID in Static Neumann\n");
         if (dirBound.hasIn(neuBound[ibound])) throw_line("ERROR: Repeated Static Dirichlet Bound ID in Static Neumann\n");
         if (innerBound.hasIn(neuBound[ibound])) throw_line("ERROR: Repeated Inner Bound ID in Static Neumann\n");
         if (symmBound.hasIn(neuBound[ibound])) throw_line("ERROR: Repeated Symmetry Bound ID in Static Neumann\n");
@@ -234,7 +234,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
 
     for (int ibound = 0; ibound < nDirTimeBound; ibound ++)
     {
-        if (wallBound.hasIn(dirTimeBound[ibound])) throw_line("ERROR: Repeated Wall Bound ID in Time Dependent Dirichlet\n");
+        if (noFluxBound.hasIn(dirTimeBound[ibound])) throw_line("ERROR: Repeated noFlux Bound ID in Time Dependent Dirichlet\n");
         if (dirBound.hasIn(dirTimeBound[ibound])) throw_line("ERROR: Repeated Static Dirichlet Bound ID in Time Dependent Dirichlet\n");
         if (neuBound.hasIn(dirTimeBound[ibound])) throw_line("ERROR: Repeated Static Neumann Bound ID in Time Dependent Dirichlet\n");
         if (innerBound.hasIn(dirTimeBound[ibound])) throw_line("ERROR: Repeated Inner Bound ID in Time Dependent Dirichlet\n");
@@ -257,7 +257,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
 
     for (int ibound = 0; ibound < nNeuTimeBound; ibound ++)
     {
-        if (wallBound.hasIn(neuTimeBound[ibound])) throw_line("ERROR: Repeated Wall Bound ID in Time Dependent Neumann\n");
+        if (noFluxBound.hasIn(neuTimeBound[ibound])) throw_line("ERROR: Repeated noFlux Bound ID in Time Dependent Neumann\n");
         if (dirBound.hasIn(neuTimeBound[ibound])) throw_line("ERROR: Repeated Static Dirichlet Bound ID in Time Dependent Neumann\n");
         if (neuBound.hasIn(neuTimeBound[ibound])) throw_line("ERROR: Repeated Static Neumann Bound ID in Time Dependent Neumann\n");
         if (dirTimeBound.hasIn(neuTimeBound[ibound])) throw_line("ERROR: Repeated Time Dependent Dirichlet Bound ID in Time Dependent Neumann\n");
@@ -313,7 +313,7 @@ void PROBLEM_DARCY::importPREPRO()
     STREAM::getValue(NodeFile_v, line, iss, (*physics).nNodes_v);
     int dim = (*physics).dim;
     int nNodes_v = (*physics).nNodes_v;
-    (*physics).nDof = dim * nNodes_v + (*physics).nNodes;
+    (*physics).nDof = dim * (*physics).nNodes;
     // choose number of thread dependding on the size of the problem
     unsigned int maxNumThreads = std::thread::hardware_concurrency();
     if ((1e5 <= (*physics).nDof) && ((*physics).nDof < 5e5))
@@ -586,12 +586,14 @@ void PROBLEM_DARCY::importPREPRO()
 
 void PROBLEM_DARCY::setBC()
 {
+    std::cout << "\n Setting Darcy BC\n";
+    pause();
     if (completeLog < 2) std::cout << "\n----------\n--| SET BC |--\n----------\n";
     // check BC conditions
     for (int i = 0; i < nNoFluxBound; i++)
     {
-        int bound = wallBound[i];
-        if (bound > nBound-1) throw_line("USAGE ERROR: Wall geometry index out of bounds.\n");
+        int bound = noFluxBound[i];
+        if (bound > nBound-1) throw_line("USAGE ERROR: noFlux geometry index out of bounds.\n");
     }
     for (int i = 0; i < nDirTimeBound; i++)
     {
@@ -627,11 +629,11 @@ void PROBLEM_DARCY::setBC()
     //-----------------------------------------------
     // CHECK THAT ALL BOUNDARY IDs HAVE BEEN DEFINED
     //-----------------------------------------------
-    if (flagWall == 0)
+    if (flagNoFlux == 0)
     {
         for (int ibound = 0; ibound < nBound; ibound++)
         {
-            if (wallBound.hasIn(ibound)) continue;
+            if (noFluxBound.hasIn(ibound)) continue;
             if (dirBound.hasIn(ibound)) continue;
             if (neuBound.hasIn(ibound)) continue;
             if (dirTimeBound.hasIn(ibound)) continue;
@@ -642,10 +644,10 @@ void PROBLEM_DARCY::setBC()
             throw_line(errormsg);
         }
     }
-    else if (flagWall == 1)
+    else if (flagNoFlux == 1)
     {
         nNoFluxBound = nBound - nDirBound - nNeuBound - nDirTimeBound - nNeuTimeBound - nInnerBound - nSymmBound;
-        wallBound.setZeros(nNoFluxBound);
+        noFluxBound.setZeros(nNoFluxBound);
         int count = 0;
         for (int ibound = 0; ibound < nBound; ibound++)
         {
@@ -673,14 +675,16 @@ void PROBLEM_DARCY::setBC()
             {
                 continue;
             }
-            wallBound[count] = ibound;
+            noFluxBound[count] = ibound;
             count++;
         }
     }
+    std::cout << "\n 1\n";
+    pause();
     
     // initialize boundInfoMat 
-    int nNodes_v = (*physics).nNodes_v;
-    MATRIX_INT boundInfoMat(2, nNodes_v);
+    int nNodes = (*physics).nNodes;
+    MATRIX_INT boundInfoMat(2, nNodes);
 
     // set bound nodes entries to -1
     for (int ibound = 0; ibound < nBound; ibound++)
@@ -691,20 +695,37 @@ void PROBLEM_DARCY::setBC()
             boundInfoMat[0][tempNode] = 0;
         }
     }
-    //--- ITERATE ON THE WALL BOUNDARIES ----
-    int sum = 0; 
-    for (int iwall = 0; iwall < nNoFluxBound; iwall++)
-    {
-        int ibound = wallBound[iwall];
-        sum += nBoundIdNodes[ibound];
-    }
-    wallNod.initialize(sum); //initialize wallNod with max possible dim
-    nWall = 0;
+    std::cout << "\n 2\n";
+    pause();
 
-    wallIdCount.initialize(nNoFluxBound);
-    for (int iwall = 0; iwall < nNoFluxBound; iwall++)
+    //--- ITERATE ON THE NO-FLUX BOUNDARIES ----
+    int sum = 0; 
+    // std::cout << "\n nbound " << nNoFluxBound << "\n";
+    // noFluxBound.print();
+    // noFluxNod.print();
+    // VECTOR_INT::print(nBoundIdNodes, nBound);
+    // std::cout << "\n sum " << sum << "\n";
+    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
     {
-        int ibound = wallBound[iwall];
+        int ibound = noFluxBound[inoFlux];
+        // std::cout << "\n bound: " << ibound << "\n";
+        sum += nBoundIdNodes[ibound];
+        // std::cout << "\n sum " << sum << "\n";
+    }
+    std::cout << "\n final sum " << sum << "\n";
+    pause();
+    noFluxNod.setZeros(sum); //initialize noFluxNod with max possible dim
+    std::cout << "\n final sum " << sum << "\n";
+    pause();
+    nNoFlux = 0;
+    
+    std::cout << "\n 3\n";
+    pause();
+
+    noFluxIdCount.initialize(nNoFluxBound);
+    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
+    {
+        int ibound = noFluxBound[inoFlux];
         for (int inode = 0; inode < nBoundIdNodes[ibound]; inode++)
         {
             int tempNode = boundIdNodes[ibound][inode];
@@ -712,14 +733,17 @@ void PROBLEM_DARCY::setBC()
             if (boundInfoMat[0][tempNode] == 0)
             {
                 boundInfoMat[0][tempNode] = 5;
-                wallNod[nWall] = tempNode;
-                nWall++;
+                noFluxNod[nNoFlux] = tempNode;
+                nNoFlux++;
             }
         }
-        wallIdCount[iwall] = nWall;
+        noFluxIdCount[inoFlux] = nNoFlux;
     }
-    wallNod.shrink(nWall);
-    wallNod.length = nWall;
+    noFluxNod.shrink(nNoFlux);
+    noFluxNod.length = nNoFlux;
+    std::cout << "\n 4\n";
+    pause();
+
     //--- ITERATE ON THE TIME DIR BOUNDARIES ----
     dirTimeIdCount.initialize(nDirTimeBound);
     sum = 0; 
@@ -895,12 +919,19 @@ void PROBLEM_DARCY::setBC()
     symmNod.length = nSymm;
     symmVal.initialize(nSymm, dim);
 
-    //--- ITERATE ON THE WALL BOUNDARIES ----
+    //--- ITERATE ON THE noFlux BOUNDARIES ----
     sum = 0;
-
+    std::cout << "\n Start Setting\n";
+    pause();
     setStatDirBC();
+    std::cout << "\n Set Static Dir\n";
+    pause();
     setStatNeuBC(boundInfoMat);
+    std::cout << "\n Set Static Neu\n";
+    pause();
     setSymmBC(boundInfoMat);
+    std::cout << "\n Set Symm\n";
+    pause();
 }
 //----------------------------------------------------------------------------
 // SET BOUNDARY CONDITIONS
@@ -1781,10 +1812,10 @@ void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
         prec penalty = 1e13;
         for (int icomp = 0; icomp < dim; icomp++)
         {
-            // WALL dir
-            for (int iwall = 0; iwall < nWall; iwall++)
+            // noFlux dir
+            for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
             {
-                int iglob = wallNod[iwall] + nNodes_v*icomp; 
+                int iglob = noFluxNod[inoFlux] + nNodes_v*icomp; 
                 SYSMAT_NS(iglob,iglob, penalty);
                 rhs[iglob] = 0;
             }
@@ -1828,20 +1859,20 @@ void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
         
         if (!statBCAlreadyApplied)
         {
-            // WALL
+            // noFlux
             // set to zero row & col entries
             int countPosToZero = 0; int countIglobToZero = 0; int countPosToOne = 0;
             for (int icomp = 0; icomp < dim; icomp++)
             {
-                for (int iwall = 0; iwall < nWall; iwall++)
+                for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
                 {
-                    int iglob = wallNod[iwall] + icomp*nNodes_v; 
-                    VECTOR_INT rowInColToZero = SYSMAT_NS.setColInRowToZero(iglob, wallPosToZero, countPosToZero, wallPosToOne, countPosToOne);  
+                    int iglob = noFluxNod[inoFlux] + icomp*nNodes_v; 
+                    VECTOR_INT rowInColToZero = SYSMAT_NS.setColInRowToZero(iglob, noFluxPosToZero, countPosToZero, noFluxPosToOne, countPosToOne);  
                     rhs[iglob] = 0;                                             
                     for (int i = 0; i < rowInColToZero.length; i++) 
                     {
                         int tempPos = SYSMAT_NS(rowInColToZero[i], iglob, 0);
-                        wallPosToZero[countPosToZero] = tempPos; countPosToZero++;
+                        noFluxPosToZero[countPosToZero] = tempPos; countPosToZero++;
                     }
                 }
             }
@@ -1929,26 +1960,26 @@ void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
             statBCAlreadyApplied = true;
         } else
         {
-            //--- Wall
-            int nToZero = wallPosToZero.length; int nToOne = wallPosToOne.length;
+            //--- noFlux
+            int nToZero = noFluxPosToZero.length; int nToOne = noFluxPosToOne.length;
             std::shared_ptr<prec[]> coefMat = SYSMAT_NS.coef;
             for (int icomp = 0; icomp < dim; icomp++)
             {
-                for (int iwall = 0; iwall < nWall; iwall++)
+                for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
                 {
-                    int iglob = wallNod[iwall] + icomp*nNodes_v;
+                    int iglob = noFluxNod[inoFlux] + icomp*nNodes_v;
                     rhs[iglob] = 0.0;
                 }
             }
             //---
             for (int countPosToZero = 0; countPosToZero < nToZero; countPosToZero++)
             {
-                int pos = wallPosToZero[countPosToZero];
+                int pos = noFluxPosToZero[countPosToZero];
                 coefMat[pos] = 0.0;
             }
             for (int countPosToOne = 0; countPosToOne < nToOne; countPosToOne++)
             {
-                int pos = wallPosToOne[countPosToOne];
+                int pos = noFluxPosToOne[countPosToOne];
                 coefMat[pos] = 1.0;
             }
 
@@ -2280,17 +2311,17 @@ void PROBLEM_DARCY::prepareSolver()
     // {
     //     std::shared_ptr<int[]> iat = SYSMAT_base.iat;
     //     int countPosToZero = 0;
-    //     //--- wall
-    //     for (int iwall = 0; iwall < nWall; iwall++)
+    //     //--- noFlux
+    //     for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
     //     {
-    //         int iglob = wallNod[iwall];
+    //         int iglob = noFluxNod[inoFlux];
     //         int nnzInRow = iat[iglob+1] - iat[iglob];
     //         countPosToZero += nnzInRow;
     //     }
-    //     countPosToZero -= nWall;
+    //     countPosToZero -= nNoFlux;
     //     countPosToZero *= 2;
-    //     wallPosToZero.initialize(countPosToZero*dim);
-    //     wallPosToOne.initialize(nWall*dim);
+    //     noFluxPosToZero.initialize(countPosToZero*dim);
+    //     noFluxPosToOne.initialize(nNoFlux*dim);
     //     //--- static
     //     countPosToZero = 0;
     //     for (int idir = 0; idir < nDir; idir++)
@@ -2339,7 +2370,7 @@ void PROBLEM_DARCY::prepareSolver()
     // //-----------------------
     // boundIdNodes_buff.reset(); boundIdNodes.reset(); 
     // // dirBound.dlt();
-    // // wallBound.dlt(); 
+    // // noFluxBound.dlt(); 
     // //----------------------------------------------------------
     // // get max length of each element
     // //----------------------------------------------------------
@@ -2632,11 +2663,11 @@ void PROBLEM_DARCY::checkImportParameters()
     // BOUNDARY CONDITIONS
     std::cout << "\n.-=| BOUNDARY CONDITIONS |=-. \n";
     std::cout << " Flag BC: " << (*physics).flagBC << "\n";
-    std::cout << " Flag No-Flux: " << flagWall << "\n";
-    // Wall
+    std::cout << " Flag No-Flux: " << flagNoFlux << "\n";
+    // noFlux
     std::cout << "\n--| NO-FLUX:  ";
     std::cout << "\n # NO-FLUX Bound ID: " << nNoFluxBound << "\n";
-    wallBound.printRowMatlab(" NO-FLUX Bound ID");
+    noFluxBound.printRowMatlab(" NO-FLUX Bound ID");
     // Inner 
     std::cout << "\n--| INNER:  ";
     std::cout << "\n # Inner Bound ID: " << nInnerBound << "\n";

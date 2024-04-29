@@ -50,8 +50,12 @@ public:
     //-----------------------
     // INITIALIZE
     //-----------------------
-    void initialize(int N)
+    void initialize(int N, bool reset = false)
     {
+        if (reset)
+        {
+            complete_reset();
+        }
         length = N;
         P = std::shared_ptr<int[]>(new int[N]);
     }
@@ -1098,6 +1102,12 @@ public:
     // CLEAR VECTOR
     //--------------------------------------------
     void clear()
+    {
+        P.reset(); P = 0;
+        length = 0;
+    }
+    //---
+    void complete_reset()
     {
         P.reset(); P = 0;
         length = 0;

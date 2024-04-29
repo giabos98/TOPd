@@ -68,20 +68,19 @@ channel_3D_extra_coarse
 
 // DIRICHLET
 // # DIRICHLET
-1
+2
 //geomID
-6
+6 7
 // prescribed pressure
 10
+0
 
 // NEUMANN
 //--------
 // # NEUMANN
-1
-// geomID
-7
-// prescribed flux
 0
+// geomID
+**
 
 // DIRICHLET - TIME DEPENDENT
 //--------
