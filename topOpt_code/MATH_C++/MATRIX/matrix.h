@@ -278,6 +278,19 @@ public:
         }
     }
     //---
+    void operator *= (VECTOR &coef)
+    {
+        if (coef.length != nRow) throw_line("ERROR: incmpatible division of a matrix by a vector\n");
+        for (int i = 0; i < nRow; i++)
+        {
+            prec temp_coef = coef[i];
+            for (int j = 0; j < nRow; j++)
+            {
+                PP[i][j] *= temp_coef;
+            }
+        }
+    }
+    //---
     void operator /= (prec coef)
     {
         for (int i = 0; i < nRow; i++)
@@ -285,6 +298,20 @@ public:
             for (int j = 0; j < nRow; j++)
             {
                 PP[i][j] /= coef;
+            }
+        }
+    }
+    //---
+    void operator /= (VECTOR &coef)
+    {
+        if (coef.length != nRow) throw_line("ERROR: incmpatible division of a matrix by a vector\n");
+        for (int i = 0; i < nRow; i++)
+        {
+            prec temp_coef = coef[i];
+            if (abs(temp_coef) <= 1e-14) throw_line("ERROR: dividing by zero\n");
+            for (int j = 0; j < nRow; j++)
+            {
+                PP[i][j] /= temp_coef;
             }
         }
     }

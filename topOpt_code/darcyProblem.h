@@ -11,7 +11,7 @@ public:
     std::string name;
     int nDof; 
     PHYSICS* physics;
-    int completeLog;
+    int completeLog = 2;
     bool printRes = false;
     int save_solution = 1;;
     prec deltaT0;
@@ -27,6 +27,9 @@ public:
 
     //---  PROBLEM_DARCY ---
     VECTOR domains_permeability;
+    VECTOR_INT domains_permeability_priority; // index 0: min_priority, index last: max_priority
+    VECTOR discrete_permeabilities;
+    VECTOR smooth_permeabilities;
     int flagForcing;
     std::vector<std::string> statForcing;
     std::vector<std::string> timeForcing;
@@ -108,7 +111,7 @@ public:
     VECTOR_INT symmBound;
     CSRMAT J;
     
-    //- NoFlux BC --- (priority: 5)
+    //- NoFlux BC --- (priority: -1)
     int        nNoFluxBound;
     VECTOR_INT noFluxBound;
     VECTOR_INT noFluxNod; 
@@ -210,6 +213,9 @@ public:
     //-----------------------------------------
     void importParameters(std::string readFile);
 
+    // SET NODAL PERMEABILITIES
+    void set_permeabilities();
+
     //------------------------------------------
     // INIT CONDITIONS
     //------------------------------------------
@@ -268,6 +274,12 @@ public:
     // PRINT ONE STEP SOLUTION IN VTK
     //-------------------------------
     void print_sol_in_VTK(MATRIX &requested_sol);
+
+    //------------------------------
+    // EVALUATE FLUX ON A BOUNDARY
+    //------------------------------
+    void eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &velocity);
+
     //------------------------------
     // CHECK CORRECT PROBLEM SETTING
     //------------------------------

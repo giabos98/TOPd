@@ -19,7 +19,8 @@ int main()
     prec endTime = omp_get_wtime();
 
     prec totalTime = endTime - startTime;
-    topOpt.print_stats(totalTime);
+    std::cout << "\n ---| Solution Time: " << totalTime << "\n";
+    // topOpt.print_stats(totalTime);
 
     return 0;
 

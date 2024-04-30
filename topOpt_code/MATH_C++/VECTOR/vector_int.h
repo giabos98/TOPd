@@ -970,6 +970,23 @@ public:
         
         return answer;
     }
+    //---
+    int getFirstOccurrence(int value, bool check = false) // return the id of the first occurrence of the value, returns -1 if not found
+    {
+        for (int i = 0; i < length; i++)
+        {
+            if (P[i] == value)
+            {
+                return i;
+            } 
+        }
+        if (check)
+        {
+            throw_line("ERROR: searching for the first occurrence of a non existent value\n");
+        }
+        return -1;
+    }
+    //---
     //-------------------------------------------------------
     // PRINT VECTOR_INT
     //-------------------------------------------------------

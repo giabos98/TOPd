@@ -413,7 +413,7 @@ public:
         if (vec.length != length) throw_line("ERROR: Pointwise division of vectors of different lenght\n");
         for (int i = 0; i < length; i++)
         {
-            if (vec[i] == 0) throw_line("ERROR: Dividing by zero in pointwise divsion of vectors\n");
+            if (abs(vec[i]) <= 1e-14) throw_line("ERROR: Dividing by zero in pointwise divsion of vectors\n");
             P[i] /= vec[i];
         }
     }

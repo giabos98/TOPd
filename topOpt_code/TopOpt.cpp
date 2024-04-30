@@ -322,6 +322,7 @@ void TOP_OPT::solveNS() // NS solver
 void TOP_OPT::prepareDarcy() // prepare Darcy solver
 {
     printf("\n-------\n-| PREPARE DARCY |--\n-------\n");
+    DARCY.set_permeabilities();
     DARCY.setBC();
     DARCY.prepareSolver();
     physics.Darcy_solution.complete_reset();
@@ -1069,7 +1070,7 @@ void TOP_OPT::solve()
     prepareDarcy();
     loop++;
     DARCY.resetPrint(loop);
-    
+
     solveDarcy();
 
     prec endTime = omp_get_wtime();

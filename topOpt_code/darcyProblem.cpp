@@ -75,6 +75,9 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_domains);
     STREAM::getLines(ParameterFile, line, 1);
+    domains_permeability_priority.initialize(n_domains);
+    STREAM::getRowVector(ParameterFile, line, iss, domains_permeability_priority);
+    STREAM::getLines(ParameterFile, line, 1);
     (*physics).domains_permeability.initialize(n_domains);
     STREAM::getRowVector(ParameterFile, line, iss, (*physics).domains_permeability);
     domains_permeability = (*physics).domains_permeability;
@@ -556,6 +559,54 @@ void PROBLEM_DARCY::importPREPRO()
     rhs.initialize(nDof);
 }
 
+// SET NODAL PERMEABILITIES
+void PROBLEM_DARCY::set_permeabilities()
+{
+    int dim = (*physics).dim;
+    int nElem = (*physics).nElem;
+    int nNodes = (*physics).nNodes;
+
+    // set discrete permeabilities
+    discrete_permeabilities.setZeros(nNodes);
+    VECTOR_INT nodal_priorities;
+    nodal_priorities.setZeros(nNodes);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int* tempElem = (*physics).elem[iel];
+        int idom = (*physics).elem_geo_entities_ids[iel];
+        prec el_permeability = domains_permeability[idom];
+        int permability_priority = domains_permeability_priority.getFirstOccurrence(idom, true);
+        for (int inod = 0; inod < (dim+1); inod++)
+        {
+            int iglob = tempElem[inod];
+            if (permability_priority >= nodal_priorities[iglob])
+            {
+                nodal_priorities[iglob] = permability_priority;
+                discrete_permeabilities[iglob] = el_permeability;
+            }            
+        }
+    }
+
+    // set smooth permeabilities
+    smooth_permeabilities.setZeros(nNodes);
+    VECTOR nodal_weights;
+    nodal_weights.setZeros(nNodes);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int* tempElem = (*physics).elem[iel];
+        int idom = (*physics).elem_geo_entities_ids[iel];
+        prec el_permeability = domains_permeability[idom];
+        prec temp_vol = (*physics).Volume[iel];
+        for (int inod = 0; inod < (dim+1); inod++)
+        {
+            int iglob = tempElem[inod];
+            nodal_weights[iglob] += temp_vol;
+            smooth_permeabilities[iglob] += el_permeability * temp_vol;
+        }
+    }
+    smooth_permeabilities /= nodal_weights;
+}
+
 void PROBLEM_DARCY::setBC()
 {
     if (completeLog < 2) std::cout << "\n----------\n--| SET BC |--\n----------\n";
@@ -664,39 +715,9 @@ void PROBLEM_DARCY::setBC()
         }
     }
 
-    //--- ITERATE ON THE NO-FLUX BOUNDARIES ----
-    int sum = 0; 
-    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
-    {
-        int ibound = noFluxBound[inoFlux];
-        sum += nBoundIdNodes[ibound];
-    }
-    noFluxNod.initialize(sum); //initialize noFluxNod with max possible dim
-    nNoFlux = 0;
-
-    noFluxIdCount.initialize(nNoFluxBound);
-    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
-    {
-        int ibound = noFluxBound[inoFlux];
-        for (int inode = 0; inode < nBoundIdNodes[ibound]; inode++)
-        {
-            int tempNode = boundIdNodes[ibound][inode];
-            
-            if (boundInfoMat[0][tempNode] == 0)
-            {
-                boundInfoMat[0][tempNode] = 5;
-                noFluxNod[nNoFlux] = tempNode;
-                nNoFlux++;
-            }
-        }
-        noFluxIdCount[inoFlux] = nNoFlux;
-    }
-    noFluxNod.shrink(nNoFlux);
-    noFluxNod.length = nNoFlux;
-
     //--- ITERATE ON THE TIME DIR BOUNDARIES ----
     dirTimeIdCount.initialize(nDirTimeBound);
-    sum = 0; 
+    int sum = 0; 
     for (int idir = 0; idir < nDirTimeBound; idir++)
     {
         int ibound = dirTimeBound[idir];
@@ -724,6 +745,7 @@ void PROBLEM_DARCY::setBC()
     dirTimeNod.length = nTimeDir;
     int dim = (*physics).dim;
     dirTimeVal.initialize(nTimeDir, 1);
+
         //--- ITERATE ON THE STATIC DIR BOUNDARIES ----
     dirIdCount.initialize(nDirBound);
     sum = 0; 
@@ -867,8 +889,34 @@ void PROBLEM_DARCY::setBC()
     symmNod.length = nSymm;
     symmVal.initialize(nSymm, dim);
 
-    //--- ITERATE ON THE noFlux BOUNDARIES ----
-    sum = 0;
+    sum = 0; 
+    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
+    {
+        int ibound = noFluxBound[inoFlux];
+        sum += nBoundIdNodes[ibound];
+    }
+    noFluxNod.initialize(sum); //initialize noFluxNod with max possible dim
+    nNoFlux = 0;
+    noFluxIdCount.initialize(nNoFluxBound);
+    for (int inoFlux = 0; inoFlux < nNoFluxBound; inoFlux++)
+    {
+        int ibound = noFluxBound[inoFlux];
+        for (int inode = 0; inode < nBoundIdNodes[ibound]; inode++)
+        {
+            int tempNode = boundIdNodes[ibound][inode];
+            
+            if (boundInfoMat[0][tempNode] == 0)
+            {
+                boundInfoMat[0][tempNode] = -1;
+                noFluxNod[nNoFlux] = tempNode;
+                nNoFlux++;
+            }
+        }
+        noFluxIdCount[inoFlux] = nNoFlux;
+    }
+    noFluxNod.shrink(nNoFlux);
+    noFluxNod.length = nNoFlux;
+
     setStatDirBC();
     setStatNeuBC(boundInfoMat);
     setSymmBC(boundInfoMat);
@@ -1089,8 +1137,9 @@ void PROBLEM_DARCY::updateTimeForcing()
 void PROBLEM_DARCY::imposeBC(CSRMAT &SYSMAT_final, VECTOR &rhs)
 {
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| IMPOSE BC |--\n----------\n";
+    
     imposeStaticBC(SYSMAT_final, rhs);
-    imposeTimeBC(SYSMAT_final, rhs);
+    if ((*physics).isStationary == 0) imposeTimeBC(SYSMAT_final, rhs);
 }
 
 //------------------------------
@@ -1321,8 +1370,6 @@ void PROBLEM_DARCY::updateBC(prec trialTime)
 //-------------------------------------------------
 void PROBLEM_DARCY::updateSYSMAT()
 {  
-    SYSMAT = SYSMAT_base; // initialize SYSMAT as SYSMAT_base in order to add updated matrices in correct blocks
-
     // add Time Derivative Matrix to SYSMAT
     prec factorP = 1 / deltaT;
     addToSysmat(M, factorP); 
@@ -1562,12 +1609,13 @@ void PROBLEM_DARCY::Solver()
 void PROBLEM_DARCY::oneStepSolver(prec toll, int itMax)
 {
     prec trialTime = time + deltaT;
-    
-    updateBC(trialTime);
-
-    updateSYSMAT();
-
-    updateRHS();
+    SYSMAT = SYSMAT_base; // initialize SYSMAT as SYSMAT_base in order to add updated matrices in correct blocks
+    if ((*physics).isStationary == 0)
+    {
+        updateBC(trialTime);
+        updateSYSMAT();
+        updateRHS();
+    }
 
     // if (completeLog) 
     if (completeLog < 2) std::cout << "\n----------------------------------------------------------------------------\n--| DARCY ONE-STEP SOLVER TIME " << time << "-> " << trialTime << "|--\n----------------------------------------------------------------------------\n";
@@ -1630,8 +1678,7 @@ void PROBLEM_DARCY::oneStepSolver(prec toll, int itMax)
     time = trialTime;
     real_solution_times.append(time);
     prec t_end = (*physics).t_end;  
-    if (completeLog < 2) printf("In progress... %%%4.2f\n", time/t_end*100);
-    
+    if (completeLog < 2) printf("In progress... %%%4.2f\n", time/t_end*100);    
     globIter++;
 }
 //
@@ -1656,11 +1703,81 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
          
         // GET PRESSURE
         VECTOR pressure = requested_sol.get_row(itime);
+
+        std::cout << "\nhere\n";
+        std::vector<VECTOR> pressure_gradient;
+        (*physics).eval_gradient_p(pressure, pressure_gradient);
+        // MATRIX velocity;
+        // (*physics).convert_std_vector_of_vectors_into_matrix(pressure_gradient, velocity);
+        // velocity /= (*physics).mu;
+        // velocity *= smooth_permeabilities;
+        // pause();
+        VECTOR velocity_magnitude;
+        (*physics).eval_gradient_norm(pressure_gradient, velocity_magnitude);
+        velocity_magnitude /= (*physics).mu;
+        velocity_magnitude *= smooth_permeabilities;
+        
+        VECTOR bound_ids(5);
+        bound_ids[0] = 11; 
+        bound_ids[1] = 12; 
+        bound_ids[2] = 13; 
+        bound_ids[3] = 14; 
+        bound_ids[4] = 15; 
+        eval_flux_sum_on_boundaries(bound_ids, velocity_magnitude);
+        
         
         //-----------------
-        if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure");
+        if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure", discrete_permeabilities, 1, "zK_d", smooth_permeabilities, 1, "zK_s", velocity_magnitude, 1, "||Velocity||");
+    }    
+}
+
+void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &velocity)
+{
+    // N.B.: the velocity vector is supposed aligned with the normal to each element
+
+    prec flux = 0;
+    prec total_area = 0;
+
+    int dim = (*physics).dim;
+    for (int ibound = 0; ibound < bound_ids.length; ibound++)
+    {
+        int bound_id = bound_ids[ibound];
+        MATRIX_INT bound_elems = (*physics).bound_elems[bound_id];
+        for (int iel = 0; iel < bound_elems.nRow; iel++)
+        {
+            int* temp_elem = bound_elems[iel];
+            MATRIX coord(dim, dim);
+            for (int inode = 0; inode < dim; inode++)
+            {
+                int node = bound_elems[iel][inode];
+                for (int jcomp = 0; jcomp < dim; jcomp++)
+                {
+                    coord[inode][jcomp] = (*physics).coord[node][jcomp];
+                }
+            }
+            prec el_area = (*physics).get_surface(coord, dim);
+            total_area += el_area;
+            for (int inod = 0; inod < dim; inod++)
+            {
+                int iglob = temp_elem[inod];
+                flux += velocity[iglob] * el_area / dim;
+            }
+        }
     }
-         
+
+    prec avg_velocity = flux / total_area;
+    prec domain_length = 100;
+    prec delta_P = 1000;
+    prec eq_permeability = avg_velocity * domain_length * (*physics).mu / delta_P;
+
+    std::cout << "\n   ----------------------------------------------------";
+    std::cout << "\n   | DARCY PROBLEM EQUIVALENT PERMEABILITY |";
+    std::cout << "\n   ---| REQUESTED FLUX: " << flux << "\n";
+    std::cout << "   ---| TOTAL AREA: " << total_area << "\n";
+    std::cout << "   ---| AVG. VELOCITY: " << avg_velocity << "\n";
+    std::cout << "   ---| EQ. PERMEABILITY: " << eq_permeability << "\n";
+    std::cout << "   ----------------------------------------------------\n";
+    
 }
 
 // PRECONDITIONER !!!!!!!

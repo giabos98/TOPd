@@ -63,6 +63,10 @@ class PHYSICS
     VECTOR Volume;
 
     //--- BOUNDS INFO ---
+    std::string bound_nodes_path;
+    std::string bound_elems_path;
+    std::vector<VECTOR_INT> bound_nodes;
+    std::vector<MATRIX_INT> bound_elems;
     std::string bound_nodes_v_path;
     std::string bound_elems_v_path;
     std::vector<VECTOR_INT> bound_nodes_v;
@@ -83,6 +87,7 @@ class PHYSICS
     std::string bound_info_file_path;
     std::string bound_nodes_v_file_path;
     std::vector<MATRIX_INT> bounds_elems_v;
+    
     std::vector<VECTOR> bounds_elems_surface_v;
 
     // ABOUT SOLUTION TIMES
@@ -112,7 +117,10 @@ class PHYSICS
     PHYSICS(){};
 
     void initialize();
+    void parse_bounds_p();
     void parse_bounds();
+
+    void convert_std_vector_of_vectors_into_matrix(std::vector<VECTOR> std_vector, MATRIX &matrix);
 
     void print();
 
@@ -120,6 +128,7 @@ class PHYSICS
     void build_bounds_elems_v();
     void build_bounds_elems_surfaces_v();
     void build_centroids_v();
+    void get_normal(MATRIX &matCoord, VECTOR &normal);
 
     void invert_sizes(std::vector<VECTOR> &vec, std::vector<VECTOR> &inverted_vec);
 
@@ -136,6 +145,7 @@ class PHYSICS
     void smooth_between_elements(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &smoothed_value);
     static prec get_surface(MATRIX &matCoord, int dim);
     void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
+    void eval_gradient_p(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
     void eval_gradient(MATRIX &value, std::vector<MATRIX> &gradient, int eval_method = 0);// eval method means: gradient L2 projection method
     void eval_divergence(VECTOR &value, VECTOR &divergence);
     void eval_divergence(MATRIX &value, std::vector<VECTOR> &divergence);

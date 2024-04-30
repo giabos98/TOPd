@@ -6,16 +6,66 @@
 void PHYSICS::initialize()
 {
     eval_solution_times();
-    // build_bounds_elems_v();
-    // build_bounds_elems_surfaces_v();
 
-    // for (int ibound = 0; ibound < nBounds; ibound++)
-    // {
-    //     bounds_elems_v[ibound].print();
-    //     bounds_elems_surface_v[ibound].printRowMatlab(std::to_string(ibound));
-    // }
-    // parse_bounds();
-    // build_centroids_v();
+    parse_bounds_p();
+}
+
+void PHYSICS::parse_bounds_p()
+{
+    std::string folderPath = name;
+    folderPath = "PREPRO/PROBLEM_DATA/" + folderPath;
+    bound_elems_path = folderPath + "/BoundElems.txt";
+    bound_nodes_path = folderPath + "/BoundNodes.txt";
+
+    // BEGIN NODES STREAMING
+    std::ifstream bound_nodes_stream;
+    bound_nodes_stream.open(bound_nodes_path);
+    if (!bound_nodes_stream.is_open()) throw_line("ERROR, can't open input data file");
+    std::string line;
+    std::istringstream iss;
+
+    VECTOR_INT general_info(2);
+    STREAM::getRowVector(bound_nodes_stream, line, iss, general_info);
+    int n_bounds = general_info[1];
+    bound_nodes.resize(n_bounds);
+
+    for (int ibound = 0; ibound < n_bounds; ibound++)
+    {
+        VECTOR_INT temp_info(2);
+        STREAM::getRowVector(bound_nodes_stream, line, iss, temp_info);
+        int temp_n_nodes = temp_info[1];
+        bound_nodes[ibound].initialize(temp_n_nodes);
+        VECTOR_INT temp_bound_nodes(temp_n_nodes);
+        STREAM::getColVector(bound_nodes_stream, line, iss, temp_bound_nodes, temp_bound_nodes.length);
+        bound_nodes[ibound] = temp_bound_nodes;
+        getline(bound_nodes_stream, line);
+    }  
+    bound_nodes_stream.close();
+    // CLOSE NODES STREAMING
+
+    // BEGIN ELEMS STREAMING
+    std::ifstream bound_elems_stream;
+    bound_elems_stream.open(bound_elems_path);
+    if (!bound_elems_stream.is_open()) throw_line("ERROR, can't open input data file");
+    // std::string line;
+    // std::istringstream iss;
+
+    getline(bound_elems_stream, line); // skip general info
+    bound_elems.resize(n_bounds);
+
+    for (int ibound = 0; ibound < n_bounds; ibound++)
+    {
+        VECTOR_INT temp_info(2);
+        STREAM::getRowVector(bound_elems_stream, line, iss, temp_info);
+        int temp_n_elem = temp_info[1];
+        bound_elems[ibound].initialize(temp_n_elem, dim);
+        MATRIX_INT temp_bound_elems(temp_n_elem, dim);
+        STREAM::getMatrix(bound_elems_stream, line, iss, temp_bound_elems);
+        bound_elems[ibound] = temp_bound_elems;
+        getline(bound_elems_stream, line);
+    } 
+    bound_elems_stream.close();
+    // CLOSE ELEMS STREAMING   
 }
 
 void PHYSICS::parse_bounds()
@@ -75,6 +125,42 @@ void PHYSICS::parse_bounds()
     bound_elems_v_stream.close();
     // CLOSE ELEMS_V STREAMING   
 }
+
+//----------------------------------------------
+// COMPUTE EXTERNAL NORMAL TO A BOUNDARY ELEMENT
+//----------------------------------------------
+void PHYSICS::get_normal(MATRIX &matCoord, VECTOR &normal)
+{
+    switch (dim)
+    {
+        case 2:
+        {
+            prec* v0 = matCoord[0]; prec* v1 = matCoord[1];
+            VECTOR vec; VECTOR zVec;
+            vec.setZeros(3); zVec.setZeros(3);
+            for (int i = 0; i < 2; i++)
+            {
+                vec[i] = v1[i] - v0[i];
+            }
+            zVec[2] = 1;
+            VECTOR::cross(zVec, vec, normal);
+            normal /= normal.norm();
+            normal.shrink(2);
+            normal.length = 2;
+            break;
+        }
+        case 3:
+        {
+            prec* v0 = matCoord[0]; prec* v1 = matCoord[1]; prec* v2 = matCoord[2];
+            VECTOR v0Vec(3); v0Vec = v0; VECTOR v1Vec(3); v1Vec = v1; VECTOR v2Vec(3); v2Vec = v2;
+            v1Vec -= v0Vec; v2Vec -= v0Vec;
+            VECTOR::cross(v1Vec, v2Vec, normal);
+            prec norm = normal.norm();
+            normal /= norm;
+            break;
+        }
+    }
+} 
 
 void PHYSICS::build_bounds_elems_v()
 {
@@ -502,6 +588,60 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
     }
 }
 
+void PHYSICS::eval_gradient_p(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method)
+{
+    // suppose the value interpolated in the coord
+    // value structure: value[nodal_value]
+    // gradient structure: gradient[node][gradient_component]
+    //eval_method = 0: Lampeato. Other cases not implemented
+    int n_val = value.length;
+    gradient.clear();
+    gradient.resize(n_val);
+    if (eval_method == 0) // Lampeato
+    {
+        VECTOR weights; 
+        weights.setZeros(n_val);
+        for (int inod = 0; inod < n_val; inod++)
+        {
+            gradient[inod].complete_reset();
+            gradient[inod].setZeros(dim);
+        }
+        for (int iel = 0; iel < nElem; iel++)
+        {
+            prec temp_weight = Volume[iel];
+            VECTOR element_gradient_value; element_gradient_value.setZeros(dim);
+            for (int iloc = 0; iloc < dim+1; iloc++)
+            {
+                int iglob = elem[iel][iloc];
+                weights[iglob] += temp_weight;
+                for (int icomp = 0; icomp < dim; icomp++)
+                {
+                    element_gradient_value[icomp] += value[iglob]*Coef[icomp][iel][iloc];
+                }
+            }
+            for (int iloc = 0; iloc < dim+1; iloc++)
+            {
+                int iglob = elem[iel][iloc];
+                for (int icomp = 0; icomp < dim; icomp++)
+                {
+                    gradient[iglob][icomp] += element_gradient_value[icomp] * temp_weight;
+                }
+            }
+        }
+        for (int inod = 0; inod < n_val; inod++)
+        {
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                gradient[inod][icomp] /= weights[inod];
+            }
+        }
+    }
+    else
+    {
+        throw_line("ERROR: not handled gradient reconstruction method\n");
+    }
+}
+
 void PHYSICS::eval_gradient(MATRIX &value, std::vector<MATRIX> &gradient, int eval_method)
 {
     // suppose the value interpolated in the coord_v
@@ -620,8 +760,9 @@ void PHYSICS::eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::v
 void PHYSICS::eval_gradient_norm(std::vector<VECTOR> &gradient, VECTOR &norm)
 {
     norm.complete_reset();
-    norm.setZeros(nNodes_v);
-    for (int inod = 0; inod < nNodes_v; inod++)
+    int n_val = int(gradient.size());
+    norm.setZeros(n_val);
+    for (int inod = 0; inod < n_val; inod++)
     {
         for (int icomp = 0; icomp < dim; icomp++)
         {
@@ -820,6 +961,21 @@ void PHYSICS::build_tangents_from_normals(std::vector<VECTOR> &normals, std::vec
     {
         VECTOR nodal_normal = normals[inod];
         build_tangents_from_normal(nodal_normal, tangent_vectors[inod]); 
+    }
+}
+
+void PHYSICS::convert_std_vector_of_vectors_into_matrix(std::vector<VECTOR> std_vector, MATRIX &matrix)
+{
+    matrix.complete_reset();
+    int nRows = int(std_vector.size());
+    int nCols = int(std_vector[0].length);
+    matrix.initialize(nRows, nCols);
+    for (int irow = 0; irow < nRows; irow++)
+    {
+        for (int jcol = 0; jcol < nCols; jcol++)
+        {
+            matrix[irow][jcol] = std_vector[irow][jcol];
+        }
     }
 }
 //--------------------------------------------

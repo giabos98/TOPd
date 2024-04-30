@@ -1,5 +1,5 @@
 // PROBLEM NAME
-porous_media_2D_h2_10
+porous_media_2D_h2_2.5
 // DIMENSION (2 or 3)
 2
 
@@ -23,8 +23,10 @@ porous_media_2D_h2_10
 // MATERIAL PROPERTIES
 // n_domains
 5
+// domains priority (from lowest to highest)
+0 2 4 1 3
 // PERMEABILITY VALUES (must be long as n_domains)
-10 100 10 100 10
+0.00001 0.01 0.00001 0.01 0.00001
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
