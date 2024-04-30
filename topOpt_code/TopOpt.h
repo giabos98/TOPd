@@ -74,6 +74,7 @@ public:
     //--- SOLUTIONS ---
     VECTOR lastSolNS;
     VECTOR lastSolADJ;
+    VECTOR lastSolDarcy;
 
     //--- FLUID ENERGY ---
     VECTOR temp_fluid_energy;

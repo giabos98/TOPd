@@ -330,16 +330,16 @@ void TOP_OPT::prepareDarcy() // prepare Darcy solver
 //---
 void TOP_OPT::solveDarcy() // Darcy solver
 {
-    printf("\n-------\n-| NAVIER-STOKES SOLVER |--\n-------\n\n");
+    printf("\n-------\n-| DARCY SOLVER |--\n-------\n\n");
     if (physics.isStationary == 1)
     {
-        NS.StatSolverIterative();
+        DARCY.StatSolver();
     } 
     else 
     {
-        NS.Solver();
+        DARCY.Solver();
     }
-    lastSolNS = physics.NS_solution.get_row(physics.solution_times.length-1);
+    lastSolDarcy = physics.Darcy_solution.get_row(physics.solution_times.length-1);
 }
 
 //-----------------------
@@ -1055,7 +1055,7 @@ void TOP_OPT::solve()
     prec startTime = omp_get_wtime();
 
     //------------------------------
-    std::cout << "\n\n----------| NAVIER-STOKES TOPOLOGY OPTIMIZATION SOLVER |----------\n";
+    std::cout << "\n\n----------| TOPOLOGY OPTIMIZATION SOLVER |----------\n";
     std::cout << "\n----------| GEOMETRIC CONFIGURATION: ";
     std::cout << "\n-------------| dimension: " << physics.dim;
     std::cout << "\n-------------| n° nodes: " << physics.nNodes;
@@ -1069,11 +1069,8 @@ void TOP_OPT::solve()
     prepareDarcy();
     loop++;
     DARCY.resetPrint(loop);
-    std::cout << "\n Start Solution \n";
-    pause();
+    
     solveDarcy();
-    std::cout << "\n Darcy Solved \n";
-    pause();
 
     prec endTime = omp_get_wtime();
     solution_time = endTime - startTime;

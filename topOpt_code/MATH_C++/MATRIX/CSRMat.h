@@ -1168,7 +1168,7 @@ class CSRMAT
         std::shared_ptr<prec[]> inCoef = inMat.coef;
         for (int i = 0; i < nTerm; i++)
         {
-            if (coef[i] != inCoef[i]|| ja[i]!=inJa[i]) 
+            if ((coef[i] != inCoef[i]) || (ja[i]!=inJa[i])) 
             {
                 return false;
             }
@@ -1180,6 +1180,7 @@ class CSRMAT
         return isEqual;
     }
     //---
+    
     bool checkPattern(CSRMAT &inMat)
     {
         bool isEqual = true;

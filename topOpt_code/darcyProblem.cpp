@@ -75,6 +75,7 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, n_domains);
     STREAM::getLines(ParameterFile, line, 1);
+    (*physics).domains_permeability.initialize(n_domains);
     STREAM::getRowVector(ParameterFile, line, iss, (*physics).domains_permeability);
     domains_permeability = (*physics).domains_permeability;
 
@@ -83,16 +84,12 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getValue(ParameterFile, line, iss, flagForcing);
     if (flagForcing != 0 && flagForcing != 1) throw_line("ERROR: flagForcing different from 0 or 1\n");
     // FORCING
-    getline(ParameterFile, line);
-    statForcing.resize(dim);
-    for (int i = 0; i < dim; i++) STREAM::getValue(ParameterFile, line, iss, statForcing[i]);    
-    if (flagForcing == 1)
-    {
-        timeForcing.resize(dim);
-        getline(ParameterFile, line);
-        for (int i = 0; i < dim; i++) STREAM::getValue(ParameterFile, line, iss, timeForcing[i]);
-    }
-    else STREAM::getLines(ParameterFile, line, dim+1);
+    STREAM::getLines(ParameterFile, line, 1);
+    statForcing.resize(1);
+    STREAM::getValue(ParameterFile, line, iss, statForcing[0]);
+    STREAM::getLines(ParameterFile, line, 1);
+    timeForcing.resize(1);
+    STREAM::getValue(ParameterFile, line, iss, timeForcing[0]);
     
     STREAM::getLines(ParameterFile, line, 3);
 
@@ -245,11 +242,11 @@ void PROBLEM_DARCY::importParameters(std::string readFile)
     STREAM::getValue(ParameterFile, line, iss, nNeuTimeBound);
     neuTimeBound.initialize(nNeuTimeBound);
     nIdNeuTimeCases.initialize(nNeuTimeBound);
-    neuTimeMeanP.resize(nNeuTimeBound);
+    neuTimeMeanFlux.resize(nNeuTimeBound);
     getline(ParameterFile, line);
     for (int ibound = 0; ibound < nNeuTimeBound; ibound++)
     {
-        STREAM::getNeuTime(ParameterFile, line, iss, neuTimeBound[ibound], nIdNeuTimeCases[ibound], neuTimeMeanP[ibound]);
+        STREAM::getNeuTime(ParameterFile, line, iss, neuTimeBound[ibound], nIdNeuTimeCases[ibound], neuTimeMeanFlux[ibound]);
         getline(ParameterFile, line);
     }
 
@@ -787,7 +784,6 @@ void PROBLEM_DARCY::setBC()
                 for (int icomp = 0; icomp < dim; icomp++) matCoord[inode][icomp] = coord[tempElem[inode]][icomp]; 
             }
             prec tempBaseFlux = getArea(matCoord, dim)/dim;
-            getNormal(matCoord, normal);
 
             for (int inode = 0; inode < dim; inode++)
             {
@@ -802,7 +798,6 @@ void PROBLEM_DARCY::setBC()
                 {
                     neuTimeNod[nTimeNeu] = tempNode;
                     neuTimeBaseFlux[nTimeNeu] = tempBaseFlux;
-                    neuTimeNormal.modifyRow(nTimeNeu, normal);
                     nTimeNeu++;
                 }
             };
@@ -811,7 +806,7 @@ void PROBLEM_DARCY::setBC()
     }
     neuTimeNod.shrink(nTimeNeu); neuTimeBaseFlux.shrink(nTimeNeu);
     neuTimeNod.length = nTimeNeu; neuTimeBaseFlux.length = nTimeNeu;
-    neuTimeVal.zeros(nTimeNeu, dim); neuTimeNormal.shrinkRows(nTimeNeu);
+    neuTimeVal.zeros(nTimeNeu, 1);
 
     //--- ITERATE ON THE STATIC NEU BOUNDARIES ----
     sum = 0; 
@@ -907,10 +902,7 @@ void PROBLEM_DARCY::setTimeDirBC(prec trialTime) //priority 4
         tempCount = 0;
         for (int idir = old; idir < endPos; idir++)
         {
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
-                dirTimeVal[idir][icomp] = tempTimeDirVal[icomp][tempCount];
-            }
+            dirTimeVal[idir][0] = tempTimeDirVal[0][tempCount];
             tempCount++;
         }
         old = dirTimeIdCount[iDirBound];
@@ -956,20 +948,13 @@ void PROBLEM_DARCY::setTimeNeuBC(prec trialTime) // priority 2
 {
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| DARCY SET TIME NEU BC |--\n----------\n";
     int old = 0;
-    prec rho = (*physics).rho;
-    int dim = (*physics).dim;
     int neuCount = 0;
     for (int iNeuBound = 0; iNeuBound < nNeuTimeBound; iNeuBound++)
     {
-        prec meanP = *neuTimeMeanP[iNeuBound](0, 0, 0, trialTime);
+        prec meanFlux = *neuTimeMeanFlux[iNeuBound](0, 0, 0, trialTime);
         for (int ineu = old; ineu < neuTimeIdCount[iNeuBound]; ineu++)
         {
-            prec* normal = neuTimeNormal[neuCount];
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
-                neuTimeVal[ineu][icomp] = neuTimeBaseFlux[neuCount] * meanP * normal[icomp] / rho;
-            }
-
+            neuTimeVal[ineu][0] = neuTimeBaseFlux[neuCount] * meanFlux;
             neuCount++;
         }
         old = neuTimeIdCount[iNeuBound];
@@ -1030,89 +1015,72 @@ void PROBLEM_DARCY::setSymmBC(MATRIX_INT& boundInfoMat) //priority -1
 //-----------------------------------------------------------------------
 void PROBLEM_DARCY::applyStatForcing()
 {
-    if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS APPLY STATIC FORCING |--\n----------\n";
+    if ((*physics).completeLog == 0) std::cout << "\n----------\n--| DARCY APPLY STATIC FORCING |--\n----------\n";
     int dim = (*physics).dim;
-    int nNodes_v = (*physics).nNodes_v;
-    std::shared_ptr<int*[]> elem_v = (*physics).elem_v.PP;
-    std::shared_ptr<prec[]> Volume_v = (*physics).Volume_v.P;
-    int nElem_v = (*physics).nElem_v;
+    int nNodes = (*physics).nNodes;
+    std::shared_ptr<int*[]> elem = (*physics).elem.PP;
+    std::shared_ptr<prec[]> Volume = (*physics).Volume.P;
+    int nElem = (*physics).nElem;
 
-    std::vector<VECTOR> forcingAtNodes(dim);
-    for (int icomp = 0; icomp < dim; icomp++)
-    {
-        forcingAtNodes[icomp].initialize(nNodes_v);
-        FUNCTION_PARSER::evalCoord(statForcing[icomp], (*physics).coord_v, 0, forcingAtNodes[icomp]);
-    }
+    std::vector<VECTOR> forcingAtNodes(1);
+    forcingAtNodes[0].initialize(nNodes);
+    FUNCTION_PARSER::evalCoord(statForcing[0], (*physics).coord, 0, forcingAtNodes[0]);
     //----------
-    for (int iel = 0; iel < nElem_v; iel++)
+    for (int iel = 0; iel < nElem; iel++)
     {
-        int* tempElem = elem_v[iel];
-        for (int icomp = 0; icomp < dim; icomp++)
+        int* tempElem = elem[iel];
+        prec element_factor = Volume[iel] / ((dim+1)*(dim+2));
+        prec tempForcingSum = 0;
+        for (int iloc = 0; iloc < dim+1; iloc++)
         {
-            prec tempForcingSum = 0;
-            for (int iloc = 0; iloc < dim+1; iloc++)
-            {
-                int iglob = tempElem[iloc];
-                tempForcingSum += forcingAtNodes[icomp][iglob];
-            }
-            for (int iloc = 0; iloc < dim+1; iloc++)
-            {
-                int iglob = tempElem[iloc];
-                prec forcingFactor = (forcingAtNodes[icomp][iglob] + tempForcingSum)/(dim+2);
-                int globId = icomp*nNodes_v+iglob;
-                rhs_statForcing[globId] += Volume_v[iel]/(dim+1)*forcingFactor;
-            }
+            int iglob = tempElem[iloc];
+            tempForcingSum += forcingAtNodes[0][iglob];
+        }
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = tempElem[iloc];
+            prec forcingFactor = (forcingAtNodes[0][iglob] + tempForcingSum);
+            rhs_statForcing[iglob] += forcingFactor * element_factor;
         }
     }        
     //---------------------------------------
 }
 //---
+
 void PROBLEM_DARCY::updateTimeForcing()
 {
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS UPDATE TIME FORCING |--\n----------\n";
     int dim = (*physics).dim;
-    int nNodes_v = (*physics).nNodes_v;
-    int nElem_v = (*physics).nElem_v;
-    std::shared_ptr<int*[]> elem_v = (*physics).elem_v.PP;
-    std::shared_ptr<prec[]> Volume_v = (*physics).Volume_v.P;
+    int nNodes = (*physics).nNodes;
+    int nElem = (*physics).nElem;
+    std::shared_ptr<int*[]> elem = (*physics).elem.PP;
+    std::shared_ptr<prec[]> Volume = (*physics).Volume.P;
     prec evalTime = time + deltaT;
     rhs_timeForcing.resetZeros();
-    std::vector<VECTOR> forcingAtNodes(dim);
+    std::vector<VECTOR> forcingAtNodes(1);
 
-    for (int icomp = 0; icomp < dim; icomp++)
-    {    
-        
-        forcingAtNodes[icomp].initialize(nNodes_v);
-        FUNCTION_PARSER::evalCoord(timeForcing[icomp], (*physics).coord_v, evalTime, forcingAtNodes[icomp]);
-        
-        //std::cout << "\n" << forcingAtNodes[icomp].length << "\n";
-    }
+    forcingAtNodes[0].initialize(nNodes);
+    FUNCTION_PARSER::evalCoord(timeForcing[0], (*physics).coord, evalTime, forcingAtNodes[0]);
     //----------
     
-    for (int iel = 0; iel < nElem_v; iel++)
+    for (int iel = 0; iel < nElem; iel++)
     {
-        int* tempElem = elem_v[iel];
-        
-        for (int icomp = 0; icomp < dim; icomp++)
+        int* tempElem = elem[iel];
+        prec element_factor = Volume[iel] / ((dim+1)*(dim+2));
+        prec tempForcingSum = 0;
+        for (int iloc = 0; iloc < dim+1; iloc++)
         {
-            prec tempForcingSum = 0;
-            for (int iloc = 0; iloc < dim+1; iloc++)
-            {
-                
-                int iglob = tempElem[iloc];                
-                tempForcingSum += forcingAtNodes[icomp][iglob];
-                
-            }
-            for (int iloc = 0; iloc < dim+1; iloc++)
-            {
-                int iglob = tempElem[iloc];
-                prec forcingFactor = (forcingAtNodes[icomp][iglob] + tempForcingSum)/(dim+2);
-                int globId = icomp*nNodes_v+iglob;
-                rhs_timeForcing[globId] += Volume_v[iel]/(dim+1)*forcingFactor;
-            }
+            
+            int iglob = tempElem[iloc];                
+            tempForcingSum += forcingAtNodes[0][iglob];
             
         }
-        
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = tempElem[iloc];
+            prec forcingFactor = (forcingAtNodes[0][iglob] + tempForcingSum);
+            rhs_timeForcing[iglob] += forcingFactor * element_factor;
+        }
     }        
 }
 //------------------------------------------------------------------------------
@@ -1128,201 +1096,74 @@ void PROBLEM_DARCY::imposeBC(CSRMAT &SYSMAT_final, VECTOR &rhs)
 //------------------------------
 // IMPOSE STATIC BC
 //------------------------------
-void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
+void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_Darcy, VECTOR &rhs)
 {
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| IMPOSE STATIC BC  |--\n----------\n";
-    int dim = (*physics).dim;
     int flagBC = (*physics).flagBC;
-    int nNodes_v = (*physics).nNodes_v;
+
     // DIRICHLET BC
     switch (flagBC)
     {
-    case 0:
-    {
-        prec penalty = 1e13;
-        for (int icomp = 0; icomp < dim; icomp++)
+        case 0:
         {
-            // noFlux dir
-            for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
-            {
-                int iglob = noFluxNod[inoFlux] + nNodes_v*icomp; 
-                SYSMAT_NS(iglob,iglob, penalty);
-                rhs[iglob] = 0;
-            }
+            prec penalty = 1e13;
+            // noFlux: DO NOTHING
+            // symm: DO NOTHING
             // static dir
             for (int idir = 0; idir < nDir; idir++)
             {
-                int iglob = dirNod[idir] + nNodes_v*icomp;  
-                SYSMAT_NS(iglob,iglob) = penalty;
-                rhs[iglob] = penalty * dirVal[idir][icomp];
+                int iglob = dirNod[idir];
+                SYSMAT_Darcy(iglob,iglob) = penalty;
+                rhs[iglob] = penalty * dirVal[idir][0];
             }
+            break;
         }
-        // symm 
-        for (int isymm = 0; isymm < nSymm; isymm++)
+        case 1:
         {
-            int iglob = symmNod[isymm]; 
-
-            prec* tempValue = symmVal[isymm];
-
-            int trueIglob = 0;
-
-            for (int jcomp = 0; jcomp < dim; jcomp++)
-            {
-                if (tempValue[jcomp] != 0)
-                {
-                    trueIglob = iglob+jcomp*nNodes_v;
-                    break;
-                }
-            }
             
-            for (int jcomp = 0; jcomp < dim; jcomp++)
+            if (!statBCAlreadyApplied)
             {
-                int jglob = iglob + jcomp*nNodes_v;
-                SYSMAT_NS(trueIglob, jglob) = tempValue[jcomp];
-            } 
-            rhs[trueIglob] = 0;
-        }
-        break;
-    }
-    case 1:
-    {
-        
-        if (!statBCAlreadyApplied)
-        {
-            // noFlux
-            // set to zero row & col entries
-            int countPosToZero = 0; int countIglobToZero = 0; int countPosToOne = 0;
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
-                for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
-                {
-                    int iglob = noFluxNod[inoFlux] + icomp*nNodes_v; 
-                    VECTOR_INT rowInColToZero = SYSMAT_NS.setColInRowToZero(iglob, noFluxPosToZero, countPosToZero, noFluxPosToOne, countPosToOne);  
-                    rhs[iglob] = 0;                                             
-                    for (int i = 0; i < rowInColToZero.length; i++) 
-                    {
-                        int tempPos = SYSMAT_NS(rowInColToZero[i], iglob, 0);
-                        noFluxPosToZero[countPosToZero] = tempPos; countPosToZero++;
-                    }
-                }
-            }
-            //---
-            // static dir
-            // set to zero row & col entries
-            countPosToZero = 0; countPosToOne = 0;
-            std::shared_ptr<prec[]> coefMat = SYSMAT_NS.coef;
-            dirCountToZero[0] = 0;
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
+                // noFlux: DO NOTHING
+                // symm: DO NOTHING
+                
+                // static dir
+                // set to zero row & col entries
+                int countPosToZero = 0; int countIglobToZero = 0; int countPosToOne = 0;
+                std::shared_ptr<prec[]> coefMat = SYSMAT_Darcy.coef;
+                dirCountToZero[0] = 0;
                 for (int idir = 0; idir < nDir; idir++)
                 {
-                    prec tempDirVal = dirVal[idir][icomp];
-                    int tempDirNod  = dirNod[idir] + icomp*nNodes_v;
+                    prec tempDirVal = dirVal[idir][0];
+                    int tempDirNod  = dirNod[idir];
                     rhs[tempDirNod] = tempDirVal;
-                    VECTOR_INT rowInColToZero = SYSMAT_NS.setColInRowToZero(tempDirNod, dirPosToZero, countPosToZero, dirPosToOne, countPosToOne);
+                    VECTOR_INT rowInColToZero = SYSMAT_Darcy.setColInRowToZero(tempDirNod, dirPosToZero, countPosToZero, dirPosToOne, countPosToOne);
                     for (int i = 0; i < rowInColToZero.length; i++) 
                     {
                         int iglob = rowInColToZero[i];
-                        int pos = SYSMAT_NS.getPos(iglob, tempDirNod);
+                        int pos = SYSMAT_Darcy.getPos(iglob, tempDirNod);
                         prec tempVal = coefMat[pos];
                         rhs[iglob] -= tempVal * tempDirVal;
                         coefMat[pos] = 0.0;
                         dirIglobToZero[countIglobToZero] = iglob; countIglobToZero++;
                         dirPosToZero[countPosToZero] = pos; countPosToZero++;
 
-                        int tempDirCountId = icomp*nDir + idir + 1;
+                        int tempDirCountId = idir + 1;
                         dirCountToZero[tempDirCountId] = countPosToZero;
                     }
                 }
-            }
-
-            //---
-            // SYMMETRIC BC
-            //*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-            countPosToZero = 0; int countPosToCoef = 0;
-            std::shared_ptr<int[]> iat = SYSMAT_NS.iat;
-            std::shared_ptr<int[]> ja = SYSMAT_NS.ja;
-            for (int isymm = 0; isymm < nSymm; isymm++)
+                statBCAlreadyApplied = true;
+            } 
+            else
             {
-                prec* tempVal = symmVal[isymm];
-                int iglob  = symmNod[isymm];
-
-                int trueIglob = 0;
-                for (int jcomp = 0; jcomp < dim; jcomp++)
-                {
-                    if (abs(tempVal[jcomp]) > 0.8)
-                    {
-                        trueIglob = iglob+jcomp*nNodes_v;
-                        break;
-                    }
-                }
-
-                // VECTOR::print(tempVal,3);
-                symmRealIglob[isymm] = trueIglob;
-
-                rhs[trueIglob] = 0;
-                
-                int startPos = iat[trueIglob]; int endPos = iat[trueIglob+1];
-
-                int jglob = iglob; int jcomp = 0;
-
-                for (int pos = startPos; pos < endPos; pos++)
-                {
-                    int tempCol = ja[pos];
-                    if (tempCol == jglob)
-                    {
-                        coefMat[pos] = tempVal[jcomp];
-                        symmPosToCoef[countPosToCoef] = pos;
-                        countPosToCoef++;
-                        if (jcomp != dim-1) 
-                        {
-                            jglob += nNodes_v; jcomp++;
-                        }
-                    } else
-                    {
-                        coefMat[pos] = 0;
-                        symmPosToZero[countPosToZero] = pos;
-                        countPosToZero++;
-                    }
-                }       
-            }
-            //*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
-            statBCAlreadyApplied = true;
-        } else
-        {
-            //--- noFlux
-            int nToZero = noFluxPosToZero.length; int nToOne = noFluxPosToOne.length;
-            std::shared_ptr<prec[]> coefMat = SYSMAT_NS.coef;
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
-                for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
-                {
-                    int iglob = noFluxNod[inoFlux] + icomp*nNodes_v;
-                    rhs[iglob] = 0.0;
-                }
-            }
-            //---
-            for (int countPosToZero = 0; countPosToZero < nToZero; countPosToZero++)
-            {
-                int pos = noFluxPosToZero[countPosToZero];
-                coefMat[pos] = 0.0;
-            }
-            for (int countPosToOne = 0; countPosToOne < nToOne; countPosToOne++)
-            {
-                int pos = noFluxPosToOne[countPosToOne];
-                coefMat[pos] = 1.0;
-            }
-
-            //--- Dirichlet
-            nToOne = dirPosToOne.length; int countIglobToZero = 0;
-            for (int icomp = 0; icomp < dim; icomp++)
-            {
+                //--- Dirichlet
+                int nToOne = dirPosToOne.length; int countIglobToZero = 0;
+                std::shared_ptr<prec[]> coefMat = SYSMAT_Darcy.coef;
                 for (int idir = 0; idir < nDir; idir++)
                 {
-                    int tempDirNod = dirNod[idir] + icomp*nNodes_v;
-                    prec tempVal = dirVal[idir][icomp]; 
+                    int tempDirNod = dirNod[idir];
+                    prec tempVal = dirVal[idir][0]; 
                     rhs[tempDirNod] = tempVal;
-                    int tempDirCountId = icomp*nDir + idir;
+                    int tempDirCountId = idir;
                     int start = dirCountToZero[tempDirCountId]; int end = dirCountToZero[tempDirCountId+1];
                     int length = end - start;
                     for (int i = 0; i < length/2; i++)
@@ -1340,44 +1181,18 @@ void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
                         coefMat[pos] = 0.0;
                     }
                 }
-            }
-            //---
-            for (int i = 0; i < nToOne; i++)
-            {
-                int pos = dirPosToOne[i];
-                coefMat[pos] = 1;
-            }
-            //----------------------------------
-            // SYMMETRY BC
-            //----------------------------------
-            int countIglobToCoef = 0; nToZero = symmPosToZero.length;
-
-            for (int isymm = 0; isymm < nSymm; isymm++)
-            {
-                int trueIglob = symmRealIglob[isymm];
-
-                prec* tempVal = symmVal[isymm]; 
-
-                rhs[trueIglob] = 0;
-
-                for (int jcomp = 0; jcomp < dim; jcomp++)
+                //---
+                for (int i = 0; i < nToOne; i++)
                 {
-                    int pos = symmPosToCoef[countIglobToCoef];
-                    coefMat[pos] = tempVal[jcomp];
-                    countIglobToCoef++;
+                    int pos = dirPosToOne[i];
+                    coefMat[pos] = 1;
                 }
             }
             //---
-            for (int i = 0; i < nToZero; i++)
-            {
-                int pos = symmPosToZero[i];
-                coefMat[pos] = 0;
-            }
+            break;
         }
-        //---
-        break;
     }
-    }
+
     // NEUMANN BC
     //static
         for (int ineu = 0; ineu < nNeu; ineu++)
@@ -1390,78 +1205,69 @@ void PROBLEM_DARCY::imposeStaticBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
 //-----------------------------
 // IMPOSE TIME DEPENDENT BC
 //-----------------------------
-void PROBLEM_DARCY::imposeTimeBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
+void PROBLEM_DARCY::imposeTimeBC(CSRMAT &SYSMAT_Darcy, VECTOR &rhs)
 {
     static bool timeBCAlreadyApplied = false;
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS IMPOSE TIME BC  |--\n----------\n";
-    int dim = (*physics).dim;
     int flagBC = (*physics).flagBC;
-    int nNodes_v = (*physics).nNodes_v;
     // DIRICHLET BC
     switch (flagBC)
     {
-    case 0:
-    {
-        prec penalty = 1e13;
-        // time dep dir
-        for (int icomp = 0; icomp < dim; icomp++)
+        case 0:
         {
+            prec penalty = 1e13;
+            // time dep dir
             for (int idir = 0; idir < nTimeDir; idir++)
             {
-                int iglob = dirTimeNod[idir] + nNodes_v*icomp;  
-                SYSMAT_NS(iglob,iglob,penalty);
-                rhs[iglob] = penalty * dirTimeVal[idir][icomp];
+                int iglob = dirTimeNod[idir];  
+                SYSMAT_Darcy(iglob,iglob,penalty);
+                rhs[iglob] = penalty * dirTimeVal[idir][0];
             }
+            break;
         }
-        break;
-    }
-    case 1:
-    {
-        // time dep
-        // set to zero row % col entries
-        if (!timeBCAlreadyApplied)
+        case 1:
         {
-            int countPosToZero = 0; int countIglobToZero = 0; int countPosToOne = 0;
-            std::shared_ptr<prec[]> coefMat = SYSMAT_NS.coef;
-            dirTimeCountToZero[0] = 0;
-            for (int icomp = 0; icomp < dim; icomp++)
+            // time dep
+            // set to zero row % col entries
+            if (!timeBCAlreadyApplied)
             {
+                int countPosToZero = 0; int countIglobToZero = 0; int countPosToOne = 0;
+                std::shared_ptr<prec[]> coefMat = SYSMAT_Darcy.coef;
+                dirTimeCountToZero[0] = 0;
                 for (int idir = 0; idir < nTimeDir; idir++)
                 {
-                    prec tempDirVal = dirTimeVal[idir][icomp];
-                    int tempDirTimeNod  = dirTimeNod[idir] + icomp*nNodes_v;
+                    prec tempDirVal = dirTimeVal[idir][0];
+                    int tempDirTimeNod  = dirTimeNod[idir];
                     rhs[tempDirTimeNod] = tempDirVal;
-                    VECTOR_INT rowInColToZero = SYSMAT_NS.setColInRowToZero(tempDirTimeNod, dirTimePosToZero, countPosToZero, dirTimePosToOne, countPosToOne); //since the matrix has symmetric non zero entries we use the                                                                    //non 
+                    VECTOR_INT rowInColToZero = SYSMAT_Darcy.setColInRowToZero(tempDirTimeNod, dirTimePosToZero, countPosToZero, dirTimePosToOne, countPosToOne); //since the matrix has symmetric non zero entries we use the                                                                    //non 
                     for (int i = 0; i < rowInColToZero.length; i++) 
                     {
                         int iglob = rowInColToZero[i];
-                        int pos = SYSMAT_NS.getPos(iglob, tempDirTimeNod);
+                        int pos = SYSMAT_Darcy.getPos(iglob, tempDirTimeNod);
                         prec tempVal = coefMat[pos];
                         rhs[iglob] -= tempVal * tempDirVal;
                         coefMat[pos] = 0.0;
                         dirTimeIglobToZero[countIglobToZero] = iglob; countIglobToZero++;
                         dirTimePosToZero[countPosToZero] = pos; countPosToZero++;
 
-                        int tempDirTimeCountId = icomp*nTimeDir + idir + 1;
+                        int tempDirTimeCountId = idir + 1;
                         dirTimeCountToZero[tempDirTimeCountId] = countPosToZero;
                     }
                 }
-            }
-            timeBCAlreadyApplied = true;
-        } else
-        {
-            int nToOne = dirTimePosToOne.length;
-            std::shared_ptr<prec[]> coefMat = SYSMAT_NS.coef; int countIglobToZero = 0;
-            //---
-            for (int icomp = 0; icomp < dim; icomp++)
+                timeBCAlreadyApplied = true;
+            } 
+            else
             {
+                int nToOne = dirTimePosToOne.length;
+                std::shared_ptr<prec[]> coefMat = SYSMAT_Darcy.coef; int countIglobToZero = 0;
+                //---
                 for (int idir = 0; idir < nTimeDir; idir++)
                 {
-                    int tempDirTimeNod = dirTimeNod[idir] + icomp*nNodes_v;
-                    prec tempVal = dirTimeVal[idir][icomp];
+                    int tempDirTimeNod = dirTimeNod[idir];
+                    prec tempVal = dirTimeVal[idir][0];
                     rhs[tempDirTimeNod] = tempVal;
 
-                    int tempDirTimeCountId = icomp*nTimeDir + idir;
+                    int tempDirTimeCountId = idir;
                     int start = dirTimeCountToZero[tempDirTimeCountId]; int end = dirTimeCountToZero[tempDirTimeCountId+1];
                     int length = end - start;
                     for (int i = 0; i < length/2; i++)
@@ -1479,31 +1285,27 @@ void PROBLEM_DARCY::imposeTimeBC(CSRMAT &SYSMAT_NS, VECTOR &rhs)
                         coefMat[pos] = 0.0;
                     }
                 }
+                //---
+                for (int i = 0; i < nToOne; i++)
+                {
+                    int pos = dirTimePosToOne[i];
+                    coefMat[pos] = 1;
+                }
             }
-            //---
-            for (int i = 0; i < nToOne; i++)
-            {
-                int pos = dirTimePosToOne[i];
-                coefMat[pos] = 1;
-            }
+            //---       
+            break;
         }
-        
-        //---       
-        break;
-    }
     }
 
     // NEUMANN BC
     // time dependent
-    for (int icomp = 0; icomp < dim; icomp++)
+    for (int ineu = 0; ineu < nTimeNeu; ineu++)
     {
-        for (int ineu = 0; ineu < nTimeNeu; ineu++)
-        {
-            int iglob = neuTimeNod[ineu] + nNodes_v*icomp;
-            rhs[iglob] -= neuTimeVal[ineu][icomp];
-        }
+        int iglob = neuTimeNod[ineu];
+        rhs[iglob] -= neuTimeVal[ineu][0];
     }
 }
+
 //-------------------------------------------------
 // UPDATE BC
 //-------------------------------------------------
@@ -1515,30 +1317,15 @@ void PROBLEM_DARCY::updateBC(prec trialTime)
 }
 
 //-------------------------------------------------
-// UPDATE SYSMAT_NS 
+// UPDATE SYSMAT_Darcy 
 //-------------------------------------------------
 void PROBLEM_DARCY::updateSYSMAT()
-{
-    // if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS UPDATE SYSMAT_NS |--\n----------\n";
-    
-    // SYSMAT = SYSMAT_base; // initialize SYSMAT as SYSMAT_base in order to add updated matrices in correct blocks
+{  
+    SYSMAT = SYSMAT_base; // initialize SYSMAT as SYSMAT_base in order to add updated matrices in correct blocks
 
-    // // add Time Derivative Matrix
-    // std::shared_ptr<prec[]> coefM = M.coef;
-    // prec factorP = 1 / deltaT;
-    // // add P
-    // addToSysmat(coefM, factorP); // add in diagonal blocks
-
-    // // convective term assembled in the convective convergence loop
-
-    // // add Optimization Variable Matrix
-    // // assemble
-    // assembleMa();
-    // std::shared_ptr<prec[]> coefMa = Ma.P;
-    // prec factorMa = 1 / (*physics).rho;
-    // // add Ma
-    // addToSysmat(coefMa, factorMa); // add in diagonal blocks
-
+    // add Time Derivative Matrix to SYSMAT
+    prec factorP = 1 / deltaT;
+    addToSysmat(M, factorP); 
 }
 //---
 
@@ -1548,57 +1335,19 @@ void PROBLEM_DARCY::updateSYSMAT()
 void PROBLEM_DARCY::updateRHS()
 {
     if ((*physics).completeLog == 0) std::cout << "\n----------\n--| UPDATE RHS |--\n----------\n";
-    int dim = (*physics).dim;
-    int nNodes_v = (*physics).nNodes_v;
+    int nNodes = (*physics).nNodes;
+    rhs.completeReset();
+    rhs = rhs_statForcing;
 
     if (flagForcing == 1)
     {
         updateTimeForcing();
-        VECTOR::sum(rhs_statForcing, rhs_timeForcing, rhs);
-        currForcingAtNodes = rhs;
-        for (int icomp = 0; icomp < dim; icomp++)      //(P * lastSol)/deltaT;
-        {
-            int startId = icomp*nNodes_v;
-            VECTOR tempSolComp(nNodes_v);
-            prec* tempP = &lastSol[startId];
-            tempSolComp.copy(tempP);
-
-            VECTOR tSol(nNodes_v);
-            M.prod(tempSolComp, tSol);
-            // tempSolComp = M*tempSolComp;
-            tSol /= deltaT;
-            tempP = &rhs[startId];
-            VECTOR::sum(tempP, tSol.P, nNodes_v, tempP);
-        }
+        rhs += rhs_timeForcing;
     }
-    else
-    {
-        static bool alreadyVisited = false;
-        if (!alreadyVisited)
-        {
-            alreadyVisited = true;
-            currForcingAtNodes = rhs_statForcing;
-        } 
-        for (int icomp = 0; icomp < dim; icomp++)
-        {
-            int startId = icomp*nNodes_v;
-            VECTOR tempSolComp(nNodes_v);
-            prec* tempP = &lastSol[startId];
-            tempSolComp.copy(tempP);
 
-
-            VECTOR tSol(nNodes_v);
-            M.prod(tempSolComp, tSol);
-            // tempSolComp = M*tempSolComp;
-            tSol /= deltaT;
-
-            tempP = &rhs[startId];
-
-            prec* rhs_fP = &rhs_statForcing[startId];
-            VECTOR::sum(rhs_fP, tSol.P, nNodes_v, tempP);
-        }
-    }
-    
+    VECTOR last_sol_contribution(nNodes);
+    last_sol_contribution = (M*lastSol) / deltaT;
+    rhs += last_sol_contribution;
 }
 //------------------------------------------------------------------------------------
 void PROBLEM_DARCY::setInitCond()
@@ -1628,162 +1377,116 @@ void PROBLEM_DARCY::setInitCond()
 //---------------------------------------------------
 void PROBLEM_DARCY::prepareSolver()
 {
-    std::cout << "\n PREPARE SOLVER IMPLENTATION TO BE DONE \n";
-    pause();
     assemble();
-    // applyStatForcing();
-    // // prepare BC update in case of lifting functions imposition
-    // int dim = (*physics).dim;
-    // int nElem_v = (*physics).nElem_v;
-    // std::shared_ptr<int*[]> elem_v = (*physics).elem_v.PP;
-    // if ((*physics).flagBC == 1)
-    // {
-    //     std::shared_ptr<int[]> iat = SYSMAT_base.iat;
-    //     int countPosToZero = 0;
-    //     //--- noFlux
-    //     for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
-    //     {
-    //         int iglob = noFluxNod[inoFlux];
-    //         int nnzInRow = iat[iglob+1] - iat[iglob];
-    //         countPosToZero += nnzInRow;
-    //     }
-    //     countPosToZero -= nNoFlux;
-    //     countPosToZero *= 2;
-    //     noFluxPosToZero.initialize(countPosToZero*dim);
-    //     noFluxPosToOne.initialize(nNoFlux*dim);
-    //     //--- static
-    //     countPosToZero = 0;
-    //     for (int idir = 0; idir < nDir; idir++)
-    //     {
-    //         int iglob = dirNod[idir];
-    //         int nnzInRow = iat[iglob+1] - iat[iglob];
-    //         countPosToZero += nnzInRow;
-    //     }
-    //     countPosToZero -= nDir;
-    //     dirIglobToZero.initialize(countPosToZero * dim);
-    //     countPosToZero *= 2;
-    //     dirPosToZero.initialize(countPosToZero * dim);
-    //     dirPosToOne.initialize(nDir * dim);
-    //     dirCountToZero.initialize(nDir*dim + 1);
-    //     //--- time-dependent
-    //     countPosToZero = 0;
-    //     for (int idir = 0; idir < nTimeDir; idir++)
-    //     {
-    //         int iglob = dirTimeNod[idir];
-    //         int nnzInRow = iat[iglob+1] - iat[iglob];
-    //         countPosToZero += nnzInRow;
-    //     }
-    //     countPosToZero -= nTimeDir;
-    //     dirTimeIglobToZero.initialize(countPosToZero * dim);
-    //     countPosToZero *= 2;
-    //     dirTimePosToZero.initialize(countPosToZero * dim);
-    //     dirTimePosToOne.initialize(nTimeDir * dim);
-    //     dirTimeCountToZero.initialize(nTimeDir*dim + 1);
-    //     //--------------------------------------------------
-    //     // SYMMETRY BC
-    //     //--------------------------------------------------
-    //     countPosToZero = 0;
-    //     for (int isymm = 0; isymm < nSymm; isymm++)
-    //     {
-    //         int iglob = symmNod[isymm];
-    //         int nnzInRow = iat[iglob+1] - iat[iglob];
-    //         countPosToZero += nnzInRow;
-    //     }
-    //     countPosToZero -= nSymm*dim;
-    //     symmPosToZero.initialize(countPosToZero);
-    //     symmPosToCoef.initialize(nSymm*dim);
-    // }
+
+    applyStatForcing();
+
+    // prepare BC update in case of lifting functions imposition
+    int dim = (*physics).dim;
+    int nElem = (*physics).nElem;
+    std::shared_ptr<int*[]> elem = (*physics).elem.PP;
+    if ((*physics).flagBC == 1)
+    {
+        std::shared_ptr<int[]> iat = SYSMAT_base.iat;
+        int countPosToZero = 0;
+        //--- noFlux
+        for (int inoFlux = 0; inoFlux < nNoFlux; inoFlux++)
+        {
+            int iglob = noFluxNod[inoFlux];
+            int nnzInRow = iat[iglob+1] - iat[iglob];
+            countPosToZero += nnzInRow;
+        }
+        countPosToZero -= nNoFlux;
+        countPosToZero *= 2;
+        noFluxPosToZero.initialize(countPosToZero);
+        noFluxPosToOne.initialize(nNoFlux);
+        //--- static
+        countPosToZero = 0;
+        for (int idir = 0; idir < nDir; idir++)
+        {
+            int iglob = dirNod[idir];
+            int nnzInRow = iat[iglob+1] - iat[iglob];
+            countPosToZero += nnzInRow;
+        }
+        countPosToZero -= nDir;
+        dirIglobToZero.initialize(countPosToZero);
+        countPosToZero *= 2;
+        dirPosToZero.initialize(countPosToZero);
+        dirPosToOne.initialize(nDir);
+        dirCountToZero.initialize(nDir + 1);
+        //--- time-dependent
+        countPosToZero = 0;
+        for (int idir = 0; idir < nTimeDir; idir++)
+        {
+            int iglob = dirTimeNod[idir];
+            int nnzInRow = iat[iglob+1] - iat[iglob];
+            countPosToZero += nnzInRow;
+        }
+        countPosToZero -= nTimeDir;
+        dirTimeIglobToZero.initialize(countPosToZero);
+        countPosToZero *= 2;
+        dirTimePosToZero.initialize(countPosToZero);
+        dirTimePosToOne.initialize(nTimeDir);
+        dirTimeCountToZero.initialize(nTimeDir + 1);
+
+        //--------------------------------------------------
+        // SYMMETRY and NO-FLUX BC
+        //--------------------------------------------------
+        // symm BC are equivalent to "do-nothing"
+    }
     
-    // //-----------------------
-    // // FREE USELESS STUFF
-    // //-----------------------
-    // boundIdNodes_buff.reset(); boundIdNodes.reset(); 
+    //-----------------------
+    // FREE USELESS STUFF
+    //-----------------------
+    boundIdNodes_buff.reset(); boundIdNodes.reset(); 
     // // dirBound.dlt();
     // // noFluxBound.dlt(); 
-    // //----------------------------------------------------------
-    // // get max length of each element
-    // //----------------------------------------------------------
-    // (*physics).h_v.initialize(nElem_v);
-    // std::shared_ptr<prec*[]> coord_v = (*physics).coord_v.PP;
-    // std::vector<VECTOR> tempCoord(dim+1);
-    // for (int iel = 0; iel < nElem_v; iel++)
-    // {
-    //     prec maxDist = 0;
-    //     int* tempElem = elem_v[iel];
-    //     //----------------------------------------
-    //     for (int iloc = 0; iloc < dim+1; iloc++)
-    //     {
-    //         int iglob = tempElem[iloc];
-    //         prec* nodeCoord = coord_v[iglob];
-    //         tempCoord[iloc].initialize(dim);
-    //         for (int icomp = 0; icomp < dim; icomp++)
-    //         {
-    //             tempCoord[iloc][icomp] = nodeCoord[icomp];
-    //         }
-    //     }
-    //     //----------------------------------------
-    //     for (int iloc = 0; iloc < dim+1; iloc++)
-    //     {
-    //         for (int jloc = iloc+1; jloc < dim+1; jloc++)
-    //         {
-    //             VECTOR diff = tempCoord[iloc] - tempCoord[jloc];
-    //             prec tempDist = diff.norm();
-    //             if (tempDist > maxDist)
-    //             {
-    //                 maxDist = tempDist;
-    //             }
-    //         }
-    //     }
-    //     (*physics).h_v[iel] = maxDist;
-    // }
-    // //--------------------------------------
-    // // PRINT INIT COND
-    // //--------------------------------------
-    // int nNodes = (*physics).nNodes;
-    // int nElem = (*physics).nElem;
-    // int nNodes_v = (*physics).nNodes_v;
-    // std::string folderName;
-    // switch ((*physics).isNS)
-    // {
-    //     case 0:
-    //     {
-    //         folderName = "S_sol";
-    //         break;
-    //     }
-    //     case 1:
-    //     {
-    //         folderName = "NS_sol";
-    //         break;
-    //     }
-    //     default:
-    //     {
-    //         break;
-    //     }
-    // }
-    // VTKWriter.initializeForNS(name, dim, nNodes, nElem, folderName);
 
-    // setInitCond();
+    //----------------------------------------------------------
+    // get max length of each element
+    //----------------------------------------------------------
+    (*physics).h.initialize(nElem);
+    std::shared_ptr<prec*[]> coord = (*physics).coord.PP;
+    std::vector<VECTOR> tempCoord(dim+1);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        prec maxDist = 0;
+        int* tempElem = elem[iel];
+        //----------------------------------------
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = tempElem[iloc];
+            prec* nodeCoord = coord[iglob];
+            tempCoord[iloc].initialize(dim);
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                tempCoord[iloc][icomp] = nodeCoord[icomp];
+            }
+        }
+        //----------------------------------------
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            for (int jloc = iloc+1; jloc < dim+1; jloc++)
+            {
+                VECTOR diff = tempCoord[iloc] - tempCoord[jloc];
+                prec tempDist = diff.norm();
+                if (tempDist > maxDist)
+                {
+                    maxDist = tempDist;
+                }
+            }
+        }
+        (*physics).h[iel] = maxDist;
+    }
 
-    // // GET INIT VELOCITY
-    // MATRIX coord(nNodes, dim);
-    // coord = (*physics).coord;
-    // MATRIX_INT elem(nElem,dim+1);
-    // elem = (*physics).elem;
-    // MATRIX velocity(nNodes, dim);
-    // for (int icomp = 0; icomp < dim; icomp++)
-    // {
-    //     for (int inode = 0; inode < nNodes; inode++)
-    //     {
-    //         int iglob = inode + nNodes_v*icomp;
-    //         velocity[inode][icomp] = lastSol[iglob];
-    //     }
-    // }
-    // // GET INIT PRESSURE
-    // VECTOR pressure(nNodes);
-    // prec* tempP = &lastSol[dim*nNodes_v];
-    // pressure = tempP;
+    //--------------------------------------
+    // PRINT INIT COND
+    //--------------------------------------
+    int nNodes = (*physics).nNodes;
+    std::string folderName = "Darcy_sol";
+    VTKWriter.initializeForNS(name, dim, nNodes, nElem, folderName);
 
-    // // VTKWriter.write(coord, elem, pressure, 0, deltaT, velocity);
+    setInitCond();
 }
 
 //------------------------------
@@ -1806,50 +1509,25 @@ void PROBLEM_DARCY::resetPrint(int iter)
 //-------------------------
 void PROBLEM_DARCY::StatSolver()
 {
-    throw_line("ERROR: non updated solution case. Disused method\n");
     time = 0;
-    // prec t_end = (*physics).t_end;
     deltaT = (*physics).deltaT;
     globIter = 0;
+    (*physics).Darcy_solution.complete_reset();
 
-    oneStepSolver(1e-3, 5);
-    simulation_times_solution.append_row(lastSol);
-    print_sol_in_VTK((*physics).NS_solution);
+    oneStepSolver(1e-3, 10);
+    (*physics).Darcy_solution.append_row(lastSol);
+    print_sol_in_VTK((*physics).Darcy_solution);
 
     VTKWriter.closeTFile();
 }
 //----
 
-void PROBLEM_DARCY::StatSolverIterative()
-{
-    
-    prec t_end = (*physics).t_end; // = (*physics).solution_times[0]
-    deltaT = (*physics).deltaT; // fixed value defined in the geometry.h time settings method
-    time = 0;
-    globIter = 0;
-    while (time < t_end)
-    {
-        oneStepSolver();
-        if (time+deltaT > t_end) 
-        {
-            deltaT = t_end-time;
-            // convergence_toll = 1e-4;
-            // convergence_it = 20;
-        }
-    }
-    // std::cout << "\nNS_las_sol_norm: " << lastSol.norm() << "\n";
-    // pause();
-    (*physics).NS_solution.modifyRow(0, lastSol);
-    print_sol_in_VTK((*physics).NS_solution);
-    VTKWriter.closeTFile();
-}
-
 void PROBLEM_DARCY::Solver()
 {
     real_solution_times.resetZeros();
     real_solution_times.initialize(0);
-    simulation_times_solution.complete_reset();
-    // (*physics).NS_solution.complete_reset();
+    (*physics).Darcy_solution.complete_reset();
+
     // pos dal primo BC
     time = 0;
     real_solution_times.append(time);
@@ -1866,17 +1544,14 @@ void PROBLEM_DARCY::Solver()
 
     VECTOR init_cond((*physics).nDof);
     init_cond.setZeros(((*physics).nDof));
-    simulation_times_solution.append_row(init_cond);
-    //print_one_step_sol_in_VTK((*physics).dim, (*physics).nNodes, (*physics).nNodes_v, 0);
+    (*physics).Darcy_solution.append_row(init_cond);
 
     while ((t_end-time) > (1e-15 * (nTimeSteps+1)))
     {
         oneStepSolver();
-        simulation_times_solution.append_row(lastSol);
-        // std::cout << "\nNS_las_sol_norm: " << lastSol.norm() << "\n";
+        (*physics).Darcy_solution.append_row(lastSol);
         if (time+deltaT > t_end) deltaT = t_end-time;
     }
-    // pause();
     print_sol_in_VTK((*physics).NS_solution);
     VTKWriter.closeTFile();
 }
@@ -1884,62 +1559,107 @@ void PROBLEM_DARCY::Solver()
 //-------------------------
 // ONE-STEP SOLVER
 //-------------------------
-// General
 void PROBLEM_DARCY::oneStepSolver(prec toll, int itMax)
 {
-    std::cout << "\nCREATE ONE STEP SOLVER\n";
-    pause();
+    prec trialTime = time + deltaT;
+    
+    updateBC(trialTime);
+
+    updateSYSMAT();
+
+    updateRHS();
+
+    // if (completeLog) 
+    if (completeLog < 2) std::cout << "\n----------------------------------------------------------------------------\n--| DARCY ONE-STEP SOLVER TIME " << time << "-> " << trialTime << "|--\n----------------------------------------------------------------------------\n";
+
+    VECTOR rhs_final;
+    CSRMAT SYSMAT_final;
+    prec finalRes = 0.0;
+    // prec scarto = 0.0;
+
+    VECTOR oldSol;
+    oldSol = lastSol;
+    VECTOR sol(nDof);
+
+    double startTime = 0;
+    double endTime = 0;
+    // double startSolverTime = 0;
+    // double endSolverTime = 0;
+
+    startTime = omp_get_wtime();
+    rhs_final = rhs;
+    SYSMAT_final = SYSMAT;
+
+    imposeBC(SYSMAT_final, rhs_final);
+
+    std::shared_ptr<prec []> solP = sol.P;
+
+    // SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, solP, 1); finalRes = toll-1;
+    precondJacobiSolver(SYSMAT_final, rhs_final, sol);
+    // precondSchurSolver(SYSMAT_final, rhs_final, sol);
+    // SIMPLESolver(SYSMAT_final, rhs_final, sol, finalRes);
+    // SCHURgmres(SYSMAT_final, rhs_final, sol, finalRes);
+    // prec bNorm   = rhs_final.norm();
+    // sol = SOLVERLS::gmres_p(SYSMAT_final, rhs_final.P, lastSol.P, bNorm, 1e-6, 500); 
+
+    bool is_nan = false;
+    for (int i = 0; i < nDof; i++) if(!(abs(sol[i]) < 1e16))
+    {
+        is_nan = true;
+        break;
+        // throw_line("THE ERROR IS HERE MAN\n");
+    }
+    if (is_nan) 
+    {
+        // sol = SOLVERLS::launchPardiso(SYSMAT_final, rhs_final.P, 0);
+
+        // prec bNorm   = rhs_final.norm();
+        // sol = SOLVERLS::gmres_p(SYSMAT_final, rhs_final.P, lastSol.P, bNorm, 1e-6, 500); 
+    }
+    // update last sol
+    PARALLEL::copy(sol, lastSol);
+    // scarto = evalErrRelV(oldSol.P, sol.P);
+    //printf("TIME INNER |SIMPLE| SOLVER: %" format ", scarto: %e\n", endTime-startTime, scarto);
+    // printf("scarto it %d è : %" format_e "\n", it, sol);
+
+    PARALLEL::copy(lastSol, oldSol);
+
+    endTime = omp_get_wtime();
+
+    printf("|DARCY| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", residual: %e\n", (globIter+1), trialTime, endTime-startTime, finalRes);    
+    time = trialTime;
+    real_solution_times.append(time);
+    prec t_end = (*physics).t_end;  
+    if (completeLog < 2) printf("In progress... %%%4.2f\n", time/t_end*100);
+    
+    globIter++;
 }
+//
 
 //-------------------------------
-// PRINT ONE STEP SOLUTION IN VTK
+// PRINT STEP SOLUTION IN VTK
 //-------------------------------
-void PROBLEM_DARCY::print_one_step_sol_in_VTK(int dim, int nNodes, prec trial_time)
-{
-    std::cout << "\n printdarcy sol in vtk\n";
-    pause();
-    // // GET VELOCITY
-    // MATRIX velocity = getVelocityFromSol(lastSol);
-    // // GET PRESSURE
-    // VECTOR pressure(nNodes);
-    // prec* tempP = &lastSol[dim*nNodes_v];
-    // pressure = tempP;
-    
-    // //-----------------
-    // if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure", velocity, dim, "Velocity");
-}
 
 void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
 {
-    // for (int itime = 0; itime < (*physics).solution_times.length; itime++)
-    // {
-    //     prec trial_time;
-    //     if ((*physics).isStationary == 1) //stationary case: only one time = "infinity", so it has no meaning to report it.
-    //     {
-    //         trial_time = 0;
-    //     }
-    //     else // time dependent case: starting from t0.
-    //     {
-    //         trial_time = (*physics).solution_times[itime];
-    //     }
+    for (int itime = 0; itime < (*physics).solution_times.length; itime++)
+    {
+        prec trial_time;
+        if ((*physics).isStationary == 1) //stationary case: only one time = "infinity", so it has no meaning to report it.
+        {
+            trial_time = 0;
+        }
+        else // time dependent case: starting from t0.
+        {
+            trial_time = (*physics).solution_times[itime];
+        }
          
-    //     // GET VELOCITY
-    //     VECTOR temp_sol = requested_sol.get_row(itime);
-    //     // temp_sol.printRowMatlab("prova");
+        // GET PRESSURE
+        VECTOR pressure = requested_sol.get_row(itime);
         
-    //     MATRIX velocity = getVelocityFromSol(temp_sol);
-    //     // MATRIX::printForMatlab(velocity, "vel");
-    //     // std::cout << "tempsolL: " << temp_sol.length << "\n";
-    //     // std::cout << "nDof: " << nDof << "\n";
-    //     // pause();
-    //     // GET PRESSURE
-    //     VECTOR pressure((*physics).nNodes);
-    //     prec* tempP = &temp_sol[(*physics).dim*(*physics).nNodes_v];
-    //     pressure = tempP;
-        
-    //     //-----------------
-    //     if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure", velocity, (*physics).dim, "Velocity");
-    // }
+        //-----------------
+        if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure");
+    }
          
 }
 
@@ -2038,6 +1758,6 @@ void PROBLEM_DARCY::checkImportParameters()
     for (int ibound = 0; ibound < nNeuTimeBound; ibound++)
     {
         std::string tempName = std::to_string(ibound+1) + "th TIME DEPENDENT Neumann function";
-        neuTimeMeanP[ibound].print(tempName);
+        neuTimeMeanFlux[ibound].print(tempName);
     }
 }

@@ -381,6 +381,10 @@ public:
 
     void operator /= (prec coef)
     {
+        if (abs(coef) <= 1e-14)
+        {
+            throw_line("ERROR: dividing a vector by 0\n");
+        }
         for (int i = 0; i < length; i++)
         {
             P[i] /= coef;

@@ -53,6 +53,7 @@ class PHYSICS
     //--- P struct -------
     int nElem;
     int nNodes;
+    VECTOR h;
     MATRIX coord;
     MATRIX_INT elem;
     std::vector<VECTOR> centroids;

@@ -185,7 +185,8 @@ void PROBLEM_DARCY::assemble() // i: usually refers to rows; j: usually refers t
 
                         prec b_j = Bloc[iel][jloc];
                         prec c_j = Cloc[iel][jloc];
-                        // add DIFFUSION term
+
+                        //  DIFFUSION term
                         coefH[count] = (b_i*b_j + c_i*c_j) * tempHFactor;
                         i_sparse[count] = iglob; 
                         j_sparse[count] = jglob; 
@@ -281,8 +282,90 @@ void PROBLEM_DARCY::assemble() // i: usually refers to rows; j: usually refers t
             break;
         }
     }
-    std::cout << "\n assemble done\n";
-    pause();
+    
+    //---
+    int count = 0;
+    for (int iel = 0; iel < nElem; iel++) //enter the triangle
+    {
+        int* tempElem = elem[iel];
+        int temp_domain_id = elem_domain_id[iel];
+        prec temp_permeability = domains_permeability[temp_domain_id];
+        prec tempHFactor = Volume[iel] * temp_permeability / mu;
+        prec tempMFactor = Volume[iel]/ ((dim+1)*(dim+2));
+
+        //----------------------------
+        for (int iloc = 0; iloc < dim+1; iloc++) // select node i of the tetra
+        {
+            int iglob = tempElem[iloc];
+            VECTOR i_coef(dim);
+            for (int icoef = 0; icoef < dim; icoef++)
+            {
+                i_coef[icoef] = (*physics).Coef[icoef][iel][iloc];
+            }
+
+            //----------------------------
+            for (int jloc = 0; jloc < dim+1; jloc++) // select node j of the tetra
+            {
+                int jglob = tempElem[jloc];
+                
+                // MASS term
+                if (iglob == jglob) coefM[count] = 2 * tempMFactor;
+                else coefM[count] = tempMFactor;
+                
+                // DIFFUSION term
+                VECTOR j_coef(dim);
+                for (int jcoef = 0; jcoef < dim; jcoef++)
+                {
+                    j_coef[jcoef] = (*physics).Coef[jcoef][iel][jloc];
+                }
+                prec tempHCoef = i_coef.dot(j_coef);
+                coefH[count] = tempHCoef * tempHFactor;
+                i_sparse[count] = iglob; 
+                j_sparse[count] = jglob; 
+                count++;
+            } // end jloc
+        } // end iloc
+    } // end iel
+
+    //--------------------
+    // BUILD SPARSE MATRIX
+    //--------------------
+    iSparse = i_sparse;
+    jSparse = j_sparse;
+    H.initialize(nNodes, nNodes, count, i_sparse, j_sparse, coefH);
+    nTerms = H.nTerm;
+    #pragma omp parallel for num_threads(PARALLEL::nThread)
+    for (int ieval = 0; ieval < nEvals; ieval++)
+    {
+        realPos[ieval] = H.getPos(iSparse[ieval], jSparse[ieval]);
+    }
+    H.copyPattTo(M);
+    M.defineZero(nNodes, nNodes);
+    for (int i = 0; i < nEvals; i++)
+    {
+        int iglob = i_sparse[i]; int jglob = j_sparse[i];
+        M(iglob, jglob) += coefM[i];
+    }
+
+    SYSMAT_base = H;
+}
+
+void PROBLEM_DARCY::addToSysmat(CSRMAT &mat, prec factor)
+{
+    bool same_path = SYSMAT.checkPattern(mat);
+    if (same_path)
+    {
+        std::shared_ptr<prec[]> coefM = M.coef;
+        for (int iterm = 0; iterm < SYSMAT.nTerm; iterm++)
+        {
+            SYSMAT.coef[iterm] += coefM[iterm] * factor;
+        }
+    }
+    else
+    {
+        std::cout << "\n\n !!! SYSMAT and MASS MATRIX have different patterns !!! \n\n";
+        throw_line("ERROR: not handled SYSMAT sum case\n");
+    }
 }
 
 

@@ -2517,6 +2517,7 @@ void PROBLEM_NS::prepareSolver()
         }
         (*physics).h_v[iel] = maxDist;
     }
+    
     //--------------------------------------
     // PRINT INIT COND
     //--------------------------------------

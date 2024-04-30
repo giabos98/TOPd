@@ -1,7 +1,7 @@
 // PROBLEM NAME
-channel_3D_extra_coarse
+porous_media_2D_h2_10
 // DIMENSION (2 or 3)
-3
+2
 
 // Time Settings
 // stationary flag (0:time_dependent, 1:stationary)
@@ -17,25 +17,21 @@ channel_3D_extra_coarse
 0.00001
 
 // FLUID PROPERTIES
-1 //  rho
-1 //  mu
+1000 //  rho
+0.001//  mu
 
 // MATERIAL PROPERTIES
 // n_domains
-1
+5
 // PERMEABILITY VALUES (must be long as n_domains)
-1000
+10 100 10 100 10
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
 1
 // FORCING:
 0
-0
-0
 // FORCING - TIME DEPENDENT:
-0
-0
 0
 
 // BOUNDARY CONDITIONS
@@ -47,7 +43,7 @@ channel_3D_extra_coarse
 // # INNER
 4
 // geomID
-4 5 9 10
+3 5 7 9
 
 // SYMMETRY WALLS
 //--------
@@ -68,12 +64,20 @@ channel_3D_extra_coarse
 
 // DIRICHLET
 // # DIRICHLET
-2
-//geomID
-6 7
-// prescribed pressure
 10
-0
+//geomID
+0 2 4 6 8 11 12 13 14 15
+// prescribed pressure
+10000
+10000
+10000
+10000
+10000
+9000
+9000
+9000
+9000
+9000
 
 // NEUMANN
 //--------

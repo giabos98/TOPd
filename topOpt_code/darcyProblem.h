@@ -13,7 +13,7 @@ public:
     PHYSICS* physics;
     int completeLog;
     bool printRes = false;
-    int save_solution;
+    int save_solution = 1;;
     prec deltaT0;
     int n_domains;
 
@@ -31,7 +31,6 @@ public:
     std::vector<std::string> statForcing;
     std::vector<std::string> timeForcing;
 
-    VECTOR currForcingAtNodes;
     std::string statG;
     std::string timeG;
     int flagG;
@@ -148,7 +147,7 @@ public:
     int        nNeuTimeBound;
     VECTOR_INT neuTimeBound;
 
-    std::vector<PIECEWISE_FUNCTION> neuTimeMeanP;
+    std::vector<PIECEWISE_FUNCTION> neuTimeMeanFlux;
     VECTOR_INT nIdNeuTimeCases;
 
     VECTOR_INT neuTimeNod; 
@@ -230,10 +229,9 @@ public:
     // ASSEMBLE NS
     //-------------------------------------------
     void assemble();
-    void assembleMa();
-    void resizeCoef(std::shared_ptr<prec[]> &coef, VECTOR &resized);
-    void addToSysmat(std::shared_ptr<prec[]> &coef, prec factor = 1.0);
-    void addToSysmat(std::shared_ptr<prec[]> &coef, CSRMAT &mat, prec factor = 1.0);
+    // void assembleMa();
+    // void resizeCoef(std::shared_ptr<prec[]> &coef, VECTOR &resized);
+    void addToSysmat(CSRMAT &mat, prec factor = 1.0);
     
     //-------------------------------------------
     // FORCING
@@ -251,10 +249,6 @@ public:
     //-------------------------
     void StatSolver();
     //----
-    void StatSolverIterative();
-    //----
-    // void oneStepSolverStokes();
-    // void oneStepSolverNavierStokes(prec toll = 1e-2, int itMax = 5);
     void oneStepSolver(prec toll = 1e-2, int itMax = 5);
 
     //------------------------------------------
@@ -273,7 +267,6 @@ public:
     //-------------------------------
     // PRINT ONE STEP SOLUTION IN VTK
     //-------------------------------
-    void print_one_step_sol_in_VTK(int dim, int nNodes, prec time);
     void print_sol_in_VTK(MATRIX &requested_sol);
     //------------------------------
     // CHECK CORRECT PROBLEM SETTING
@@ -342,9 +335,9 @@ public:
     // IMPOSE BOUNDARY CONDITIONS
     //---------------------------
     //---
-    void imposeStaticBC(CSRMAT &SYSMAT, VECTOR& rhs);
+    void imposeStaticBC(CSRMAT &SYSMAT_darcy, VECTOR& rhs);
     //---
-    void imposeTimeBC(CSRMAT &SYSMAT, VECTOR& rhs);
+    void imposeTimeBC(CSRMAT &SYSMAT_Darcy, VECTOR& rhs);
     //---
     void updateBC(prec time);
     //---
