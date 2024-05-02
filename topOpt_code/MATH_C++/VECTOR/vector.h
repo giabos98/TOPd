@@ -171,6 +171,46 @@ public:
     }
 
     //-------------------------------------------------------
+    // GET MULTIPLE ENTRIES
+    //-------------------------------------------------------
+    VECTOR eval(VECTOR_INT &indices)
+    {
+        int n_id = indices.length;
+        VECTOR res;
+        for (int i = 0; i < n_id; i++)
+        {
+            int id = indices[i];
+            if (id >= length || id < 0) 
+            {
+                throw_line("ERROR evlauating a vector of indices: id out of bounds\n");
+            }
+            else
+            {
+                res.append(P[id]);
+            }
+        }
+        return res;
+    }
+    //---
+    VECTOR eval(VECTOR_INT &indices, VECTOR &res)
+    {
+        res.complete_reset();
+        int n_id = indices.length;
+        for (int i = 0; i < n_id; i++)
+        {
+            int id = indices[i];
+            if (id >= length || id < 0) 
+            {
+                throw_line("ERROR evlauating a vector of indices: id out of bounds\n");
+            }
+            else
+            {
+                res.append(P[id]);
+            }
+        }
+    }
+
+    //-------------------------------------------------------
     // GET LAST ENTRY
     //-------------------------------------------------------
     prec get_last()
@@ -519,6 +559,15 @@ public:
     //----------------------------------------------------------
     // VECTOR MEAN
     //----------------------------------------------------------
+    prec mean()
+        {
+            if (length == 0) throw_line("ERROR: trying to evaluate the mean of an empty vector.\n");
+            if (P == 0) throw_line("ERROR: trying to evaluate the mean of an empty vector.\n");
+            prec tempMean = (*this).sum();
+            tempMean = tempMean / length;
+            return tempMean;
+        }
+
     static prec mean(VECTOR &vec)
     {
         if (vec.length == 0) throw_line("ERROR: trying to evaluate the mean of an empty vector.\n");

@@ -29,7 +29,9 @@ public:
     VECTOR domains_permeability;
     VECTOR_INT domains_permeability_priority; // index 0: min_priority, index last: max_priority
     VECTOR discrete_permeabilities;
+    VECTOR discrete_smooth_permeabilities;
     VECTOR smooth_permeabilities;
+    VECTOR equivalent_permeabilities;
     int flagForcing;
     std::vector<std::string> statForcing;
     std::vector<std::string> timeForcing;
@@ -215,6 +217,7 @@ public:
 
     // SET NODAL PERMEABILITIES
     void set_permeabilities();
+    void set_equivalent_permeability(VECTOR &pressure_grad_norm);
 
     //------------------------------------------
     // INIT CONDITIONS

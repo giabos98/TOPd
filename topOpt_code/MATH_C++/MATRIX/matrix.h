@@ -271,7 +271,7 @@ public:
     {
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] *= coef;
             }
@@ -280,11 +280,11 @@ public:
     //---
     void operator *= (VECTOR &coef)
     {
-        if (coef.length != nRow) throw_line("ERROR: incmpatible division of a matrix by a vector\n");
+        if (coef.length != nRow) throw_line("ERROR: incompatible pointwise multiplication of a matrix by a vector\n");
         for (int i = 0; i < nRow; i++)
         {
             prec temp_coef = coef[i];
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] *= temp_coef;
             }
@@ -293,9 +293,10 @@ public:
     //---
     void operator /= (prec coef)
     {
+        if (abs(coef) <= 1e-14) throw_line("ERROR: divding by zero\n");
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] /= coef;
             }
@@ -304,12 +305,12 @@ public:
     //---
     void operator /= (VECTOR &coef)
     {
-        if (coef.length != nRow) throw_line("ERROR: incmpatible division of a matrix by a vector\n");
+        if (coef.length != nRow) throw_line("ERROR: incmpatible pointwise division of a matrix by a vector\n");
         for (int i = 0; i < nRow; i++)
         {
             prec temp_coef = coef[i];
             if (abs(temp_coef) <= 1e-14) throw_line("ERROR: dividing by zero\n");
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] /= temp_coef;
             }
@@ -326,7 +327,7 @@ public:
         std::shared_ptr<prec*[]> PP_in = mat.PP;
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 res.PP[i][j] = PP[i][j] + PP_in[i][j];
             }
@@ -344,7 +345,7 @@ public:
         std::shared_ptr<prec*[]> PP_in = mat.PP;
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 res.PP[i][j] = PP[i][j] - PP_in[i][j];
             }
@@ -462,7 +463,7 @@ public:
             for (int k = 0; k < nCols; k++)
             {
                 prec tempRes = 0;
-                for (int j = 0; j< nCol; j++)
+                for (int j = 0; j < nCol; j++)
                 {
                     tempRes += PP[i][j]*PP_in[j][k];
                 }

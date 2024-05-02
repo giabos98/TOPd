@@ -344,6 +344,26 @@ void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR &element_value)
     element_value /= n_nodes_x_el;
 }
 
+//eval a quantity on the elements of the velocity mesh
+void PHYSICS::eval_on_elements(VECTOR &value, VECTOR &element_value)
+{
+    // with 1D shape functions, the average value on the element corresponds to the aritmetic mean of the nodal values
+    // so it is fine to sum the nodal value for each element, and finally divide the whole vector by th number of nodes per element
+    // value is supposed known in the coord_v mesh
+    element_value.complete_reset();
+    element_value.setZeros(nElem);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem[iel][iloc];
+            element_value[iel] += value[iglob];
+        }
+    }
+    prec n_nodes_x_el = (dim+1) * 1.0; // make dim+1 a prec variable to divide it to element_value
+    element_value /= n_nodes_x_el;
+}
+
 //eval a quantity on a given subset 
 void PHYSICS::eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &element_value)
 {
@@ -412,7 +432,34 @@ void PHYSICS::smooth_between_elements(VECTOR &value, VECTOR &smoothed_value)
             nodal_weights[iglob]  += temp_volume;
         }
     }
-    smoothed_value *= nodal_weights;
+    smoothed_value /= nodal_weights;
+}
+
+// smooth a value between the elements of the velocity mesh
+void PHYSICS::smooth_between_elements_p(VECTOR &value, VECTOR &smoothed_value)
+{
+    // value is supposed know in all the velocity mesh nodes
+    smoothed_value.complete_reset();
+    smoothed_value.setZeros(nNodes);
+
+    VECTOR value_on_elems;
+    value_on_elems.setZeros(nElem);
+    eval_on_elements(value, value_on_elems);
+
+    VECTOR nodal_weights;
+    nodal_weights.setZeros(nNodes);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        prec temp_volume = Volume[iel];
+        prec temp_elem_value = value_on_elems[iel];
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem[iel][iloc];
+            smoothed_value[iglob] += temp_elem_value * temp_volume;
+            nodal_weights[iglob]  += temp_volume;
+        }
+    }
+    smoothed_value /= nodal_weights;
 }
 
 // smooth a value between a given subset of elements of the velocity mesh
@@ -580,6 +627,42 @@ void PHYSICS::eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int ev
                 //     // pause();
                 // }
             }
+        }
+    }
+    else
+    {
+        throw_line("ERROR: not handled gradient reconstruction method\n");
+    }
+}
+
+void PHYSICS::eval_gradient_on_elem_p(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method)
+{
+    // suppose the value interpolated in the coord
+    // value structure: value[nodal_value]
+    // gradient structure: gradient[node][gradient_component]
+    //eval_method = 0: Lampeato. Other cases not implemented
+    gradient.clear();
+    gradient.resize(nElem);
+    if (eval_method == 0) // Lampeato
+    {
+        for (int iel = 0; iel < nElem; iel++)
+        {
+            gradient[iel].complete_reset();
+            gradient[iel].setZeros(dim);
+        }
+        for (int iel = 0; iel < nElem; iel++)
+        {
+            VECTOR element_gradient_value; element_gradient_value.setZeros(dim);
+            for (int iloc = 0; iloc < dim+1; iloc++)
+            {
+                int iglob = elem[iel][iloc];
+                for (int icomp = 0; icomp < dim; icomp++)
+                {
+                    element_gradient_value[icomp] += value[iglob]*Coef[icomp][iel][iloc];
+                }
+                
+            }
+            gradient[iel] = element_gradient_value;
         }
     }
     else

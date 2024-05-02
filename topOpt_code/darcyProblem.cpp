@@ -13,6 +13,7 @@ void PROBLEM_DARCY::initialize(PHYSICS *&Physics, std::string probRefFile, VECTO
         checkImportParameters();
         importPREPRO();
         if (abs(time) < 1e-16) time = 0;
+        // set_permeabilities();
         localBasis();
     }
 
@@ -587,7 +588,39 @@ void PROBLEM_DARCY::set_permeabilities()
         }
     }
 
+    // set discrete smooth permeabilities
+    // the permeability values are chosen to be the aritmetic mean of the different element (to which the nodes belong) permeabilities.
+    // If it belongs to 2 elements with the same permeability  they will count as 1. 
+    discrete_smooth_permeabilities.setZeros(nNodes);
+    std::vector<VECTOR_INT> nodal_info;
+    nodal_info.resize(nNodes);
+    for (int inod = 0; inod < nNodes; inod++)
+    {
+        nodal_info[inod].complete_reset();
+    }
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int* tempElem = (*physics).elem[iel];
+        int idom = (*physics).elem_geo_entities_ids[iel];
+        // prec temp_vol = (*physics).Volume[iel];
+        for (int inod = 0; inod < (dim+1); inod++)
+        {
+            int iglob = tempElem[inod];
+            if (!(nodal_info[iglob].hasIn(idom)))
+            {
+                nodal_info[iglob].append(idom);
+            }
+        }
+    }
+    for (int inod = 0; inod < nNodes; inod++)
+    {
+        VECTOR_INT temp_info = nodal_info[inod];
+        VECTOR nodal_permeabilities = domains_permeability.eval(temp_info);
+        discrete_smooth_permeabilities[inod] = nodal_permeabilities.mean();
+    }
+
     // set smooth permeabilities
+    // the permeability values are chosen to be the weighted average of the elements (to which a node belongs) permeabilites, with the elements volume as weights
     smooth_permeabilities.setZeros(nNodes);
     VECTOR nodal_weights;
     nodal_weights.setZeros(nNodes);
@@ -605,6 +638,33 @@ void PROBLEM_DARCY::set_permeabilities()
         }
     }
     smooth_permeabilities /= nodal_weights;
+}
+
+void PROBLEM_DARCY::set_equivalent_permeability(VECTOR &pressure)
+{
+    // set equivalent permeabilities
+    // the permeability values in order to be suitable for a reasonable velocity evaluation at the interfaces.
+    std::vector<VECTOR> elem_pressure_gradient;
+    (*physics).eval_gradient_on_elem_p(pressure, elem_pressure_gradient);
+
+    equivalent_permeabilities.setZeros((*physics).nNodes);
+    VECTOR nodal_weights;
+    nodal_weights.setZeros((*physics).nNodes);
+    for (int iel = 0; iel < (*physics).nElem; iel++)
+    {
+        int* tempElem = (*physics).elem[iel];
+        int idom = (*physics).elem_geo_entities_ids[iel];
+        prec el_permeability = domains_permeability[idom];
+        prec temp_grad_norm = elem_pressure_gradient[iel].norm(); 
+        prec temp_vol = (*physics).Volume[iel];
+        for (int inod = 0; inod < ((*physics).dim+1); inod++)
+        {
+            int iglob = tempElem[inod];
+            nodal_weights[iglob] += temp_grad_norm * temp_vol;
+            equivalent_permeabilities[iglob] += el_permeability * temp_grad_norm * temp_vol;
+        }
+    }
+    equivalent_permeabilities /= nodal_weights;
 }
 
 void PROBLEM_DARCY::setBC()
@@ -1392,8 +1452,10 @@ void PROBLEM_DARCY::updateRHS()
         rhs += rhs_timeForcing;
     }
 
+    prec time_contribution = 1 / deltaT;
+
     VECTOR last_sol_contribution(nNodes);
-    last_sol_contribution = (M*lastSol) / deltaT;
+    last_sol_contribution = (M*lastSol) * time_contribution;
     rhs += last_sol_contribution;
 }
 //------------------------------------------------------------------------------------
@@ -1612,6 +1674,7 @@ void PROBLEM_DARCY::oneStepSolver(prec toll, int itMax)
     SYSMAT = SYSMAT_base; // initialize SYSMAT as SYSMAT_base in order to add updated matrices in correct blocks
     if ((*physics).isStationary == 0)
     {
+        throw_line("ERROR: time dependent solver not implemented \n");
         updateBC(trialTime);
         updateSYSMAT();
         updateRHS();
@@ -1704,30 +1767,32 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
         // GET PRESSURE
         VECTOR pressure = requested_sol.get_row(itime);
 
-        std::cout << "\nhere\n";
         std::vector<VECTOR> pressure_gradient;
         (*physics).eval_gradient_p(pressure, pressure_gradient);
-        // MATRIX velocity;
-        // (*physics).convert_std_vector_of_vectors_into_matrix(pressure_gradient, velocity);
-        // velocity /= (*physics).mu;
-        // velocity *= smooth_permeabilities;
-        // pause();
-        VECTOR velocity_magnitude;
-        (*physics).eval_gradient_norm(pressure_gradient, velocity_magnitude);
-        velocity_magnitude /= (*physics).mu;
-        velocity_magnitude *= smooth_permeabilities;
+        MATRIX pressure_gradient_mat;
+        (*physics).convert_std_vector_of_vectors_into_matrix(pressure_gradient, pressure_gradient_mat);
+        VECTOR pressure_gradient_norm;
         
-        VECTOR bound_ids(5);
-        bound_ids[0] = 11; 
-        bound_ids[1] = 12; 
-        bound_ids[2] = 13; 
-        bound_ids[3] = 14; 
-        bound_ids[4] = 15; 
+        (*physics).eval_gradient_norm(pressure_gradient, pressure_gradient_norm);
+        pressure_gradient_norm.printRowMatlab("norm");
+        set_equivalent_permeability(pressure_gradient_norm);
+        // equivalent_permeabilities.printRowMatlab("eq");
+        pause();
+        MATRIX velocity = pressure_gradient_mat / (*physics).mu;
+        velocity *= equivalent_permeabilities;
+        velocity *= -1.0;
+        VECTOR velocity_magnitude = pressure_gradient_norm;
+        
+        velocity_magnitude *= equivalent_permeabilities;
+        velocity_magnitude /= (*physics).mu;
+        
+        VECTOR bound_ids(1);
+        bound_ids[0] = 15;
         eval_flux_sum_on_boundaries(bound_ids, velocity_magnitude);
         
         
         //-----------------
-        if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure", discrete_permeabilities, 1, "zK_d", smooth_permeabilities, 1, "zK_s", velocity_magnitude, 1, "||Velocity||");
+        if (printRes) VTKWriter.write((*physics).coord, (*physics).elem, trial_time, pressure, 1, "Pressure", pressure_gradient_mat, (*physics).dim, "Pressure_Grad", velocity, (*physics).dim, "Velocity", equivalent_permeabilities/(*physics).mu , 1, "zK_eq/mu", smooth_permeabilities/(*physics).mu , 1, "zK_s/mu", velocity_magnitude, 1, "||Velocity||");
     }    
 }
 

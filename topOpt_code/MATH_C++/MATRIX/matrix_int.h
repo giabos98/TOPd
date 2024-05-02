@@ -187,7 +187,7 @@ public:
     {
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] *= coef;
             }
@@ -198,7 +198,7 @@ public:
     {
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 PP[i][j] /= coef;
             }
@@ -215,7 +215,7 @@ public:
         std::shared_ptr<int*[]> PP_in = mat.PP;
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 res.PP[i][j] = PP[i][j] + PP_in[i][j];
             }
@@ -233,7 +233,7 @@ public:
         std::shared_ptr<int*[]> PP_in = mat.PP;
         for (int i = 0; i < nRow; i++)
         {
-            for (int j = 0; j < nRow; j++)
+            for (int j = 0; j < nCol; j++)
             {
                 res.PP[i][j] = PP[i][j] - PP_in[i][j];
             }

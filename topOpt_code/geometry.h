@@ -139,12 +139,15 @@ class PHYSICS
 
     // static prec get_surface(MATRIX &matCoord, int dim);
     void eval_on_elements_v(VECTOR &value, VECTOR &element_value);
+    void eval_on_elements(VECTOR &value, VECTOR &element_value);
     void eval_on_elements_v(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &element_value);
     void eval_on_centroids_v(VECTOR &value, VECTOR &centroids_value);
     void smooth_between_elements(VECTOR &value, VECTOR &smoothed_value);
+    void smooth_between_elements_p(VECTOR &value, VECTOR &smoothed_value);
     void smooth_between_elements(VECTOR &value, VECTOR_INT &nodesFromNodes_v, VECTOR_INT &elems, VECTOR &smoothed_value);
     static prec get_surface(MATRIX &matCoord, int dim);
     void eval_gradient(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
+    void eval_gradient_on_elem_p(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
     void eval_gradient_p(VECTOR &value, std::vector<VECTOR> &gradient, int eval_method = 0); // eval method means: gradient L2 projection method
     void eval_gradient(MATRIX &value, std::vector<MATRIX> &gradient, int eval_method = 0);// eval method means: gradient L2 projection method
     void eval_divergence(VECTOR &value, VECTOR &divergence);

@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_f[diffisuveFilterCazse_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-test
+test_2
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
