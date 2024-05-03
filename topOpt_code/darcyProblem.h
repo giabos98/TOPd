@@ -26,6 +26,10 @@ public:
     VECTOR real_solution_times;
 
     //---  PROBLEM_DARCY ---
+    prec tot_volume;
+    VECTOR domains_volume_fraction;
+    prec min_eq_permeability;
+    prec max_eq_permeability;
     VECTOR domains_permeability;
     VECTOR_INT domains_permeability_priority; // index 0: min_priority, index last: max_priority
     VECTOR discrete_permeabilities;
@@ -217,7 +221,9 @@ public:
 
     // SET NODAL PERMEABILITIES
     void set_permeabilities();
+    void set_domains_volume();
     void set_equivalent_permeability(VECTOR &pressure_grad_norm);
+    void eval_pressure_gradient_norm_on_domains(VECTOR &pressure, std::vector<VECTOR> &grad_norms_on_domains);
 
     //------------------------------------------
     // INIT CONDITIONS

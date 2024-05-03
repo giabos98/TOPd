@@ -13,7 +13,6 @@ void PROBLEM_DARCY::initialize(PHYSICS *&Physics, std::string probRefFile, VECTO
         checkImportParameters();
         importPREPRO();
         if (abs(time) < 1e-16) time = 0;
-        // set_permeabilities();
         localBasis();
     }
 
@@ -560,12 +559,40 @@ void PROBLEM_DARCY::importPREPRO()
     rhs.initialize(nDof);
 }
 
+// SET DOMAINS VOLUME AND MAX & MIN PERMEABILITY
+void PROBLEM_DARCY::set_domains_volume()
+{
+    int nElem = (*physics).nElem;
+    VECTOR_INT elem_domain = (*physics).elem_geo_entities_ids;
+    VECTOR Volume = (*physics).Volume;
+    tot_volume = 0;
+    domains_volume_fraction.setZeros(n_domains);
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int el_dom = elem_domain[iel];
+        prec el_vol = Volume[iel];
+        domains_volume_fraction[el_dom] += el_vol;
+        tot_volume += el_vol;
+    }
+    domains_volume_fraction /= tot_volume;
+
+    min_eq_permeability = 0;
+    max_eq_permeability = 0;
+    for (int idom = 0; idom < n_domains; idom++)
+    {
+        min_eq_permeability += domains_volume_fraction[idom] / domains_permeability[idom];
+        max_eq_permeability += domains_volume_fraction[idom] * domains_permeability[idom];
+    }
+    min_eq_permeability = 1 / min_eq_permeability;
+}
+
 // SET NODAL PERMEABILITIES
 void PROBLEM_DARCY::set_permeabilities()
 {
     int dim = (*physics).dim;
     int nElem = (*physics).nElem;
     int nNodes = (*physics).nNodes;
+    set_domains_volume();
 
     // set discrete permeabilities
     discrete_permeabilities.setZeros(nNodes);
@@ -644,8 +671,8 @@ void PROBLEM_DARCY::set_equivalent_permeability(VECTOR &pressure)
 {
     // set equivalent permeabilities
     // the permeability values in order to be suitable for a reasonable velocity evaluation at the interfaces.
-    std::vector<VECTOR> elem_pressure_gradient;
-    (*physics).eval_gradient_on_elem_p(pressure, elem_pressure_gradient);
+    std::vector<VECTOR> grad_norms_on_domains;
+    eval_pressure_gradient_norm_on_domains(pressure, grad_norms_on_domains);
 
     equivalent_permeabilities.setZeros((*physics).nNodes);
     VECTOR nodal_weights;
@@ -655,16 +682,93 @@ void PROBLEM_DARCY::set_equivalent_permeability(VECTOR &pressure)
         int* tempElem = (*physics).elem[iel];
         int idom = (*physics).elem_geo_entities_ids[iel];
         prec el_permeability = domains_permeability[idom];
-        prec temp_grad_norm = elem_pressure_gradient[iel].norm(); 
         prec temp_vol = (*physics).Volume[iel];
         for (int inod = 0; inod < ((*physics).dim+1); inod++)
         {
             int iglob = tempElem[inod];
+            prec temp_grad_norm = grad_norms_on_domains[idom][iglob];
             nodal_weights[iglob] += temp_grad_norm * temp_vol;
             equivalent_permeabilities[iglob] += el_permeability * temp_grad_norm * temp_vol;
         }
     }
     equivalent_permeabilities /= nodal_weights;
+}
+
+void PROBLEM_DARCY::eval_pressure_gradient_norm_on_domains(VECTOR &pressure, std::vector<VECTOR> &grad_norms_on_domains)
+{
+    int nNodes = (*physics).nNodes;
+    int nElem = (*physics).nElem;
+    int dim = (*physics).dim;
+    VECTOR Volume = (*physics).Volume;
+    MATRIX_INT elem = (*physics).elem;
+    std::vector<MATRIX> Coef = (*physics).Coef;
+    VECTOR_INT elem_domains = (*physics).elem_geo_entities_ids;
+    grad_norms_on_domains.clear();
+    grad_norms_on_domains.resize(n_domains);
+    std::vector<std::vector<VECTOR>> grad_on_domains(n_domains);
+    std::vector<VECTOR> weights; 
+    weights.resize(n_domains);
+    for (int idom = 0; idom < n_domains; idom++)
+    {
+        grad_on_domains[idom].resize(nNodes);
+        for (int inod = 0; inod < nNodes; inod++)
+        {
+            grad_on_domains[idom][inod].complete_reset();
+            grad_on_domains[idom][inod].setZeros(dim);
+        }
+        grad_norms_on_domains[idom].complete_reset();
+        grad_norms_on_domains[idom].setZeros(nNodes);
+        weights[idom].complete_reset();
+        weights[idom].setZeros(nNodes);
+    }
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int el_domain = elem_domains[iel];
+        prec temp_weight = Volume[iel];
+        VECTOR element_gradient_value; element_gradient_value.setZeros(dim);
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem[iel][iloc];
+            weights[el_domain][iglob] += temp_weight;
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                element_gradient_value[icomp] += pressure[iglob]*Coef[icomp][iel][iloc];
+            }
+        }
+        for (int iloc = 0; iloc < dim+1; iloc++)
+        {
+            int iglob = elem[iel][iloc];
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                grad_on_domains[el_domain][iglob][icomp] += element_gradient_value[icomp] * temp_weight;
+            }
+        }
+    }
+    for (int idom = 0; idom < n_domains; idom++)
+    {
+        for (int inod = 0; inod < nNodes; inod++)
+        {
+            for (int icomp = 0; icomp < dim; icomp++)
+            {
+                prec temp_weight = weights[idom][inod];
+                if (abs(temp_weight) > 1e-14)
+                {
+                    grad_on_domains[idom][inod][icomp] /= weights[idom][inod];
+                }
+                else
+                {
+                    grad_on_domains[idom][inod][icomp] = 0;
+                }
+                
+            }
+        }
+    }
+
+    for (int idom = 0; idom < n_domains; idom++)
+    {
+        std::vector<VECTOR> temp_grad = grad_on_domains[idom];
+        (*physics).eval_gradient_norm(temp_grad, grad_norms_on_domains[idom]);
+    }    
 }
 
 void PROBLEM_DARCY::setBC()
@@ -1774,10 +1878,8 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
         VECTOR pressure_gradient_norm;
         
         (*physics).eval_gradient_norm(pressure_gradient, pressure_gradient_norm);
-        pressure_gradient_norm.printRowMatlab("norm");
-        set_equivalent_permeability(pressure_gradient_norm);
-        // equivalent_permeabilities.printRowMatlab("eq");
-        pause();
+        set_equivalent_permeability(pressure);
+
         MATRIX velocity = pressure_gradient_mat / (*physics).mu;
         velocity *= equivalent_permeabilities;
         velocity *= -1.0;
@@ -1787,7 +1889,7 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
         velocity_magnitude /= (*physics).mu;
         
         VECTOR bound_ids(1);
-        bound_ids[0] = 15;
+        bound_ids[0] = 35;
         eval_flux_sum_on_boundaries(bound_ids, velocity_magnitude);
         
         
@@ -1834,6 +1936,7 @@ void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &veloci
     prec domain_length = 100;
     prec delta_P = 1000;
     prec eq_permeability = avg_velocity * domain_length * (*physics).mu / delta_P;
+    prec eq_permeability_fraction = (eq_permeability - min_eq_permeability) / (max_eq_permeability - min_eq_permeability);
 
     std::cout << "\n   ----------------------------------------------------";
     std::cout << "\n   | DARCY PROBLEM EQUIVALENT PERMEABILITY |";
@@ -1841,8 +1944,10 @@ void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &veloci
     std::cout << "   ---| TOTAL AREA: " << total_area << "\n";
     std::cout << "   ---| AVG. VELOCITY: " << avg_velocity << "\n";
     std::cout << "   ---| EQ. PERMEABILITY: " << eq_permeability << "\n";
+    std::cout << "   ---| MIN PERMEABILITY: " << min_eq_permeability << "\n";
+    std::cout << "   ---| MAX PERMEABILITY: " << max_eq_permeability << "\n";
+    std::cout << "   ---| EQ. PERM. RATIO: " << eq_permeability_fraction << "\n";
     std::cout << "   ----------------------------------------------------\n";
-    
 }
 
 // PRECONDITIONER !!!!!!!

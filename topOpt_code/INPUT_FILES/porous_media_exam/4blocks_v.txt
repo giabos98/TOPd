@@ -1,0 +1,91 @@
+// PROBLEM NAME
+porous_media_2D_4blocks_v_1
+// DIMENSION (2 or 3)
+2
+
+// Time Settings
+// stationary flag (0:time_dependent, 1:stationary)
+1
+// convergence scale factor
+0.8
+// Time Dependence (not relevant in stationay solution)
+// final time
+1
+// time step
+0.1
+// minimum time step
+0.00001
+
+// FLUID PROPERTIES
+1000 //  rho
+0.001 //  mu
+
+// MATERIAL PROPERTIES
+// n_domains
+5
+// domains priority (from lowest to highest)
+0 1 2 3 4
+// PERMEABILITY VALUES (must be long as n_domains) N.B. the values are ordered with the domain ids, not their priority
+0.01 0.001 0.001 0.001 0.001
+
+//FORCING FUNCTIONS
+// flag Forcing: 0 constant, 1 time dependent
+1
+// FORCING:
+0
+// FORCING - TIME DEPENDENT:
+0
+
+// BOUNDARY CONDITIONS
+// flagBC: 0 penalty, 1 lifting functions
+1
+
+// INNER WALLS
+//--------
+// # INNER
+16
+// geomID
+3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+
+// SYMMETRY WALLS
+//--------
+// # SYMMETRY PLANES
+0
+// geomID
+**
+
+// flagNoFlux: 0 insert all boundID, 1 set to NoFlux boundIDs not inserted in any BC
+1
+
+// WALL
+//--------
+// # WALL
+0
+// geomID
+**
+
+// DIRICHLET
+// # DIRICHLET
+2
+//geomID
+0 19
+// functions
+10000
+9000
+
+// NEUMANN
+//--------
+// # NEUMANN
+0
+// geomID
+**
+
+// DIRICHLET - TIME DEPENDENT
+//--------
+// # DIRICHLET - TIME DEPENDENT
+0
+
+// NEUMANN - TIME DEPENDENT
+//--------
+// # NEUMANN - TIME DEPENDENT
+0
