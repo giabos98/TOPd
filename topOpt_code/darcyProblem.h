@@ -287,7 +287,7 @@ public:
     //------------------------------
     // EVALUATE FLUX ON A BOUNDARY
     //------------------------------
-    void eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &velocity);
+    void eval_flux_sum_on_boundaries(VECTOR inlet_bound_ids, VECTOR outlet_bound_ids, VECTOR &velocity);
 
     //------------------------------
     // CHECK CORRECT PROBLEM SETTING

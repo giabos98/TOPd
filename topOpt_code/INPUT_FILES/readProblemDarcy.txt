@@ -1,5 +1,5 @@
 // PROBLEM NAME
-porous_media_2D_8blocks_v_1
+porous_media_square_90_linearized
 // DIMENSION (2 or 3)
 2
 
@@ -22,11 +22,11 @@ porous_media_2D_8blocks_v_1
 
 // MATERIAL PROPERTIES
 // n_domains
-9
+3
 // domains priority (from lowest to highest)
-0 1 2 3 4 5 6 7 8
+0 2 1
 // PERMEABILITY VALUES (must be long as n_domains) N.B. the values are ordered with the domain ids, not their priority
-0.01 0.001 0.001 0.001 0.001 0.001 0.001 0.001 0.001
+0.0001 0.01 0.0001
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -43,9 +43,9 @@ porous_media_2D_8blocks_v_1
 // INNER WALLS
 //--------
 // # INNER
-32
+2
 // geomID
-3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34
+3 5
 
 // SYMMETRY WALLS
 //--------
@@ -66,11 +66,15 @@ porous_media_2D_8blocks_v_1
 
 // DIRICHLET
 // # DIRICHLET
-2
+6
 //geomID
-0 35
+0 2 4 7 8 9
 // functions
 10000
+10000
+10000
+9000
+9000
 9000
 
 // NEUMANN

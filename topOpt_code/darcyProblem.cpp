@@ -1888,9 +1888,19 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
         velocity_magnitude *= equivalent_permeabilities;
         velocity_magnitude /= (*physics).mu;
         
-        VECTOR bound_ids(1);
-        bound_ids[0] = 35;
-        eval_flux_sum_on_boundaries(bound_ids, velocity_magnitude);
+        VECTOR inlet_bound_ids(3);
+        inlet_bound_ids[0] = 0;
+        inlet_bound_ids[1] = 2;
+        inlet_bound_ids[2] = 4;
+        // inlet_bound_ids[3] = 6;
+        // inlet_bound_ids[4] = 8;
+        VECTOR outlet_bound_ids(3);
+        outlet_bound_ids[0] = 7;
+        outlet_bound_ids[1] = 8;
+        outlet_bound_ids[2] = 9;
+        // outlet_bound_ids[3] = 14;
+        // outlet_bound_ids[4] = 15;
+        eval_flux_sum_on_boundaries(inlet_bound_ids, outlet_bound_ids, velocity_magnitude);
         
         
         //-----------------
@@ -1898,7 +1908,7 @@ void PROBLEM_DARCY::print_sol_in_VTK(MATRIX &requested_sol)
     }    
 }
 
-void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &velocity)
+void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR inlet_bound_ids, VECTOR outlet_bound_ids, VECTOR &velocity)
 {
     // N.B.: the velocity vector is supposed aligned with the normal to each element
 
@@ -1906,9 +1916,41 @@ void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &veloci
     prec total_area = 0;
 
     int dim = (*physics).dim;
-    for (int ibound = 0; ibound < bound_ids.length; ibound++)
+
+    for (int ibound = 0; ibound < inlet_bound_ids.length; ibound++)
     {
-        int bound_id = bound_ids[ibound];
+        int bound_id = inlet_bound_ids[ibound];
+        MATRIX_INT bound_elems = (*physics).bound_elems[bound_id];
+        for (int iel = 0; iel < bound_elems.nRow; iel++)
+        {
+            int* temp_elem = bound_elems[iel];
+            MATRIX coord(dim, dim);
+            for (int inode = 0; inode < dim; inode++)
+            {
+                int node = bound_elems[iel][inode];
+                for (int jcomp = 0; jcomp < dim; jcomp++)
+                {
+                    coord[inode][jcomp] = (*physics).coord[node][jcomp];
+                }
+            }
+            prec el_area = (*physics).get_surface(coord, dim);
+            total_area += el_area;
+            for (int inod = 0; inod < dim; inod++)
+            {
+                int iglob = temp_elem[inod];
+                flux += velocity[iglob] * el_area / dim;
+            }
+        }
+    }
+
+    prec inlet_avg_velocity = flux / total_area;
+    prec area_inlet = total_area;
+
+    flux = 0;
+    total_area = 0;
+    for (int ibound = 0; ibound < outlet_bound_ids.length; ibound++)
+    {
+        int bound_id = outlet_bound_ids[ibound];
         MATRIX_INT bound_elems = (*physics).bound_elems[bound_id];
         for (int iel = 0; iel < bound_elems.nRow; iel++)
         {
@@ -1939,10 +1981,12 @@ void PROBLEM_DARCY::eval_flux_sum_on_boundaries(VECTOR bound_ids, VECTOR &veloci
     prec eq_permeability_fraction = (eq_permeability - min_eq_permeability) / (max_eq_permeability - min_eq_permeability);
 
     std::cout << "\n   ----------------------------------------------------";
-    std::cout << "\n   | DARCY PROBLEM EQUIVALENT PERMEABILITY |";
-    std::cout << "\n   ---| REQUESTED FLUX: " << flux << "\n";
-    std::cout << "   ---| TOTAL AREA: " << total_area << "\n";
-    std::cout << "   ---| AVG. VELOCITY: " << avg_velocity << "\n";
+    std::cout << "\n   | DARCY PROBLEM EQUIVALENT PERMEABILITY |\n";
+    std::cout << "   ---| TOTAL INLET AREA: " << area_inlet << "\n";
+    std::cout << "   ---| TOTAL OUTLET AREA: " << total_area << "\n";
+    std::cout << "   ---| AVG. INLET VELOCITY: " << inlet_avg_velocity << "\n";
+    std::cout << "   ---| AVG. OUTLET VELOCITY: " << avg_velocity << "\n";
+    std::cout << "   ---| OUTLET FLUX: " << flux << "\n";
     std::cout << "   ---| EQ. PERMEABILITY: " << eq_permeability << "\n";
     std::cout << "   ---| MIN PERMEABILITY: " << min_eq_permeability << "\n";
     std::cout << "   ---| MAX PERMEABILITY: " << max_eq_permeability << "\n";
@@ -1964,7 +2008,7 @@ void PROBLEM_DARCY::precondJacobiSolver(CSRMAT &SYS,VECTOR &rhs, VECTOR &sol)
     VECTOR precondLastSol(nDof); PARALLEL::pointProd(precondLastSol, diag, precondLastSol); 
     prec bNorm = PARALLEL::norm(rhs);
 
-    PARALLEL::gmres_p(jacSYS, rhs, sol, precondLastSol, bNorm, 1e-5, 500); 
+    PARALLEL::gmres_p(jacSYS, rhs, sol, precondLastSol, bNorm, 1e-10, 500); 
 
     PARALLEL::pointProd(sol, diag, sol);
 }
