@@ -295,9 +295,18 @@ public:
                 //-----
                 if (res < 0) 
                 {
-                    printf("it: %d res: %" format_e "  WARNING: NEGATIVE RESIDUAL, PROBABLY DUE TO MALCONDITIONATE MATRIX.\nRESTARTED GMRES APPLIED.\n", it, res);
-                    res = toll + 1;
-                    break;
+                    int abs_res = abs(res);
+                    printf("it: %d res: %" format_e " WARNING: NEGATIVE RESIDUAL, PROBABLY DUE TO MALCONDITIONATE MATRIX.\n", it, res);
+                    if (abs_res < 1e-15)
+                    {
+                        res = abs(res);
+                    }
+                    else
+                    {
+                        std::cout << "RESTARTED GMRES APPLIED.\n";
+                        res = toll + 1;
+                        break;
+                    }                   
                 }
                 //-----
                 res = beta*res/bNorm;
