@@ -242,6 +242,31 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, write_inital_condition);
 
+
+    //------------------------------
+    // READ OPENMP INFO
+    //------------------------------
+    STREAM::getLines(ParameterFile, line, 3);
+    int thread_case;
+    STREAM::getValue(ParameterFile, line, iss, thread_case);
+    switch (thread_case)
+    {
+        case -1:
+        {
+            PARALLEL::nThread = std::thread::hardware_concurrency();
+            break;
+        }
+        case 0:
+        {
+            break;
+        }
+        default:
+        {
+            PARALLEL::nThread = thread_case;
+            break;
+        }
+    }
+
     // CLOSE STREAMING
     ParameterFile.close();
 
