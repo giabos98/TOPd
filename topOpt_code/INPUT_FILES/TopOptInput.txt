@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-vel[0.75]_[NS]_Re[1]_Vr[0.35]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_df[1_0.02_0.5]_p[2]_m[1]_s[0]
+vel[0.75]_[NS]_Re[1]_Vr[0.35]_[mma]_a[1e5]_b[1_1_0_0]_t[stat]_df[1_0.02_0.5]_p[2]_m[1]_s[0]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -19,7 +19,7 @@ vel[0.75]_[NS]_Re[1]_Vr[0.35]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_df[1_0.02_0.5]_p[2
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1e4
+1e5
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 

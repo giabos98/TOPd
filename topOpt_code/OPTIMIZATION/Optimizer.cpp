@@ -1051,12 +1051,12 @@ void OPTIMIZER::check_gamma(VECTOR &gamma_value)
             std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " is NaN\n";
             throw_line(err); 
         }
-        else if (gamma_value[i] < 0)
+        else if (gamma_value[i] < (-1e-15))
         {
             std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " < 0\n";
             throw_line(err); 
         }
-        else if (gamma_value[i] > 1)
+        else if ((gamma_value[i]-1) > 1e-15)
         {
             std::string err = "\ngamma[" + std::to_string(i) + "] = " + std::to_string(gamma_value[i]) + " > 1\n";
             throw_line(err); 
