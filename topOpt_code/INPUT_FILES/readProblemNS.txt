@@ -1,12 +1,12 @@
 // PROBLEM NAME
-competitive_flow_box_reg0.02
+cylinder_in_box_3D_normal
 // DIMENSION (2 or 3)
-2
+3
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-1
+0
 
 SAVE PDE SOLUTION (0: not save, 1: save)
-1
+0
 
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
@@ -25,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-3 //  rho
-0.3 //  mu
+1 //  rho
+1 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -34,7 +34,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // FORCING:
 0
 0
+0
 // FORCING - TIME DEPENDENT:
+0
 0
 0
 
@@ -53,9 +55,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-3
+6
 // geomID
-8 10 14
+8 9 10 13 16 19
 
 // SYMMETRY WALLS
 //--------
@@ -76,19 +78,18 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+1
 //geomID
-0 3
+7
 //funcID
--0.375*100*[0.1+y]*[y+0.3] 0
-0.375*100*[0.3-y]*[y-0.1] 0
+0 0 100*[0.01-x*x-y*y]
 
 // NEUMANN
 //--------
 // # NEUMANN
 1
 // geomID
-18
+14
 //functs
 0
 
