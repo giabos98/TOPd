@@ -25,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-30 //  rho
-0.03 //  mu
+3 //  rho
+0.3 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -53,9 +53,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-0
+3
 // geomID
-**
+8 10 14
 
 // SYMMETRY WALLS
 //--------
