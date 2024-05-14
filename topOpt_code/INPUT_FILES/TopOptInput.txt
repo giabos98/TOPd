@@ -1,19 +1,19 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[peak_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-vel[0.75]_n[2]_[NS]_Re[100]_Vr[0.35]_[mma]_a[1e5]_b[1_1_0_0]_t[stat]_df[1_0.02_0.5]_p[2]_m[1]_s[0]
+vel[0.75]_n[1]_[NS]_Re[100]_Vr[0.35]_[mma]_a[1e5]_b[1_1_0_0]_t[stat]_df[1_0.02_0.5]_p[2]_m[1]_s[0]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-1
+4
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0
+1.0 1.0 1.0 1.0
 //n opt subdomains
 1
 // optimization subdomains
-0
+2
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
@@ -100,4 +100,4 @@ vel[0.75]_n[2]_[NS]_Re[100]_Vr[0.35]_[mma]_a[1e5]_b[1_1_0_0]_t[stat]_df[1_0.02_0
 
 //-------------------------------- OPENMP PARAMETERS --------------------------------
 // # threads (0: automatic criteria, -1: max for current machine)
-6
+4

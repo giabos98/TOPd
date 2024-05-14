@@ -1,5 +1,5 @@
 // PROBLEM NAME
-competitive_flow_p_reg0.02
+competitive_flow_box_reg0.02
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -78,7 +78,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 2
 //geomID
-2 4
+0 3
 //funcID
 -0.375*100*[0.1+y]*[y+0.3] 0
 0.375*100*[0.3-y]*[y-0.1] 0
@@ -88,7 +88,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # NEUMANN
 1
 // geomID
-8
+18
 //functs
 0
 
