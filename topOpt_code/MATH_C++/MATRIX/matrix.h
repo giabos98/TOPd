@@ -505,7 +505,7 @@ public:
     //------------------------------------------
     // COPY
     //------------------------------------------
-    void operator = (MATRIX &mat)
+    void operator = (MATRIX mat)
     {
         // dlt();
         P.reset();

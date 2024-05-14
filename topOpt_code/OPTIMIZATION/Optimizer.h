@@ -2,8 +2,8 @@
 
 
 #include "../CODE_HEADERS/codeHeader.h"
-#include "../geometry.h"
 #include "../nsProblem.h"
+#include "constraints.h"
 #include "Mean_Diffusion_Filter.h"
 
 class OPTIMIZER
