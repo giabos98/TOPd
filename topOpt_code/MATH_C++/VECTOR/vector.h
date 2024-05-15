@@ -171,6 +171,26 @@ public:
     }
 
     //-------------------------------------------------------
+    // GET ENTRY (!!!works also with negative entries: -1=length-1, -length=0)
+    //-------------------------------------------------------
+    prec get(int id)
+    {
+        if (id >= length || id < (-1)*length)
+        {
+            throw_line("ERROR: index out of bounds\n");
+        } 
+        else if (id >= 0)
+        {
+            return P[id];
+        }
+        else 
+        {
+            int real_id = length + id;
+            return P[real_id];
+        }
+    }
+
+    //-------------------------------------------------------
     // GET LAST ENTRY
     //-------------------------------------------------------
     prec get_last()

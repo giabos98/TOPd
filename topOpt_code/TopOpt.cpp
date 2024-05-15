@@ -6,6 +6,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
 {
     prec startTime = omp_get_wtime();
     inputFile = InputFile;
+    time_profiler.initialize();
     printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
 
     PHYSICS* tempP = &physics;
@@ -858,9 +859,15 @@ void TOP_OPT::evaluate_total_energy()
 // Define the elements and the node of the optimization domain region.
 void TOP_OPT::handle_optimization_domain()
 {
+    std::cout << "\n----------\n--| SET OPTIMIZATION DOMAIN  |--\n----------\n";
     int nElem_v = physics.nElem_v;
     is_elem_in_dom.setZeros(nElem_v);
     physics.elems_in_doms.resize(n_subdomains);
+    for (int idom = 0; idom < n_subdomains; idom++)
+    {
+        physics.elems_in_doms[idom].initialize(nElem_v);
+    }
+    VECTOR subd_el_count; subd_el_count.setZeros(n_subdomains);
     int nodes_per_el = physics.dim + 1;
     int nNodes_v = physics.nNodes_v;
     optNodeFromGlobNode.setZeros(nNodes_v);
@@ -869,10 +876,11 @@ void TOP_OPT::handle_optimization_domain()
     is_node_in_dom += - 2; //set all to -2: -2=not passed, -1=not in opt domain, others=relative domain id
     not_opt_nodes_in_subdomains.setZeros(nNodes_v);
     not_opt_nodes_in_subdomains += -1;
+    time_profiler.set();
+    nodeInDom.setZeros(nNodes_v);
+    elemInDom.setZeros(nElem_v);
     if (n_subdomains == 1) // optimizing on all the domain
     {
-        nodeInDom.setZeros(nNodes_v);
-        elemInDom.setZeros(nElem_v);
         for (int inod = 0; inod < nNodes_v; inod++)
         {
             nodeInDom[inod] = inod;
@@ -891,13 +899,17 @@ void TOP_OPT::handle_optimization_domain()
         for (int iel = 0; iel < nElem_v; iel++)
         {
             int temp_geo_id = physics.elem_geo_entities_ids_v[iel];
-            physics.elems_in_doms[temp_geo_id].append(iel);
+            physics.elems_in_doms[temp_geo_id][subd_el_count[temp_geo_id]] = iel;
+            subd_el_count[temp_geo_id] += 1;
             if (opt_subdomains.hasIn(temp_geo_id))
             {
                 is_elem_in_dom[iel] = 1;
             }
         }
-        // is_elem_in_dom.printRowMatlab("is_el");
+        for (int idom = 0; idom < n_subdomains; idom++)
+        {
+            physics.elems_in_doms[idom].shrink(subd_el_count[idom]);
+        }
 
         //check node in dom
         for (int iel = 0; iel < nElem_v; iel++)
@@ -943,7 +955,8 @@ void TOP_OPT::handle_optimization_domain()
                 }
             } 
         }
-        // is_node_in_dom.printRowMatlab("is_nod");
+        int node_count = 0;
+
         for (int inod = 0; inod < nNodes_v; inod++)
         {
             switch (is_node_in_dom[inod])
@@ -957,18 +970,19 @@ void TOP_OPT::handle_optimization_domain()
                     break;
                 default:
                 {
-                    optNodeFromGlobNode[inod] = nodeInDom.length;
-                    nodeInDom.append(inod);
+                    optNodeFromGlobNode[inod] = node_count;
+                    nodeInDom[node_count] = inod;
+                    node_count++;
                     break;
                 }
                 
             }
         }
+        nodeInDom.shrink(node_count);
         nNodeInDom = nodeInDom.length;
-        // nodeInDom.printRowMatlab("nodeInDom");
-        // optNodeFromGlobNode.printRowMatlab("optFrom");
 
         // second check if is elem_in_dom: the idea is now to exclude elements in which one node belongs also to a non in dom element.
+        int elem_count = 0;
         for (int iel = 0; iel < nElem_v; iel++)
         {
             int temp_is_in_dom = 1;
@@ -984,14 +998,15 @@ void TOP_OPT::handle_optimization_domain()
             is_elem_in_dom[iel] = temp_is_in_dom;
             if (temp_is_in_dom == 1) 
             {
-                elemInDom.append(iel);
+                elemInDom[elem_count] = iel;
+                elem_count++;
             }
         }
+        elemInDom.shrink(elem_count);
         nElemInDom = elemInDom.length;
         // elemInDom.printRowMatlab("nodeInDom");
     }
     
-
     // finally get the optimization box to be able to use the gamma filtering
     optBox.initialize(physics.dim, 2);
     for (int idim = 0; idim < physics.dim; idim++)
@@ -1014,7 +1029,6 @@ void TOP_OPT::handle_optimization_domain()
             }
         }
     }
-    // MATRIX::printForMatlab(optBox, "optBox");
 }
 
 void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma)

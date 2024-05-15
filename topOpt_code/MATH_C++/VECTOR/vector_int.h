@@ -132,6 +132,8 @@ public:
         return P[index];
     }
     //---
+    
+
     void set3Values(int val0, int val1, int val2)
     {
         P.reset(); P = 0;

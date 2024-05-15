@@ -318,7 +318,8 @@ void PROBLEM_NS::importPREPRO()
     // velocity and pressure ELEMENTS
     // only velocity BOUND INFO
 
-    if ((*physics).completeLog == 0) std::cout << "\n----------\n--| NS IMPORT PREPRO |--\n----------\n";
+    std::cout << "\n----------\n--| IMPORT PREPRO |--\n----------\n";
+
     std::string folderPath    = name;
     folderPath = "PREPRO/PROBLEM_DATA/" + folderPath;
     std::string NodeFilePath  = folderPath + "/Nodes.txt";
@@ -2731,7 +2732,7 @@ void PROBLEM_NS::oneStepSolverStokes()
 
     endTime = omp_get_wtime();
 
-    printf("|NS| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", residual: %e\n", (globIter+1), trialTime, endTime-startTime, finalRes);    
+    printf("|S| IT: %d \tTIME: %7.4" format " \tSOLVER TIME: %" format ", residual: %e\n", (globIter+1), trialTime, endTime-startTime, finalRes);    
     time = trialTime;
     real_solution_times.append(time);
     prec t_end = (*physics).t_end;  

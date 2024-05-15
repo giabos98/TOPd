@@ -4,6 +4,7 @@
 #include "OPTIMIZATION/Optimizer.h"
 #include "problemNSHeader.h"
 #include "geometry.h"
+#include "UTILITIES/Optimization/opt_utils.h"
 // #include <sys/time.h>
 
 class TOP_OPT
@@ -17,6 +18,7 @@ public:
     std::string name;
     int optimization_scheme;
     std::string inputFile;
+    TIME_PROFILER time_profiler;
 
     int funcId = 1;
     bool binPrint;
