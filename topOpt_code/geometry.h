@@ -142,6 +142,7 @@ class PHYSICS
     void eval_directional_gradient(MATRIX &value, VECTOR_INT &nodes, std::vector<VECTOR> &directions, std::vector<VECTOR> &dir_gradient);
     void build_tangents_from_normal(VECTOR &normal, std::vector<VECTOR> &tangent_vectors);
     void build_tangents_from_normals(std::vector<VECTOR> &normals, std::vector<std::vector<VECTOR>> &tangent_vectors);
+    void print_mesh_for_mmg(std::string file_name, std::string rel_path = "");
 
     static int factorial(int n)
     {

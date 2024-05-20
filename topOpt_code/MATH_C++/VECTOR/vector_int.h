@@ -128,7 +128,14 @@ public:
     //-------------------------------------------------------
     int& operator [] (int index)
     {
-        if (index >= length || index < 0) throw_line("ERROR: index out of bounds\n");
+        if (index >= length)
+        {
+            throw_line("ERROR: index out of bounds\n");
+        }
+        else if (index < 0)
+        {
+            throw_line("ERROR: index < 0\n");
+        }
         return P[index];
     }
     //---
@@ -1100,6 +1107,12 @@ public:
     // CLEAR VECTOR
     //--------------------------------------------
     void clear()
+    {
+        P.reset(); P = 0;
+        length = 0;
+    }
+    //---
+    void complete_reset()
     {
         P.reset(); P = 0;
         length = 0;

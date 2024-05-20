@@ -822,6 +822,75 @@ void PHYSICS::build_tangents_from_normals(std::vector<VECTOR> &normals, std::vec
         build_tangents_from_normal(nodal_normal, tangent_vectors[inod]); 
     }
 }
+
+void PHYSICS::print_mesh_for_mmg(std::string file_name, std::string rel_path)
+{
+    if (dim != 2) throw_line("NOT IMPLEMENTED REMESHING FOR THE 3D CASE");
+
+    // creat mesh file
+    std::string currFilePath;
+    if (rel_path == "")
+    {
+        currFilePath = file_name;
+    }
+    else
+    {
+        currFilePath = rel_path + "/" + file_name;
+    }
+    std::ofstream file;
+    file.open(currFilePath);
+
+    // initialize mesh
+    file << "MeshVersionFormatted 2\n";
+    file << "\n";
+    file << "\n";
+    file << "Dimension " << dim << "\n";
+    file << "\n";
+    file << "\n";
+
+    // write nodes
+    file << "Vertices\n";
+    file << nNodes << "\n";
+    for (int inod = 0; inod < nNodes; inod++)
+    {
+        prec* temp_coord = coord[inod];
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            prec temp_val = temp_coord[icomp];
+            if (abs(temp_val) < 1e-14) temp_val = 0.0;
+            file << temp_val << " ";
+        }
+        if (dim == 2)
+        {
+            file << "0 ";
+        }
+        file << "\n";
+    }
+    
+    file << "\n";
+    file << "\n";
+
+    // write elements
+    file << "Triangles\n";
+    file << nElem << "\n";
+    for (int iel = 0; iel < nElem; iel++)
+    {
+        int* temp_nodes = elem[iel];
+        for (int inod = 0; inod < dim+1; inod++)
+        {
+            file << (temp_nodes[inod]+1) << " ";
+        }
+        file << (elem_geo_entities_ids_v[4*iel]);
+        file << "\n";
+    }
+
+    file << "\n";
+    file << "\n";
+    file << "End\n";
+
+    // close mesh file
+    file.close();
+}
 //--------------------------------------------
 // END PHYSICS CLASS
 //--------------------------------------------
