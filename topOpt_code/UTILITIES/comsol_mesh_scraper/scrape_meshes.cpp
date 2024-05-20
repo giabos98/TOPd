@@ -83,7 +83,7 @@ std::string scrape_3D_mesh_into_2D(std::string input_file) // BETA
 //-----------------------------------------------------------------------------------------
 // EXTRACT COORD, ELEM AND ELEM_ID FROM A .MPH MESH FILE (version 2.2)
 //-----------------------------------------------------------------------------------------
-void extract_mesh_from_mph(std::string input_file, int dim, MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &elem_id)
+void extract_mesh_from_msh(std::string input_file, int dim, MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &elem_id)
 {
     std::cout << "\n" << "---| EXTRACT COORD, ELEM AND ELEM_ID FROM A .MPH MESH FILE |---" << "\n\n";
     std::ifstream mesh_stream;
@@ -140,7 +140,7 @@ void extract_mesh_from_mph(std::string input_file, int dim, MATRIX &coord, MATRI
 //-----------------------------------------------------------------------------------------
 std::string print_mesh_in_mphtxt(MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &elem_id, int dim)
 {
-    std::cout << "\n" << "---| BUILD MPHTXT MESH FROM COORDS AND ELEMS (with elem domain id) |---" << "\n\n";
+    std::cout << "\n" << "---| BUILD .MPHTXT MESH FROM COORDS AND ELEMS (with elem domain id) |---" << "\n\n";
     std::string text = "";
 
     text += "# Major & minor version\n";
@@ -208,6 +208,110 @@ std::string print_mesh_in_mphtxt(MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &el
     return text;
 }
 
+//-----------------------------------------------------------------------------------------
+// CREATE THE STRING TO BE PRINTED IN A .MSH FILE TO READ IT IN GMSH
+//-----------------------------------------------------------------------------------------
+std::string print_mesh_in_msh(MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &elem_id, int dim)
+{
+    std::cout << "\n" << "---| BUILD .MSH MESH FROM COORDS AND ELEMS (with elem domain id) |---" << "\n\n";
+    std::string text = "";
+
+    text += "$MeshFormat\n";
+    text += "2.2 0 8\n";
+    text += "$EndMeshFormat\n";
+    text += "$Nodes\n";
+    int n_nodes = coord.nRow;
+    text += std::to_string(n_nodes) + "\n"; 
+    for (int inod = 0; inod < n_nodes; inod++)
+    {
+        std::string temp_text = std::to_string(inod+1) + " ";
+        prec* temp_coord = coord[inod];
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            temp_text += std::to_string(temp_coord[icomp]) + " ";
+        }
+        if (dim == 2)
+        {
+            temp_text += "0 ";
+        }
+        text += temp_text + "\n";
+    }
+    text += "$EndNodes\n";
+    text += "$Elements\n";
+    int n_elem = elem.nRow;
+    int n_nodes_x_el = elem.nCol;
+    text += std::to_string(n_elem) + "\n";
+    for (int iel = 0; iel < n_elem; iel++)
+    {
+        std::string temp_text = std::to_string(iel+1) + " ";
+        temp_text += "2 2 0 ";
+        temp_text += std::to_string(elem_id[iel]+1) + " ";
+        int* temp_nodes = elem[iel];
+        for (int inod = 0; inod < n_nodes_x_el; inod++)
+        {
+            temp_text += std::to_string(temp_nodes[inod]+1) + " ";
+        }
+        text += temp_text + "\n";
+    }
+    text += "$EndElements\n";
+    return text;
+}
+
+//-----------------------------------------------------------------------------------------
+// CREATE THE STRING TO BE PRINTED IN A .MESH FILE TO READ IT IN GMSH
+//-----------------------------------------------------------------------------------------
+std::string print_mesh_in_mesh(MATRIX &coord, MATRIX_INT &elem, VECTOR_INT &elem_id, int dim)
+{
+    std::cout << "\n" << "---| BUILD .MESH MESH FROM COORDS AND ELEMS (with elem domain id) |---" << "\n\n";
+    std::string text = "";
+
+    text += "MeshVersionFormatted 2\n";
+    text += "\n";
+    text += "\n";
+    text += "Dimension " + std::to_string(dim) + "\n";
+    text += "\n";
+    text += "\n";
+    text += "Vertices\n";
+    int n_nodes = coord.nRow;
+    text += std::to_string(n_nodes) + "\n"; 
+    for (int inod = 0; inod < n_nodes; inod++)
+    {
+        std::string temp_text = "";
+        prec* temp_coord = coord[inod];
+        for (int icomp = 0; icomp < dim; icomp++)
+        {
+            temp_text += std::to_string(temp_coord[icomp]) + " ";
+        }
+        if (dim == 2)
+        {
+            temp_text += "0 ";
+        }
+        text += temp_text + "\n";
+    }
+    text += "\n";
+    text += "\n";
+    text += "Triangles\n";
+    int n_elem = elem.nRow;
+    int n_nodes_x_el = elem.nCol;
+    text += std::to_string(n_elem) + "\n";
+    for (int iel = 0; iel < n_elem; iel++)
+    {
+        std::string temp_text = "";
+        int* temp_nodes = elem[iel];
+        for (int inod = 0; inod < n_nodes_x_el; inod++)
+        {
+            temp_text += std::to_string(temp_nodes[inod]+1) + " ";
+        }
+        temp_text += std::to_string(elem_id[iel]+1);
+        text += temp_text + "\n";
+    }
+    text += "\n";
+    text += "\n";
+    text += "End\n";
+    return text;
+}
+
+
 int main(int argc, char *argv[])
 {
     // bool BINREAD;
@@ -220,15 +324,28 @@ int main(int argc, char *argv[])
     MATRIX_INT elem;
     VECTOR_INT elem_id;
     int dim = 2;
-    extract_mesh_from_mph(input_file, dim, coord, elem, elem_id);
+    extract_mesh_from_msh(input_file, dim, coord, elem, elem_id);
 
-    std::string output_text = print_mesh_in_mphtxt(coord, elem, elem_id, dim);
+    std::string output_text_mph = print_mesh_in_mphtxt(coord, elem, elem_id, dim);
     // Create and open a text file
-    std::string output_file = "output.mphtxt";
-    std::ofstream output_stream(output_file);
-    // Write to the file
-    output_stream << output_text;
-    // Close the file
-    output_stream.close();
+    std::string output_file_mph = "output.mphtxt";
+    std::ofstream output_stream_mph(output_file_mph);
+    output_stream_mph << output_text_mph;
+    output_stream_mph.close();
+
+    std::string output_text_msh = print_mesh_in_msh(coord, elem, elem_id, dim);
+    // Create and open a text file
+    std::string output_file_msh = "output.msh";
+    std::ofstream output_stream_msh(output_file_msh);
+    output_stream_msh << output_text_msh;
+    output_stream_msh.close();
+
+    std::string output_text_mesh = print_mesh_in_mesh(coord, elem, elem_id, dim);
+    // Create and open a text file
+    std::string output_file_mesh = "output.mesh";
+    std::ofstream output_stream_mesh(output_file_mesh);
+    output_stream_mesh << output_text_mesh;
+    output_stream_mesh.close();
+    
     return 0;
 }
