@@ -46,6 +46,27 @@ classdef Compare_Functs
             end
         end
         %-------------------------------------------
+
+        %-------------------------------------------
+        % COMPARE FUNCTIONALS
+        function new_nfig = compare_base_functionals(self, nfig)
+            % print in nfig+1
+            % what_to_print = [print_func, print_changes, print_no_w_func]
+            new_nfig = nfig+1;
+            figure(new_nfig);
+            hold on;
+            title("BASE FUNCTIONAL COMPARISON");
+            for ifunc=1:self.n_func
+                functional = self.functionals(ifunc);
+                func = functional.func;
+                it = 1:functional.n_it;
+                plot(it, func, "-","LineWidth", 2, 'DisplayName', functional.custom_name);
+            end
+            legend;
+            colororder("reef");
+            hold off;
+        end
+        %-------------------------------------------
     end
     % END PUBLIC METHODS
     %----------------------------------------------------------------------  

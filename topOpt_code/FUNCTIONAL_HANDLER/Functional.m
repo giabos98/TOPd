@@ -12,6 +12,7 @@ classdef Functional
         problem_name = "";
         test = "";
         name = "";
+        custom_name;
 
         %functional value properties
         n_it;
@@ -42,10 +43,11 @@ classdef Functional
     methods (Access = public)
         %-------------------------------------------
         % CONSTRUCTOR
-        function self = Functional(pb_name, pb_test) 
+        function self = Functional(pb_name, pb_test, pb_custom) 
             self.problem_name = pb_name;
             self.test = pb_test;
             self.name = pb_name + "/" + pb_test;
+            self.custom_name = pb_custom;
             self = eval(self); % evaluate functional
         end
         %-------------------------------------------
