@@ -17,11 +17,8 @@ functional2 = Functional(problemName, test2, "goc");
 comparison = comparison.add_functional(functional1);
 comparison = comparison.add_functional(functional2);
 
-comparison.compare_base_functionals(nfig);
-
-% nfig = functional1.print(nfig, [1,1,1]);
-% nfig = functional2.print(nfig, [1,1,1]);
-
+% comparison.compare_base_functionals(nfig);
+nfig = comparison.print(nfig, [1,0,0]);
 
 
 

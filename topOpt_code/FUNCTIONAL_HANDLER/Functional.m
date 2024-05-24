@@ -46,7 +46,11 @@ classdef Functional
         function self = Functional(pb_name, pb_test, pb_custom) 
             self.problem_name = pb_name;
             self.test = pb_test;
-            self.name = pb_name + "/" + pb_test;
+            % start_path = "../results/";
+            start_path = "test_res/";
+            % end_path = "/Matlab_interface";
+            end_path = "";
+            self.name = start_path + pb_name + "/" + pb_test + end_path;
             self.custom_name = pb_custom;
             self = eval(self); % evaluate functional
         end
