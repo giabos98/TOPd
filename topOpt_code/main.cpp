@@ -8,8 +8,7 @@ int main()
 
     std::string inputFileNS = "INPUT_FILES/readProblemNS.txt";
     TOP_OPT topOpt(inputFileNS);
-    topOpt.physics.print_mesh_for_mmg("prova.mesh");
-    pause();
+    // topOpt.physics.print_mesh_for_mmg("prova.mesh");
 
     //*-*-*--*-*-*-*-*-*-*
     topOpt.solve();

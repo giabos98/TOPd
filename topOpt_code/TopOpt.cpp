@@ -27,7 +27,6 @@ TOP_OPT::TOP_OPT(std::string InputFile)
         Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
         //diffusionFilter.printNeighbourhood();
     }
-    
     prec endTime = omp_get_wtime();
     import_time = endTime - startTime;
 }
@@ -800,7 +799,7 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     physics.total_energy.append(temp_fluid_energy[0]);
     physics.fluid_energy.append_row(temp_fluid_energy);
 
-    std::string path = "MATLAB_INTERFACE/" + NS.name+ "/" + name;
+    std::string path = "results/" + NS.name+ "/" + name + "/Matlab_interface";
     fs::create_directories(path);
     temp_func_values.print((path  + "/func.txt").c_str());
     temp_no_weights_func_values.print((path + "/no_weight_func.txt").c_str());

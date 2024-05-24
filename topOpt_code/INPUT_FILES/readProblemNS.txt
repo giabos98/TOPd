@@ -1,5 +1,5 @@
 // PROBLEM NAME
-competitive_flow_inbox_reg0.02
+competitive_flow_inbox_reg0.02_opt
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -55,7 +55,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # INNER
 2
 // geomID
-8 10
+0 1
 
 // SYMMETRY WALLS
 //--------
@@ -78,10 +78,10 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 2
 //geomID
-0 3
+7 10
 //funcID
-1 0
-1 0
+-0.75*[y+0.1]*[y+0.3]
+0.75*[0.3-y]*[y-0.1]
 
 // NEUMANN
 //--------
