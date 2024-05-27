@@ -11,6 +11,7 @@ classdef Compare_Functs
         % general properties
         n_func = 0;
         functionals;
+        min_it = 1e10;
     end
     % END PROPERTIES
     %----------------------------------------------------------------------
@@ -32,6 +33,9 @@ classdef Compare_Functs
         function self = add_functional(self, functional)
             self.functionals = [self.functionals, functional];
             self.n_func = self.n_func+1;
+            if (functional.n_it < self.min_it)
+                self.min_it = functional.n_it;
+            end
         end
         %-------------------------------------------
 
@@ -56,14 +60,28 @@ classdef Compare_Functs
             figure(new_nfig);
             hold on;
             title("BASE FUNCTIONAL COMPARISON");
+            it = 1:self.min_it;
             for ifunc=1:self.n_func
                 functional = self.functionals(ifunc);
                 func = functional.func;
-                it = 1:functional.n_it;
+                func = func(1:self.min_it);
                 plot(it, func, "-","LineWidth", 2, 'DisplayName', functional.custom_name);
+                colororder("reef");
             end
+            for ifunc=1:self.n_func
+                functional = self.functionals(ifunc);
+                func = functional.func;
+                valid = functional.valid;
+                for i = 1 : floor(self.min_it / 20) : (self.min_it)
+                    if valid(i) == 1
+                        plot(it(i), func(i), 'bo', "LineWidth", 1.5, 'HandleVisibility','off');
+                    else
+                        plot(it(i), func(i), 'ro', "LineWidth", 1.5, 'HandleVisibility','off');
+                    end
+                end
+            end            
             legend;
-            colororder("reef");
+            
             hold off;
         end
         %-------------------------------------------
