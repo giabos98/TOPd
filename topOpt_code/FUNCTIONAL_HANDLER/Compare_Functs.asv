@@ -59,26 +59,15 @@ classdef Compare_Functs
             new_nfig = nfig+1;
             figure(new_nfig);
             scales = ones(self.n_func,1);
-            if (normalize(1) ~= 1)
+            if (normalize(0) == 0)
                 for ifunc=1:self.n_func
                     scales(ifunc) = self.functionals(ifunc).f0Init;
                 end
-                if (normalize(1) == -1)
-                    if (abs(normalize(2)) < 1e-10)
-                        rescale = 0;
-                        %set rescale to max(f0Init)
-                        for ifunc=1:self.n_func
-                            if (self.functionals(ifunc).f0Init > rescale)
-                                rescale = self.functionals(ifunc).f0Init;
-                            end
-                        end
-                    else
-                        rescale = normalize(2);
-                    end
-                    scales = scales / rescale;
-                end
+            elseif (normalize == -1)
+                min_f0Init = 1e10
             end
-            
+               
+
             hold on;
             title("BASE FUNCTIONAL COMPARISON");
             it = 1:self.min_it;
