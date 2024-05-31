@@ -53,18 +53,20 @@ classdef Compare_Functs
 
         %-------------------------------------------
         % COMPARE FUNCTIONALS
-        function new_nfig = compare_base_functionals(self, nfig, normalize, print_changes)
+        function new_nfig = compare_base_functionals(self, nfig, normalize, print_changes, axis_scale)
             % print in nfig+1
             % what_to_print = [print_func, print_changes, print_no_w_func]
             new_nfig = nfig+1;
             figure(new_nfig);
             scales = ones(self.n_func,1);
+            % normalize = 1: use functional values relative to their first
+            % one
             if (normalize(1) ~= 1)
                 for ifunc=1:self.n_func
                     scales(ifunc) = self.functionals(ifunc).f0Init;
                 end
-                if (normalize(1) == -1)
-                    if (abs(normalize(2)) < 1e-10)
+                if (normalize(1) == -1) 
+                    if (normalize(2) < 1e-10)
                         rescale = 0;
                         %set rescale to max(f0Init)
                         for ifunc=1:self.n_func
@@ -72,10 +74,14 @@ classdef Compare_Functs
                                 rescale = self.functionals(ifunc).f0Init;
                             end
                         end
-                    else
+                    else %rescale for a given factor > 0
                         rescale = normalize(2);
                     end
                     scales = scales / rescale;
+                elseif (normalize(1) == -2)
+                    for ifunc=1:self.n_func
+                        scales(ifunc) =  scales(ifunc) / self.functionals(ifunc).mu;
+                    end
                 end
             end
             
@@ -106,7 +112,39 @@ classdef Compare_Functs
                     end
                 end   
             end
-                     
+            if (axis_scale == "log")
+                xscale("log");
+            end
+            legend;
+            
+            hold off;
+        end
+        %-------------------------------------------
+        % COMPARE FUNCTIONALS
+        function new_nfig = compare_functionals(self, nfig, value_to_compare, print_changes, axis_scale, custom_colors)
+            % print in nfig+1
+            % what_to_print = [print_func, print_changes, print_no_w_func]
+            new_nfig = nfig+1;
+            figure(new_nfig);
+            
+            if (length(custom_colors) == self.n_func)
+                temp_colors = custom_colors;
+            else
+                for ifunc=1:self.n_func
+                    temp_colors(ifunc) = self.get_random_color();
+                end
+            end
+            
+            hold on;
+            title("BASE FUNCTIONAL COMPARISON");
+            for ifunc=1:self.n_func
+                functional = self.functionals(ifunc);
+                functional.print_specific_func(new_nfig, value_to_compare, print_changes, temp_colors(ifunc));
+            end
+
+            if (axis_scale == "log")
+                xscale("log");
+            end
             legend;
             
             hold off;
@@ -123,4 +161,19 @@ classdef Compare_Functs
     end
     % END PROTECTED METHODS
     %----------------------------------------------------------------------  
+
+    %----------------------------------------------------------------------
+    %% STATIC METHODS 
+    %----------------------------------------------------------------------
+    methods (Static)
+        function color = get_random_color()
+            color = "#";
+            r = dec2hex(randi([0,255]), 2);
+            g = dec2hex(randi([0,255]), 2);
+            b = dec2hex(randi([0,255]), 2);
+            color = color + r + g + b;
+        end
+    end
+    % END STATIC METHODS
+    %---------------------------------------------------------------------- 
 end

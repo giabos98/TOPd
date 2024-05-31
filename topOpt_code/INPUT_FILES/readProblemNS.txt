@@ -1,5 +1,5 @@
 // PROBLEM NAME
-double_pipe_reg_0.02
+double_pipe_reg_x0.5_0.05
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -25,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-30 //  rho
-0.03 //  mu
+2 //  rho
+1 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -80,8 +80,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 //geomID
 0 3
 //funcID
-0.9*144*[y-1/6]*[2/6-y] 0
-0.9*144*[y-4/6]*[5/6-y] 0
+1*1.5*16*[y-0.5]*[1-y] 0
+1*1.5*16*[y-2]*[2.5-y] 0
 
 // NEUMANN
 //--------

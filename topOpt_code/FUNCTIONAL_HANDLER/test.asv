@@ -1,0 +1,32 @@
+clc; close all; clear;
+
+nfig = 0;
+
+l = 0.1:0.001:10;
+
+mu = 0.001:0.01:10;
+
+rho = zeros(length(mu), length(l));
+alpha = zeros(length(mu), length(l));
+
+[X,Y]=meshgrid(mu,l);
+x = X;
+y = X./Y;
+z = X./(Y.^2);
+
+% a = -10:0.1:10;
+% b = -10:0.1:10;
+% [X,Y] = meshgrid(a,b);
+% x = X;
+% y = Y;
+% z = X.^2+Y.^2;
+
+nfig = nfig+1;
+figure(nfig);
+sl = surf(x,y,z);
+hold on;
+plot3(x(:,1),y(:,1), z(:,1), "-k")
+
+colormap summer
+sl.EdgeColor = 'none';
+hold off;

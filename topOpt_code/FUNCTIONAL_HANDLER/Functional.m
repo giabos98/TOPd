@@ -13,6 +13,7 @@ classdef Functional
         test = "";
         name = "";
         custom_name;
+        mu;
 
         %functional value properties
         n_it;
@@ -33,6 +34,9 @@ classdef Functional
         no_w_f_grad;
         no_w_f_vort;
         no_w_f_p;
+
+        % matrix functional values
+        func_values;
     end
     % END PROPERTIES
     %----------------------------------------------------------------------
@@ -43,9 +47,10 @@ classdef Functional
     methods (Access = public)
         %-------------------------------------------
         % CONSTRUCTOR
-        function self = Functional(pb_name, pb_test, pb_custom) 
+        function self = Functional(pb_name, pb_test, pb_mu, pb_custom) 
             self.problem_name = pb_name;
             self.test = pb_test;
+            self.mu = pb_mu;
             % start_path = "test_res/";
             % end_path = "";
             start_path = "../results/";
@@ -100,6 +105,41 @@ classdef Functional
             legend("Jtot", "Jout", "Jalpha", "Jgrad", "Jvort", "Jp");
             title("FUNCTIONAL");
             % xscale("log");
+            hold off;
+        end
+        %-------------------------------------------
+        function print_specific_func(self, nfig, what_to_print, print_changes, color)
+            it = 1:self.n_it;
+            figure(nfig);
+            hold on;
+            switch what_to_print
+                case "tot"
+                    func_case = 1;
+                case "out"
+                    func_case = 2;
+                case "alpha"
+                    func_case = 3;
+                case "grad"
+                    func_case = 4;
+                case "vort"
+                    func_case = 5;
+                case "p"
+                    func_case = 6;
+                otherwise
+                    func_case = 1;
+            end
+            plot(it, self.func_values(:,func_case), "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
+
+            if (print_changes == 1)
+                for i = 1 : floor(length(it)/20) : (length(it))
+                    if self.valid(i) == 1
+                        plot(it(i), self.func_values(i,func_case), 'bo', "LineWidth", 1.5);
+                    else
+                        plot(it(i), self.func_values(i,func_case), 'ro', "LineWidth", 1.5);
+                    end
+                end
+            end
+
             hold off;
         end
         %-------------------------------------------
@@ -166,6 +206,13 @@ classdef Functional
             self.no_w_f_grad = self.no_w_functional(:,2);
             self.no_w_f_vort = self.no_w_functional(:,3);
             self.no_w_f_p = self.no_w_functional(:,4);
+
+            self.func_values(:,1) = self.func;
+            self.func_values(:,2) = self.func_out_box;
+            self.func_values(:,3) = self.func_alpha;
+            self.func_values(:,4) = self.func_grad;
+            self.func_values(:,5) = self.func_vort;
+            self.func_values(:,6) = self.func_p;
         end
         %-------------------------------------------
     end
