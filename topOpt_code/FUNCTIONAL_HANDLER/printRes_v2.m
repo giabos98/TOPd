@@ -6,43 +6,38 @@ nfig = 1;
 
 comparison = Compare_Functs();
 
-problemName = "double_pipe_reg_0.02";
-% test1 = "vel[0.9]_[S]_Re[0.1]_Vr[0.34]_[goc]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-% test2 = "vel[0.9]_[S]_Re[0.1]_Vr[0.34]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test3 = "vel[0.9]_[NS]_Re[0.1]_Vr[0.34]_[goc]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test4 = "vel[0.9]_[NS]_Re[0.1]_Vr[0.34]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test5 = "vel[0.9]_[NS]_Re[1]_Vr[0.34]_[goc]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test6 = "vel[0.9]_[NS]_Re[1]_Vr[0.34]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test7 = "vel[0.9]_[NS]_Re[10]_Vr[0.34]_[goc]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-test8 = "vel[0.9]_[NS]_Re[10]_Vr[0.34]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-% test9 = "vel[0.9]_[NS]_Re[100]_Vr[0.34]_[goc]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
-% test10 = "vel[0.9]_[NS]_Re[100]_Vr[0.34]_[mma]_a[1e4]_b[1_1_0_0]_t[stat]_p[2]_m[1]_s[0]";
+problemName = "double_pipe_reg_0.1";
+test1 = "rho[1]_mu[1]_U[0.1]_a[0.1e4]_L[1]_mma";
+test2 = "rho[1]_mu[1]_U[0.1]_a[0.1e4]_L[1]_goc";
+test3 = "rho[1]_mu[1]_U[1]_a[1e4]_L[1]_mma";
+test4 = "rho[1]_mu[1]_U[1]_a[1e4]_L[1]_goc";
+test5 = "rho[1]_mu[1]_U[10]_a[10e4]_L[1]_mma";
+test6 = "rho[1]_mu[1]_U[10]_a[10e4]_L[1]_goc";
+% test7 = "rho[1]_mu[1]_U[100]_a[100e4]_L[1]_mma";
+% test8 = "rho[1]_mu[1]_U[100]_a[100e4]_L[1]_goc";
 
-% functional1 = Functional(problemName, test1, "S GOC");
-% functional2 = Functional(problemName, test2, "S MMA");
-functional3 = Functional(problemName, test3, 1, "NS Re=1 GOC");
-functional4 = Functional(problemName, test4, 1, "NS Re=0.1 MMA");
-functional5 = Functional(problemName, test5, 0.3,"NS Re=1 GOC");
-functional6 = Functional(problemName, test6, 0.3,"NS Re=1 MMA");
-functional7 = Functional(problemName, test7, 0.1,"NS Re=10 GOC");
-functional8 = Functional(problemName, test8, 0.1, "NS Re=10 MMA");
-% functional9 = Functional(problemName, test9, 1, "NS Re=100 GOC");
-% functional10 = Functional(problemName, test10, 1, "NS Re=100 MMA");
+functional1 = Functional(problemName, test1, 1, "0.1 MMA");
+functional2 = Functional(problemName, test2, 1, "0.1 GOC");
+functional3 = Functional(problemName, test3, 1, "  1 MMA");
+functional4 = Functional(problemName, test4, 1, "  1 GOC");
+functional5 = Functional(problemName, test5, 1, " 10 MMA");
+functional6 = Functional(problemName, test6, 1, " 10 GOC");
+% functional7 = Functional(problemName, test7, 1, "100 MMA");
+% functional8 = Functional(problemName, test8, 1, "100 GOC");
 
-% comparison = comparison.add_functional(functional1);
-% comparison = comparison.add_functional(functional2);
+comparison = comparison.add_functional(functional1);
+comparison = comparison.add_functional(functional2);
 comparison = comparison.add_functional(functional3);
 comparison = comparison.add_functional(functional4);
 comparison = comparison.add_functional(functional5);
 comparison = comparison.add_functional(functional6);
-comparison = comparison.add_functional(functional7);
-comparison = comparison.add_functional(functional8);
-% comparison = comparison.add_functional(functional9);
-% comparison = comparison.add_functional(functional10);
+% comparison = comparison.add_functional(functional7);
+% comparison = comparison.add_functional(functional8);
 
 
 % comparison.compare_base_functionals(nfig, [-2,1], 0, "", "tot");
-comparison.compare_functionals(nfig, "tot", 0, "", []);
+% comparison.compare_functionals(nfig, "tot", 0, 0, "", []);
+comparison.compare_functionals_initial_values(nfig);
 % nfig = comparison.print(nfig, [1,0,0]);
 
 

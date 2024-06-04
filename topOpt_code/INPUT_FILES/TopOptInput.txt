@@ -1,27 +1,29 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
+rho[1]_mu[1]_U[0.1]_a[0.1e3]_L[1]_mma_TEST_erode
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
-1
+0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
 5
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0 1.0 1.0
+1.0 1.0 0.33 1.0 1.0
 //n opt subdomains
 1
 // optimization subdomains
-1
+2
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-100e4
+0.1e3
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
+// iterations to have real_amax = amax (0:immediately a_max) 
+50
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -34,7 +36,7 @@ rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
 // --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
 0
 // parameters
-0.36
+0.33
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -46,7 +48,7 @@ rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
 // min iter
 0
 // maxIter
-100
+300
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -61,7 +63,7 @@ rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-0
+2
 // beta MAX
 2
 //beta min
@@ -69,7 +71,7 @@ rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
 1
 // change max to turn on beta interpolation
-0.005
+0.001
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation
@@ -85,7 +87,7 @@ rho[1]_mu[1]_U[10]_a[100e4]_L[1]_goc
 0.5
 
 // SMOOTHING BETWEEN ELEMENTS (0: no smooth, 1: smooth)
-0
+1
 
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (0: false, 1: true)

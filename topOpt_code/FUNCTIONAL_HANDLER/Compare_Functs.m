@@ -55,7 +55,6 @@ classdef Compare_Functs
         % COMPARE FUNCTIONALS
         function new_nfig = compare_base_functionals(self, nfig, normalize, print_changes, axis_scale)
             % print in nfig+1
-            % what_to_print = [print_func, print_changes, print_no_w_func]
             new_nfig = nfig+1;
             figure(new_nfig);
             scales = ones(self.n_func,1);
@@ -121,7 +120,7 @@ classdef Compare_Functs
         end
         %-------------------------------------------
         % COMPARE FUNCTIONALS
-        function new_nfig = compare_functionals(self, nfig, value_to_compare, print_changes, axis_scale, custom_colors)
+        function new_nfig = compare_functionals(self, nfig, value_to_compare, abs_value, print_changes, axis_scale, custom_colors)
             % print in nfig+1
             % what_to_print = [print_func, print_changes, print_no_w_func]
             new_nfig = nfig+1;
@@ -139,7 +138,7 @@ classdef Compare_Functs
             title("BASE FUNCTIONAL COMPARISON");
             for ifunc=1:self.n_func
                 functional = self.functionals(ifunc);
-                functional.print_specific_func(new_nfig, value_to_compare, print_changes, temp_colors(ifunc));
+                functional.print_specific_func(new_nfig, value_to_compare, abs_value, print_changes, temp_colors(ifunc));
             end
 
             if (axis_scale == "log")
@@ -147,6 +146,25 @@ classdef Compare_Functs
             end
             legend;
             
+            hold off;
+        end
+        %---
+        function new_nfig = compare_functionals_initial_values(self, nfig)
+            new_nfig = nfig+1;
+            x_label_loc = [];
+            x_label = [];
+            figure(new_nfig);
+            hold on;
+            for ifunc = 1:self.n_func
+                temp_func = self.functionals(ifunc);
+                rand_col = self.get_random_color();
+                plot(ifunc, temp_func.f0Init, "o", "Color", rand_col);
+                x_labels_loc = [x_label_loc, ifunc];
+                x_labels = [x_label, temp_func.custom_name];
+            end
+            xticks(x_labels_loc)
+            xticklabels(x_labels)
+
             hold off;
         end
         %-------------------------------------------
@@ -173,6 +191,27 @@ classdef Compare_Functs
             b = dec2hex(randi([0,255]), 2);
             color = color + r + g + b;
         end
+        %---
+
+        function func_case = get_func_case(what_case)
+            switch what_case
+                case "tot"
+                    func_case = 1;
+                case "out"
+                    func_case = 2;
+                case "alpha"
+                    func_case = 3;
+                case "grad"
+                    func_case = 4;
+                case "vort"
+                    func_case = 5;
+                case "p"
+                    func_case = 6;
+                otherwise
+                    func_case = 1;
+            end
+        end
+        %---
     end
     % END STATIC METHODS
     %---------------------------------------------------------------------- 

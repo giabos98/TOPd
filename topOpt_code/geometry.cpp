@@ -18,6 +18,63 @@ void PHYSICS::initialize()
     build_centroids_v();
 }
 
+void PHYSICS::set_alpha_min(VECTOR &alpha_min_vector) 
+{
+    prec a_min = alpha_min_vector[0];
+    if (dim == 2) // for the 3D case it must be set equal to 0, tha tis the default value
+    {
+        half_domain_thickness = alpha_min_vector[1];
+    }
+    prec h = half_domain_thickness;
+
+    if (h < 0.0)
+    {
+        throw_line("ERROR: invalid half out of plane domain thickness\n");
+    }
+    else
+    {
+        if (h == 0)
+        {
+            alpha_min = a_min;
+        }
+        else
+        {
+            prec a_theory = 5*mu / (2*h*h); // folloving Borrval & Perersson (2003), Gersborg-Hansen et al. (2005)
+            if (a_min >= a_theory)
+            {
+                alpha_min = a_min;
+            }
+            else
+            {
+                alpha_min = a_theory; 
+            }
+        }  
+    }
+}
+
+void PHYSICS::update_real_alpha_max()
+{
+    // scale alpha max for the given number of iteration. USEFUL TO ALLOW GENERAL GEOMETRY FORMATION
+    if (curr_opt_it < alpha_it)
+    {
+        real_alpha_max = ((1.0 * curr_opt_it) / (1.0 * alpha_it) * (alpha_max - alpha_min)) + alpha_min;
+    }
+    else
+    {
+        real_alpha_max = alpha_max;
+    }
+}
+
+void PHYSICS::update_alpha(VECTOR &gamma, VECTOR &alpha)
+{
+    update_real_alpha_max();
+    prec factor = q*(real_alpha_max - alpha_min);
+    for (int inod = 0; inod < nNodes_v; inod++)
+    {
+        alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
+    }
+}
+
 void PHYSICS::parse_bounds()
 {
     std::string folderPath = name;

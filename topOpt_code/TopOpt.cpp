@@ -10,13 +10,15 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
 
     PHYSICS* tempP = &physics;
-    NS.initialize(tempP, inputFile, alpha, false);
+    NS.initialize(tempP, inputFile, physics.alpha, false);
+    alpha.length = physics.alpha.length;
+    alpha.P = physics.alpha.P;
 
     printf("\n-------\n--| INITIALIZING PHYSICS |-- \n-------\n");
     physics.initialize();
 
     printf("\n-------\n--| INITIALIZING ADJOINT PROBLEM |-- \n-------\n");
-    ADJ.initialize(NS, alpha);
+    ADJ.initialize(NS, physics.alpha);
 
 
     // initialize TopOpt parameters
@@ -78,12 +80,13 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 3);
     VECTOR alpha_min_vector(2);
     STREAM::getRowVector(ParameterFile, line, iss, alpha_min_vector);
-    set_alpha_min(alpha_min_vector);
-
+    physics.set_alpha_min(alpha_min_vector);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, alpha_max);
+    STREAM::getValue(ParameterFile, line, iss, physics.alpha_max);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, q);
+    STREAM::getValue(ParameterFile, line, iss, physics.q);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, physics.alpha_it);
 
     // CONSTRAINTS
     CONSTRAINTS constraints;
@@ -217,7 +220,7 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getValue(ParameterFile, line, iss, smooth_gamma_between_element);
     if (customFunc == 1)
     {
-        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, q, alpha_min, alpha_max, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter, constraints, smooth_gamma_between_element);
+        Optimizer.initialize(&physics, nodeInDom, elemInDom, optNodeFromGlobNode, V0, Vr, customFunc, time_integration, onlyGrad, beta, opt_acceleration_case, beta_MAX, beta_min, beta_interpolation, change_max, change_min, crit_change, crit_beta, enableDiffusionFilter, constraints, smooth_gamma_between_element);
     }
     else
     {
@@ -288,40 +291,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     fs::copy_file("INPUT_FILES/TopOptInput.txt", "results/" + folderName + "/TopOptInput.txt", fs::copy_options::overwrite_existing);
     
     NS.VTKWriter.binWrite = binPrint;
-}
-
-void TOP_OPT::set_alpha_min(VECTOR &alpha_min_vector) 
-{
-    prec a_min = alpha_min_vector[0];
-    if (physics.dim == 2) // for the 3D case it must be set equal to 0, tha tis the default value
-    {
-        physics.half_domain_thickness = alpha_min_vector[1];
-    }
-    prec h = physics.half_domain_thickness;
-
-    if (h < 0.0)
-    {
-        throw_line("ERROR: invalid half out of plane domain thickness\n");
-    }
-    else
-    {
-        if (h == 0)
-        {
-            alpha_min = a_min;
-        }
-        else
-        {
-            prec a_theory = 5*physics.mu / (2*h*h); // folloving Borrval & Perersson (2003), Gersborg-Hansen et al. (2005)
-            if (a_min >= a_theory)
-            {
-                alpha_min = a_min;
-            }
-            else
-            {
-                alpha_min = a_theory; 
-            }
-        }  
-    }
 }
 
 //-----------------------
@@ -721,7 +690,7 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
         VECTOR alpha_print(gamma_print.length);
         for (int inod = 0; inod < alpha_print.length; inod++)
         {
-            alpha_print[inod] = alpha_min + (alpha_max - alpha_min) * q * gamma_print[inod] / ( q + 1 - gamma_print[inod]);
+            alpha_print[inod] = physics.alpha_min + (physics.real_alpha_max - physics.alpha_min) * physics.q * gamma_print[inod] / ( physics.q + 1 - gamma_print[inod]);
         }
         
         MATRIX U_print(nNodes_v, dim);
@@ -748,16 +717,16 @@ void TOP_OPT::print_results_in_vtk(int &nNodes_v, int &dim, int &nNodes, int &lo
             case 0: // pressure nodes
             {
                 //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-                VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
-                // VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                // VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                VTKWriter.write(physics.coord, physics.elem, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Inv. Perm.", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
                 // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
                 break;
             }
             case 1: // velocity nodes
             {
                 //  VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||");
-                VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
-                // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
+                VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma_print, 1, "Gamma", alpha_print, 1, "Inv. Perm.", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)");
                 // VTKWriter.write(physics.coord_v, physics.elem_v, loop, gamma, 1, "Gamma", alpha, 1, "Alpha", U_print, dim, "Velocity", P_print, 1, "Pressure", U_magnitude, 1, "||Velocity||", grad_gamma_norm, 1, "Grad(gamma)", U_x_dir_gradient, 1, "d(u_x)/dx)");
                 break;
             }
@@ -1140,16 +1109,12 @@ void TOP_OPT::solve()
     while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
     {
         loop++;
+        physics.curr_opt_it = loop;
+
         //-------------------------------
         // UPDATE ALPHA GIVEN GAMMA
         //-------------------------------
-        prec factor = q*(alpha_max - alpha_min);
-        for (int inod = 0; inod < nNodes_v; inod++)
-        {
-            alpha[inod] = alpha_min + factor * (1 - gamma[inod]) / ( q + gamma[inod]);
-        }
-        // alpha.printRowMatlab("alpha");
-        // pause();
+        physics.update_alpha(gamma, alpha);
 
         // SOLVE NS
         NS.resetPrint(loop);

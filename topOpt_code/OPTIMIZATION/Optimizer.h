@@ -9,9 +9,6 @@
 class OPTIMIZER
 {
 private:
-    prec q;
-    prec alpha_min;
-    prec alpha_max;
     prec Vr; 
     prec V0;
     int funcType;
@@ -111,41 +108,7 @@ public:
     //------------------------------------------------
     OPTIMIZER(){};
     //------------
-    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int funcId, int customFunctional, int onlyGradient)
-    {
-        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  | DEPRECATED METHOD |  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-        physics = physIn;
-        nodeInDom = nodeInDom_In;
-        elemInDom = elemInDom_In;
-        optNodeFromGlobNode = optNodeFromGlobNode_In;
-        n_nodes_in_dom = nodeInDom.length;
-        n_elems_in_dom = elemInDom.length;
-
-        // int nNodes_v = (*physics).nNodes_v;
-        dim = (*physics).dim;
-        nElem_v = (*physics).nElem_v;
-        mu = (*physics).mu;
-        //----------------
-        q = q_in;
-        alpha_min = a_min;
-        alpha_max = a_max;
-        V0   = V0_in;
-        Vr   = Vr_in;
-        funcType = funcId;
-        onlyGrad = onlyGradient;
-        customFunc = customFunctional;
-        //----------------
-        COEF.resize(dim);
-        COEF[0].define(nElem_v, dim+1, (*physics).Bloc_v.PP, (*physics).Bloc_v.P);
-        COEF[1].define(nElem_v, dim+1, (*physics).Cloc_v.PP, (*physics).Cloc_v.P);
-        if (dim == 3) COEF[2].define(nElem_v, dim+1, (*physics).Dloc_v.PP, (*physics).Dloc_v.P);
-
-        func_val.setZeros(3);
-        no_weighted_func_val.setZeros(3);
-        temp_func_val.setZeros(3);
-    }
-    //---
-    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec q_in, prec a_min, prec a_max, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case, CONSTRAINTS &constraints_input, int smooth_gamma_between_element)
+    void initialize(PHYSICS* physIn, VECTOR_INT &nodeInDom_In, VECTOR_INT &elemInDom_In, VECTOR_INT &optNodeFromGlobNode_In, prec V0_in, prec Vr_in, int customFunctional, int time_integration, int onlyGradient, VECTOR beta, int opt_acceleration_case, prec betaMax, prec betaMin, int betaInterpolation, prec changeMax, prec changeMin, prec critChange, prec critBeta, int diff_filter_case, CONSTRAINTS &constraints_input, int smooth_gamma_between_element)
     {
         physics = physIn;
         nodeInDom = nodeInDom_In;
@@ -161,9 +124,6 @@ public:
         rho = (*physics).rho;
         mu = (*physics).mu;
         //----------------
-        q = q_in;
-        alpha_min = a_min;
-        alpha_max = a_max;
         V0   = V0_in;
         Vr   = Vr_in;
         time_integration_procedure = time_integration;
@@ -176,7 +136,8 @@ public:
         temp_no_weighted_func_val.setZeros(fWeights.length);
         temp_d_obj_functional.setZeros(nNodes_v);
         d_obj_functional.setZeros(nNodes_v);
-        alpha.setZeros(nNodes_v);
+        alpha.length = physics->alpha.length;
+        alpha.P = physics->alpha.P;
         dAlpha.setZeros(nNodes_v);
         smooth_gamma_flag = smooth_gamma_between_element;
         gamma_acc_case = opt_acceleration_case;
@@ -198,13 +159,13 @@ public:
 
         constraints = constraints_input;
 
-        // initialize alpha and dAplha values in all the domain to their free domain values. 
-        // Following this procedure only the values in the Omega_opt nodes will be updated at every optimization loop.
-        for (int inod = 0; inod < nNodes_v; inod++)
-        {
-            alpha[inod]  = alpha_min;
-            dAlpha[inod] = - (q / (q+1)) * (alpha_max - alpha_min);
-        }
+        // // initialize alpha and dAplha values in all the domain to their free domain values. 
+        // // Following this procedure only the values in the Omega_opt nodes will be updated at every optimization loop.
+        // for (int inod = 0; inod < nNodes_v; inod++)
+        // {
+        //     alpha[inod]  = alpha_min;
+        //     dAlpha[inod] = - (q / (q+1)) * (alpha_max - alpha_min);
+        // }
 
         customFunc = customFunctional;
         onlyGrad = onlyGradient;
@@ -228,8 +189,6 @@ public:
     //------------------------------------------------
     // EVALUATE FUNCTIONAL AND CONSTRAINTS 
     //------------------------------------------------
-    void getFunc(VECTOR x, prec &f0, MATRIX U);
-    void getFuncAndDerivative(VECTOR x, prec &f0, VECTOR& df0, MATRIX U, MATRIX Ua);
     void update_val_and_derivative(VECTOR &x, prec &f0, VECTOR &df0, VECTOR &g, MATRIX& dg, prec &Vol);
     void update_val(VECTOR &x, prec &f0, VECTOR &g, prec &Vol);
     void update_volume_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr, MATRIX_INT &elem_v, VECTOR &Volume_v);

@@ -28,6 +28,16 @@ class PHYSICS
     prec mu;
     prec ni;
 
+    prec alpha_min;
+    prec alpha_max;
+    prec real_alpha_max;
+    prec alpha_it;
+    prec q;
+    VECTOR alpha;
+     
+    //--- SOLUTION INFO ---
+    prec curr_opt_it = 0;
+
     //---  SOLVER FLAGS ---
     bool isStationary = true;
     bool flagBC; //0 penalty, 1 lifting 
@@ -107,6 +117,10 @@ class PHYSICS
 
     void initialize();
     void parse_bounds();
+
+    void set_alpha_min(VECTOR &alpha_min_vector);
+    void update_real_alpha_max();
+    void update_alpha(VECTOR &gamma, VECTOR &alpha);
 
     void print();
 

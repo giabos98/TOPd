@@ -27,9 +27,6 @@ public:
     int maxIt;
     int change_toll;
 
-    prec alpha_min;
-    prec alpha_max;
-    prec q;
     prec V0;
     int customFunc;
     int nFunctionals = 4;
@@ -101,7 +98,6 @@ public:
     // PROBLEM INIZIALIZATION
     //-----------------------
     void importParameters(std::string inputFile);
-    void set_alpha_min(VECTOR &alpha_min_vector);
     //-------
     // SOLVER
     //-------

@@ -108,34 +108,24 @@ classdef Functional
             hold off;
         end
         %-------------------------------------------
-        function print_specific_func(self, nfig, what_to_print, print_changes, color)
+        function print_specific_func(self, nfig, what_to_print, abs_value, print_changes, color)
             it = 1:self.n_it;
             figure(nfig);
             hold on;
-            switch what_to_print
-                case "tot"
-                    func_case = 1;
-                case "out"
-                    func_case = 2;
-                case "alpha"
-                    func_case = 3;
-                case "grad"
-                    func_case = 4;
-                case "vort"
-                    func_case = 5;
-                case "p"
-                    func_case = 6;
-                otherwise
-                    func_case = 1;
+            func_case = Compare_Functs.get_func_case(what_to_print);
+            val_to_print = self.func_values(:,func_case);
+            if (abs_value == 1)
+                val_to_print = val_to_print * self.f0Init;
             end
-            plot(it, self.func_values(:,func_case), "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
+
+            plot(it, val_to_print, "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
 
             if (print_changes == 1)
                 for i = 1 : floor(length(it)/20) : (length(it))
                     if self.valid(i) == 1
-                        plot(it(i), self.func_values(i,func_case), 'bo', "LineWidth", 1.5);
+                        plot(it(i), val_to_print(i), 'bo', "LineWidth", 1.5);
                     else
-                        plot(it(i), self.func_values(i,func_case), 'ro', "LineWidth", 1.5);
+                        plot(it(i), val_to_print(i), 'ro', "LineWidth", 1.5);
                     end
                 end
             end
