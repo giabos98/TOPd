@@ -1,5 +1,5 @@
 // PROBLEM NAME
-double_pipe_reg_0.1
+hole_problem_reg_0.1
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -55,7 +55,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # INNER
 4
 // geomID
-8 10 14 18
+5 10 12 19
 
 // SYMMETRY WALLS
 //--------
@@ -78,17 +78,17 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # DIRICHLET
 2
 //geomID
-0 3
+0 23
 //funcID
-0.1*1.5*4/1*[y-1]*[2-y] 0
-0.1*1.5*4/1*[y-4]*[5-y] 0
+100*1.5*4/1*[y+0.5]*[0.5-y] 0
+-100*1.5*4/1*[y+0.5]*[0.5-y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
 2
 // geomID
-22 23
+9 13
 //functs
 0
 0
