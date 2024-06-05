@@ -1312,7 +1312,23 @@ void ADJOINT_NS::updateRHS(VECTOR &nsSol)
     
     rhs /= (*physics).func_normalization_factor;
 
-    
+    // functional constraints contribution
+    for (int icons = 0; icons < constraints->n_constr; icons++)
+    {    
+        int type = constraints->list[icons].type;
+        switch (type)
+        {
+            case 4:
+            {
+                update_WSS_constraint(g, icons, constraints.list[icons]);
+                break;
+            }
+            default:
+            {
+                break;
+            }  
+        }
+    }
 
     // time iteration contribution
     for (int icomp = 0; icomp < dim; icomp++)

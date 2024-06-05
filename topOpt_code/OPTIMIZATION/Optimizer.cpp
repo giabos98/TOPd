@@ -553,8 +553,8 @@ void OPTIMIZER::update_WSS_constraint(VECTOR &g, int iconstr, CONSTRAINT &constr
     }
 
     constr.actual_WSS = WSS_integral;
-    constr.value_WSS = (constr.critical_WSS - constr.actual_WSS) * (constr.sign * 1.0);
-    g[iconstr] = 0; //constr.value_WSS;
+    constr.value_WSS = (1 - constr.actual_WSS / constr.critical_WSS) * (constr.sign * 1.0);
+    g[iconstr] = constr.value_WSS;
 }
 
 void OPTIMIZER::update_WSS_constraint_derivative(MATRIX &dg, int iconstr, CONSTRAINT &constr)

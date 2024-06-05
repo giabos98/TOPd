@@ -29,6 +29,9 @@ TOP_OPT::TOP_OPT(std::string InputFile)
         Optimizer.diffusionFilter.initialize(enableDiffusionFilter, tempP, nNodeInDom, nodeInDom, optNodeFromGlobNode ,optBox, diffusionRadiusPercentage, Optimizer.diffusion_filter_case);
         //diffusionFilter.printNeighbourhood();
     }
+
+    ADJ.constraints = &(Optimizer.constraints);
+
     prec endTime = omp_get_wtime();
     import_time = endTime - startTime;
 }

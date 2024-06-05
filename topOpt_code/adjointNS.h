@@ -2,6 +2,7 @@
 
 #include "CODE_HEADERS/codeHeader.h"
 #include "nsProblem.h"
+#include "OPTIMIZATION/constraints.h"
 
 class ADJOINT_NS : public PROBLEM_NS
 {
@@ -30,6 +31,9 @@ public:
     MATRIX dirNormals;
 
     CSRMAT dAdGu;
+
+    // optimization constraints
+    CONSTRAINTS* constraints;
 
     //time iteration count
     int curr_iter = 0;

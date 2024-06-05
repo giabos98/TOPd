@@ -56,6 +56,8 @@ void CONSTRAINT::initialize_discretizing_constraint(int constr_type, prec discre
 
 void CONSTRAINT::initialize_WSS_constraint(int constr_type, prec crit_WSS, int sign_value)
 {
+    // sign = -1: lower than crit_WSS
+    // sign = 1: greater than crit_WSS
     initialize(constr_type);
     critical_WSS = crit_WSS;
     if ((sign_value != -1) && (sign_value != 1))

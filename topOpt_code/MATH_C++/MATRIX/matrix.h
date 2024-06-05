@@ -418,6 +418,21 @@ public:
         }
     }
 
+    static void tensor_product(VECTOR &v1, VECTOR &v2, MATRIX &mat)
+    {
+        mat.complete_reset();
+        int n_rows = v1.length;
+        int n_cols = v2.length;
+        mat.initialize(n_rows, n_cols);
+        for (int irow = 0; irow < n_rows; irow++)
+        {
+            for (int jcol = 0; jcol < n_cols; jcol++)
+            {
+                mat[irow][jcol] = v1[irow]*v2[jcol];
+            }
+        }
+    }
+
     //-------------------------------------
     // MULTIPLY MATRICES
     //-------------------------------------
