@@ -1,5 +1,5 @@
 // PROBLEM NAME
-pipe_bend_reg_0.1
+dp_inv_1_reg_d10
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -53,9 +53,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-2
+4
 // geomID
-5 10
+8 10 14 18
 
 // SYMMETRY WALLS
 //--------
@@ -76,19 +76,21 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-1
+2
 //geomID
-0
+0 3
 //funcID
-1000*1.5*4/1*[y-1]*[2-y] 0
+1*1.5*4/[1*1]*[y-1*1]*[2*1-y] 0
+1*1.5*4/[1*1]*[y-4*1]*[5*1-y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
-1
+2
 // geomID
-9
+22 23
 //functs
+0
 0
 
 // DIRICHLET - TIME DEPENDENT

@@ -1106,7 +1106,7 @@ void TOP_OPT::solve()
     temp_fluid_energy.setZeros(2);
 
     //UNTILL GAMMA CONVERGENCE DO:
-    while (((change > change_toll || !(feasible)) && loop < maxIt) || loop < minIt)
+    while ((((change > change_toll) || (!(feasible))) || (loop < minIt)) && (loop < maxIt)) 
     {
         loop++;
         physics.curr_opt_it = loop;
@@ -1163,7 +1163,7 @@ void TOP_OPT::solve()
         gamma = gammaNew;
         gamma_print = (gamma-1.0)*(-1.0);
         prec vol_fract = Vol / V0;
-        if (vol_fract <= Vr)
+        if (vol_fract <= 1.001*Vr)
         {
             feasible = true;
             valid.append(1);
@@ -1190,7 +1190,16 @@ void TOP_OPT::solve()
     
         print_optimization_results(nNodes_v, dim, nNodes, loop, currLoopPrint, obj, change, gamma_print, feasible, funcValues, no_weights_funcValues, changes, valid, gamma_gradient_norm);
         // pause();
+        // std::cout << "total: " << ((((change > change_toll) || (!(feasible))) && (loop < maxIt)) || (loop < minIt)) << "\n";
+        // std::cout << "ch: " << change << "\t ch_tol: " << change_toll << "\n"; 
+        // std::cout << "change: " << (change > change_toll) << "\n";
+        // std::cout << "vol: " << vol_fract << "\t vr: " << 1.001*Vr << "\n"; 
+        // std::cout << "feas: " << (vol_fract <= 1.001*Vr) << "\n";
+        // std::cout << "feasible: " << (!(feasible)) << "\n";
+        // std::cout << "max: " << (loop < maxIt) << "\n";
+        // std::cout << "min: " << (loop < minIt) << "\n";
     }
+
 
     // -----------------------------------
     // EXPORT OPTIMIZAED GEOMETRY NODES

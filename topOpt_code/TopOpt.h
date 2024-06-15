@@ -25,7 +25,7 @@ public:
     int deltaPrint;
     int minIt;
     int maxIt;
-    int change_toll;
+    prec change_toll;
 
     prec V0;
     int customFunc;
