@@ -23,7 +23,7 @@ vel[0.36]_P[13332]_NS_Vr[0.2]_mma_a[1e6_100]_b[1_1_2_0]_t[stat]_p[2]
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // iterations to have real_amax = amax (0:immediately a_max) 
-100
+200
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -46,7 +46,7 @@ vel[0.36]_P[13332]_NS_Vr[0.2]_mma_a[1e6_100]_b[1_1_2_0]_t[stat]_p[2]
 
 // ITERATIONS
 // min iter
-0
+200
 // maxIter
 1000
 
@@ -99,6 +99,14 @@ vel[0.36]_P[13332]_NS_Vr[0.2]_mma_a[1e6_100]_b[1_1_2_0]_t[stat]_p[2]
 1
 // write initial condition in vtk (0: don't write, 1:write)
 1
+
+//--------------------------------- MMG OPTIMIZATION ---------------------------------------------------------------------
+// level set
+0.5
+// hmin
+0.000001
+// hmax
+0.0001
 
 //-------------------------------- OPENMP PARAMETERS --------------------------------
 // # threads (0: automatic criteria, -1: max for current machine)

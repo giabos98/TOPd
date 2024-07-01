@@ -22,6 +22,9 @@ public:
     std::string inputFile;
     TIME_PROFILER time_profiler;
     MESH_SCRAPER mesh_scraper;
+    prec mmg_level_set = 0.5;
+    prec mmg_hmin;
+    prec mmg_hmax;
 
     int funcId = 1;
     bool binPrint;
@@ -140,7 +143,7 @@ public:
     
     void print_mesh_for_postprocessing(VECTOR &gamma);
 
-    void export_optimized_domain_mesh_with_mmg(prec level_set);
+    void export_optimized_domain_mesh_with_mmg();
 
     void evaluate_total_energy();
 

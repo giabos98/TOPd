@@ -246,6 +246,16 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, write_inital_condition);
 
+    //------------------------------
+    // READ MMG INFO
+    //------------------------------
+    STREAM::getLines(ParameterFile, line, 3);
+    STREAM::getValue(ParameterFile, line, iss, mmg_level_set);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, mmg_hmin);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, mmg_hmax);
+
 
     //------------------------------
     // READ OPENMP INFO
@@ -799,16 +809,16 @@ void TOP_OPT::print_mesh_for_postprocessing(VECTOR &gamma)
     solution_stream.close();
 }
 
-void TOP_OPT::export_optimized_domain_mesh_with_mmg(prec level_set)
+void TOP_OPT::export_optimized_domain_mesh_with_mmg()
 {
-    if ((level_set <= 0) || (level_set >= 1))
+    if ((mmg_level_set <= 0) || (mmg_level_set >= 1))
     {
         throw_line("ERROR: invalid level set value to export the optimized mesh\n");
     }
     if (physics.dim == 2)
     {
         std::string path = "results/" + NS.name+ "/" + name + "/PostProcessing";
-        std::string mmg_command = "./UTILITIES/mesh_scraper/mmg/mmg2d_O3.exe " + path + "/geometry.mesh -sol " + path + "/solution.sol -ls 0.5";
+        std::string mmg_command = "./UTILITIES/mesh_scraper/mmg/mmg2d_O3.exe " + path + "/geometry.mesh -sol " + path + "/solution.sol -ls " + std::to_string(mmg_level_set) + " -hmin " + std::to_string(mmg_hmin) + " -hmax " + std::to_string(mmg_hmax);
         int sys = system(mmg_command.c_str());
         if (sys == -1)
         {
@@ -1248,13 +1258,12 @@ void TOP_OPT::solve()
     exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
     VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
     // VTKWriter.closeTFile();
-    export_optimized_domain_mesh_with_mmg(0.5);
+
+    // export the mesh following the provided level set of the optimal solution
+    export_optimized_domain_mesh_with_mmg();
 
     prec endTime = omp_get_wtime();
-
-    solution_time = endTime - startTime;
-
-    
+    solution_time = endTime - startTime;    
 }
 //-------------------------
 
