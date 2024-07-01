@@ -7,6 +7,7 @@ TOP_OPT::TOP_OPT(std::string InputFile)
     prec startTime = omp_get_wtime();
     inputFile = InputFile;
     time_profiler.initialize();
+    mesh_scraper.initialize();
     printf("\n-------\n--| INITIALIZING NS PROBLEM |--\n-------\n");
 
     PHYSICS* tempP = &physics;
@@ -574,6 +575,8 @@ void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, i
     print_results_in_vtk(nNodes_v, dim, nNodes, loop, currLoopPrint, gamma, grad_gamma_norm);
 
     print_for_matlab_interface(loop, obj, change, feasible, funcValues, no_weights_funcValues, changes, valid);
+
+    print_mesh_for_postprocessing(gamma);
 }
 
 void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
@@ -776,6 +779,42 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     physics.fluid_energy.print((path + "/fluid_energy.txt").c_str());
     changes.print((path + "/changes.txt").c_str());
     valid.print((path + "/valid.txt").c_str());
+}
+
+void TOP_OPT::print_mesh_for_postprocessing(VECTOR &gamma)
+{
+    std::string output_mesh_string = mesh_scraper.print_mesh_in_mesh(physics.coord_v, physics.elem_v, physics.elem_geo_entities_ids_v, physics.dim);
+    // Create and open a text file
+    std::string path = "results/" + NS.name+ "/" + name + "/PostProcessing";
+    fs::create_directories(path);
+    std::string geometry_file = path + "/geometry.mesh";
+    std::ofstream geometry_stream(geometry_file);
+    geometry_stream << output_mesh_string;
+    geometry_stream.close();
+
+    std::string output_sol_string = mesh_scraper.print_scalar_solution_in_sol(gamma, physics.dim);
+    std::string solution_file = path + "/solution.sol";
+    std::ofstream solution_stream(solution_file);
+    solution_stream << output_sol_string;
+    solution_stream.close();
+}
+
+void TOP_OPT::export_optimized_domain_mesh_with_mmg(prec level_set)
+{
+    if ((level_set <= 0) || (level_set >= 1))
+    {
+        throw_line("ERROR: invalid level set value to export the optimized mesh\n");
+    }
+    if (physics.dim == 2)
+    {
+        std::string path = "results/" + NS.name+ "/" + name + "/PostProcessing";
+        std::string mmg_command = "./UTILITIES/mesh_scraper/mmg/mmg2d_O3.exe " + path + "/geometry.mesh -sol " + path + "/solution.sol -ls 0.5";
+        int sys = system(mmg_command.c_str());
+        if (sys == -1)
+        {
+            throw_line("ERROR: something went wrong using MMG mesh conversion\n");
+        }
+    }
 }
 
 void TOP_OPT::evaluate_total_energy()
@@ -1209,10 +1248,13 @@ void TOP_OPT::solve()
     exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
     VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
     // VTKWriter.closeTFile();
+    export_optimized_domain_mesh_with_mmg(0.5);
 
     prec endTime = omp_get_wtime();
 
     solution_time = endTime - startTime;
+
+    
 }
 //-------------------------
 

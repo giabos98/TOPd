@@ -5,6 +5,8 @@
 #include "problemNSHeader.h"
 #include "geometry.h"
 #include "UTILITIES/Optimization/opt_utils.h"
+#include "UTILITIES/mesh_scraper/scrape_meshes.h"
+
 // #include <sys/time.h>
 
 class TOP_OPT
@@ -19,6 +21,7 @@ public:
     int optimization_scheme;
     std::string inputFile;
     TIME_PROFILER time_profiler;
+    MESH_SCRAPER mesh_scraper;
 
     int funcId = 1;
     bool binPrint;
@@ -135,6 +138,10 @@ public:
     
     void print_for_matlab_interface(int &loop, prec &obj, prec &change, bool &feasible, MATRIX &funcValues, MATRIX &no_weights_funcValues, VECTOR &changes, VECTOR_INT &valid);
     
+    void print_mesh_for_postprocessing(VECTOR &gamma);
+
+    void export_optimized_domain_mesh_with_mmg(prec level_set);
+
     void evaluate_total_energy();
 
 };

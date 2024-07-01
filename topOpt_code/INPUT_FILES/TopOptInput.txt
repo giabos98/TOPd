@@ -1,29 +1,29 @@
 // OPTIMIZATION PARAMETERS
-// TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-case_Re[1]_B[10000]
+// TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alphaMax_itToaMax]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
+vel[0.36]_P[13332]_NS_Vr[0.2]_mma_a[1e6_100]_b[1_1_2_0]_t[stat]_p[2]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-5
+2
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0 1.0 1.0
+1.0 1.0
 //n opt subdomains
 1
 // optimization subdomains
-2
+1
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1e4
+1e6
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // iterations to have real_amax = amax (0:immediately a_max) 
-1
+100
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -36,7 +36,7 @@ case_Re[1]_B[10000]
 // --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
 0
 // parameters
-0.333
+0.2
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -48,7 +48,7 @@ case_Re[1]_B[10000]
 // min iter
 0
 // maxIter
-300
+1000
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -57,13 +57,13 @@ case_Re[1]_B[10000]
 0
 // INT_OMEGA{ beta1*alpha*||u||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  beta4 * INT_GAMMA_in{p} +  // INT__OMEGA { beta5 * 1/2*rho * ||u||^2}
 // beta1    beta2    beta3    beta4 
-1 1 0 0
+1 1 2 0
 
 // GAMMA CHANGE TOLERANCE
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-0
+2
 // beta MAX
 2
 //beta min
@@ -71,7 +71,7 @@ case_Re[1]_B[10000]
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
 1
 // change max to turn on beta interpolation
-0.005
+0.001
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation
