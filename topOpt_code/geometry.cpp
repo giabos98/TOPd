@@ -52,17 +52,45 @@ void PHYSICS::set_alpha_min(VECTOR &alpha_min_vector)
     }
 }
 
+void PHYSICS::set_alpha_max_staircase(MATRIX &staircase_mat)
+{
+    n_alpha_max_steps += 1;
+    real_alpha_max_vec.initialize(n_alpha_max_steps);
+    alpha_it.initialize(n_alpha_max_steps);
+    alpha_it[0] = 0;
+    real_alpha_max_vec[0] = alpha_min;
+    for (int istep = 1; istep < n_alpha_max_steps; istep++)
+    {
+        prec prec_alpha_it = staircase_mat[istep-1][0];
+        alpha_it[istep] = int(prec_alpha_it);
+        real_alpha_max_vec[istep] = staircase_mat[istep-1][1];
+    }
+}
+
 void PHYSICS::update_real_alpha_max()
 {
     // scale alpha max for the given number of iteration. USEFUL TO ALLOW GENERAL GEOMETRY FORMATION
-    if (curr_opt_it < alpha_it)
-    {
-        real_alpha_max = ((1.0 * curr_opt_it) / (1.0 * alpha_it) * (alpha_max - alpha_min)) + alpha_min;
-    }
-    else
+    if (use_alpha_max_staircase == 0)
     {
         real_alpha_max = alpha_max;
     }
+    else
+    {
+        int current_staircase_step = alpha_it.get_first_greater_or_equal_value_index(curr_opt_it); // curr_opt_it starts from 1
+        if (current_staircase_step == n_alpha_max_steps)
+        {
+            real_alpha_max = alpha_max;
+        }
+        else
+        {
+            int temp_min_it = alpha_it[current_staircase_step-1];
+            prec temp_alpha_min = real_alpha_max_vec[current_staircase_step-1];
+            int temp_max_it = alpha_it[current_staircase_step];
+            prec temp_alpha_max = real_alpha_max_vec[current_staircase_step];
+            real_alpha_max = temp_alpha_min + (temp_alpha_max-temp_alpha_min)*((curr_opt_it-temp_min_it)/(temp_max_it-temp_min_it));
+        }
+    }
+
 }
 
 void PHYSICS::update_alpha(VECTOR &gamma, VECTOR &alpha)

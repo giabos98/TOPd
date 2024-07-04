@@ -108,7 +108,7 @@ classdef Functional
             hold off;
         end
         %-------------------------------------------
-        function print_specific_func(self, nfig, what_to_print, abs_value, print_changes, color)
+        function print_specific_func(self, nfig, what_to_print, abs_value, print_changes, color, max_it)
             it = 1:self.n_it;
             figure(nfig);
             hold on;
@@ -117,15 +117,28 @@ classdef Functional
             if (abs_value == 1)
                 val_to_print = val_to_print * self.f0Init;
             end
+            
+            if (max_it == 0)
+                real_max_it = self.n_it;
+            else
+                real_max_it = max_it;
+            end
 
-            plot(it, val_to_print, "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
+            print_it = it;
+            print_val = val_to_print;
+            for i_it=self.n_it+1:real_max_it
+                print_it(i_it) = i_it;
+                print_val(i_it) = val_to_print(self.n_it);
+            end
+
+            plot(print_it(1:real_max_it), print_val(1:real_max_it), "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
 
             if (print_changes == 1)
-                for i = 1 : floor(length(it)/20) : (length(it))
+                for i = 1 : floor(real_max_it/20) : (real_max_it)
                     if self.valid(i) == 1
-                        plot(it(i), val_to_print(i), 'bo', "LineWidth", 1.5);
+                        plot(print_it(i), print_val(i), 'bo', "LineWidth", 1.5);
                     else
-                        plot(it(i), val_to_print(i), 'ro', "LineWidth", 1.5);
+                        plot(print_it(i), print_val(i), 'ro', "LineWidth", 1.5);
                     end
                 end
             end

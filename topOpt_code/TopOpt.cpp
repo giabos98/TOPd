@@ -87,7 +87,13 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, physics.q);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, physics.alpha_it);
+    STREAM::getValue(ParameterFile, line, iss, physics.use_alpha_max_staircase);
+    STREAM::getLines(ParameterFile, line, 1);
+    STREAM::getValue(ParameterFile, line, iss, physics.n_alpha_max_steps);
+    STREAM::getLines(ParameterFile, line, 1);
+    MATRIX temp_alpha_staircase_mat(physics.n_alpha_max_steps, 2);
+    STREAM::getMatrix(ParameterFile, line, iss, temp_alpha_staircase_mat);
+    physics.set_alpha_max_staircase(temp_alpha_staircase_mat);
 
     // CONSTRAINTS
     CONSTRAINTS constraints;
@@ -216,7 +222,6 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getValue(ParameterFile, line, iss, diffusionRadiusPercentage);
     getline(ParameterFile, line);
     STREAM::getValue(ParameterFile, line, iss, diffusionFilterWeight);
-
     STREAM::getLines(ParameterFile, line, 2);
     STREAM::getValue(ParameterFile, line, iss, smooth_gamma_between_element);
     if (customFunc == 1)
@@ -252,11 +257,25 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 3);
     STREAM::getValue(ParameterFile, line, iss, mmg_level_set);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, mmg_hmin);
-    STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, mmg_hmax);
-
-
+    STREAM::getValue(ParameterFile, line, iss, custom_opt_mesh_sizes);
+    prec min_frac;
+    prec max_frac;
+    if (custom_opt_mesh_sizes == 0)
+    {
+        min_frac = 1.0e-4; // default value
+        max_frac = 1.0e-2; // default value
+        STREAM::getLines(ParameterFile, line, 4);
+    }
+    else
+    {
+        STREAM::getLines(ParameterFile, line, 1);
+        STREAM::getValue(ParameterFile, line, iss, min_frac);
+        STREAM::getLines(ParameterFile, line, 1);
+        STREAM::getValue(ParameterFile, line, iss, max_frac);
+    }
+    mmg_hmin = min_frac * max_opt_box_side;
+    mmg_hmax = max_frac * max_opt_box_side;
+    
     //------------------------------
     // READ OPENMP INFO
     //------------------------------
@@ -807,23 +826,47 @@ void TOP_OPT::print_mesh_for_postprocessing(VECTOR &gamma)
     std::ofstream solution_stream(solution_file);
     solution_stream << output_sol_string;
     solution_stream.close();
+
+    // export the mesh following the provided level set of the optimal solution
+    export_optimized_domain_mesh_with_mmg();
 }
 
 void TOP_OPT::export_optimized_domain_mesh_with_mmg()
 {
-    if ((mmg_level_set <= 0) || (mmg_level_set >= 1))
-    {
-        throw_line("ERROR: invalid level set value to export the optimized mesh\n");
-    }
     if (physics.dim == 2)
     {
+        // Generate Optimized Mesh in .msh using MMG2D IMPLICIT DOMAIN MESHING 
         std::string path = "results/" + NS.name+ "/" + name + "/PostProcessing";
-        std::string mmg_command = "./UTILITIES/mesh_scraper/mmg/mmg2d_O3.exe " + path + "/geometry.mesh -sol " + path + "/solution.sol -ls " + std::to_string(mmg_level_set) + " -hmin " + std::to_string(mmg_hmin) + " -hmax " + std::to_string(mmg_hmax);
-        int sys = system(mmg_command.c_str());
-        if (sys == -1)
+        std::string opt_file_name = path + "/opt_mesh.msh";
+        if ((mmg_level_set <= 0) || (mmg_level_set >= 1))
         {
-            throw_line("ERROR: something went wrong using MMG mesh conversion\n");
+            throw_line("ERROR: invalid level set value to export the optimized mesh\n");
         }
+        if (physics.dim == 2)
+        {
+            std::string mmg_command = "./UTILITIES/mesh_scraper/mmg/mmg2d_O3.exe " + path + "/geometry.mesh -sol " + path + "/solution.sol -ls " + std::to_string(mmg_level_set) + " -hmin " + std::to_string(mmg_hmin) + " -hmax " + std::to_string(mmg_hmax) + " -out " + opt_file_name;
+            int sys = system(mmg_command.c_str());
+            if (sys == -1)
+            {
+                throw_line("ERROR: something went wrong using MMG mesh conversion\n");
+            }
+        }
+
+        //extract new mesh from the .msh file
+        MATRIX opt_coord;
+        MATRIX_INT opt_elem;
+        VECTOR_INT opt_elem_id;
+        mesh_scraper.extract_mesh_from_msh(opt_file_name, physics.dim, opt_coord, opt_elem, opt_elem_id);
+
+        std::string output_text_mph = mesh_scraper.print_mesh_in_mphtxt(opt_coord, opt_elem, opt_elem_id, physics.dim);
+        std::string opt_file_name_mph = path + "/opt_mesh_comsol.mphtxt";
+        std::ofstream output_stream_mph(opt_file_name_mph);
+        output_stream_mph << output_text_mph;
+        output_stream_mph.close();
+    }
+    else
+    {
+        std::cout << "\n---| SKIPPED OPTIMIZED MESH GENERATION IN DIMENSION = 3\n";
     }
 }
 
@@ -1046,6 +1089,17 @@ void TOP_OPT::handle_optimization_domain()
             }
         }
     }
+
+    // define max-opt_box_side
+    max_opt_box_side = 0.0;
+    for (int idim = 0; idim < physics.dim; idim++)
+    {
+        prec temp_side = optBox[idim][1]-optBox[idim][0];
+        if (temp_side > max_opt_box_side)
+        {
+            max_opt_box_side = temp_side;
+        }
+    }
 }
 
 void TOP_OPT::handle_gamma_initial_condition(VECTOR &gamma_opt, VECTOR &gamma)
@@ -1258,9 +1312,6 @@ void TOP_OPT::solve()
     exportOptimizedDomain(gamma, gammaMinOptMesh, optElem);
     VTKWriter.writeMesh(physics.nNodes_v, optElem.nRow, physics.coord_v, optElem);
     // VTKWriter.closeTFile();
-
-    // export the mesh following the provided level set of the optimal solution
-    export_optimized_domain_mesh_with_mmg();
 
     prec endTime = omp_get_wtime();
     solution_time = endTime - startTime;    

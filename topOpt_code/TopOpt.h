@@ -23,6 +23,7 @@ public:
     TIME_PROFILER time_profiler;
     MESH_SCRAPER mesh_scraper;
     prec mmg_level_set = 0.5;
+    int custom_opt_mesh_sizes = 0;
     prec mmg_hmin;
     prec mmg_hmax;
 
@@ -67,6 +68,7 @@ public:
     //--- DIFFUSION FILTER FOR THE TOP. OPT. PARAMETER
     int flagDomain;
     MATRIX optBox;
+    prec max_opt_box_side;
     int enableDiffusionFilter;
     prec diffusionRadiusPercentage;
     prec diffusionFilterWeight;

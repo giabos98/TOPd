@@ -753,6 +753,30 @@ public:
         return min;
     }
 
+    //-------------------------------------------------------
+    // GET LAST ENTRY
+    //-------------------------------------------------------
+    int get_last()
+    {
+        return P[length-1];
+    }
+
+    //---------------------------------------
+    // GET INDEX RANGE OF A VALUE
+    //---------------------------------------
+    int get_first_greater_or_equal_value_index(int value)
+    {
+        // N.B.: this method suppose that the vector is sorted in increasing values
+        for (int i = 0; i < length; i++)
+        {
+            if (P[i] >= value)
+            {
+                return i;
+            }
+        }
+        return length;
+    }
+
     //----------------------------------------
     // APPEND VECTOR_INT
     //----------------------------------------

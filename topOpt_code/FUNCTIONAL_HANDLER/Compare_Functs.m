@@ -120,7 +120,7 @@ classdef Compare_Functs
         end
         %-------------------------------------------
         % COMPARE FUNCTIONALS
-        function new_nfig = compare_functionals(self, nfig, value_to_compare, abs_value, print_changes, axis_scale, custom_colors)
+        function new_nfig = compare_functionals(self, nfig, value_to_compare, abs_value, print_changes, axis_scale, custom_colors, max_it)
             % print in nfig+1
             % what_to_print = [print_func, print_changes, print_no_w_func]
             new_nfig = nfig+1;
@@ -138,7 +138,7 @@ classdef Compare_Functs
             title("BASE FUNCTIONAL COMPARISON");
             for ifunc=1:self.n_func
                 functional = self.functionals(ifunc);
-                functional.print_specific_func(new_nfig, value_to_compare, abs_value, print_changes, temp_colors(ifunc));
+                functional.print_specific_func(new_nfig, value_to_compare, abs_value, print_changes, temp_colors(ifunc), max_it);
             end
 
             if (axis_scale == "log")
