@@ -616,6 +616,7 @@ void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
     VECTOR rel_func_val = Optimizer.func_val / obj * 100;
 
     std::cout << "\n-| It. " << loop << " <OPTIMIZATION RESULTS>| \n";
+    std::cout << "--| ALPHA MAX: " << physics.real_alpha_max << "\n";
     std::cout << "--| VOLUME INFO| " << "\n";
     std::cout << "    |-----> Opt Box Vol: " << V0 << "\n"; 
     std::cout << "    |-----> Current Vol: " << Vol << "\n";

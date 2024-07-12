@@ -135,7 +135,7 @@ classdef Compare_Functs
             end
             
             hold on;
-            title("BASE FUNCTIONAL COMPARISON");
+            % title("BASE FUNCTIONAL COMPARISON");
             for ifunc=1:self.n_func
                 functional = self.functionals(ifunc);
                 functional.print_specific_func(new_nfig, value_to_compare, abs_value, print_changes, temp_colors(ifunc), max_it);
@@ -144,7 +144,7 @@ classdef Compare_Functs
             if (axis_scale == "log")
                 xscale("log");
             end
-            legend;
+            % legend;
             
             hold off;
         end

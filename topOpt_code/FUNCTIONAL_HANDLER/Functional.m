@@ -114,6 +114,7 @@ classdef Functional
             hold on;
             func_case = Compare_Functs.get_func_case(what_to_print);
             val_to_print = self.func_values(:,func_case);
+            [max_val, max_id] = max(val_to_print(4:end));
             if (abs_value == 1)
                 val_to_print = val_to_print * self.f0Init;
             end
@@ -131,14 +132,16 @@ classdef Functional
                 print_val(i_it) = val_to_print(self.n_it);
             end
 
-            plot(print_it(1:real_max_it), print_val(1:real_max_it), "-", "Color", color, "LineWidth", 2, 'DisplayName', self.custom_name);
+            plot(print_it(1:real_max_it), print_val(1:real_max_it), "-", "Color", color, "LineWidth", 6, 'DisplayName', self.custom_name);
 
             if (print_changes == 1)
-                for i = 1 : floor(real_max_it/20) : (real_max_it)
+                % for i = 1 : floor(real_max_it/20) : (real_max_it)
+                for i = 1 : (max_id+4)
+                % for i = 1 : (14)
                     if self.valid(i) == 1
-                        plot(print_it(i), print_val(i), 'bo', "LineWidth", 1.5);
+                        plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',[0.8 0.8 0.8]);
                     else
-                        plot(print_it(i), print_val(i), 'ro', "LineWidth", 1.5);
+                        plot(print_it(i), print_val(i), 'k^', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',[0.8 0.8 0.8]);
                     end
                 end
             end

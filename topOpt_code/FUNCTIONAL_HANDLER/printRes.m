@@ -2,98 +2,46 @@ clc;
 clear; 
 close all;
 
-problemName = "double_pipe_extremely_fine";
-test = "vel[1]_S_Vr[0.34]_goc_a1e5_b[1_1_0_0]_time[stat]_p2";
-name = problemName + "/" + test;
-% nameF = "optimization/" + name + "/func.txt";
-% nameC = "optimization/" + name + "/changes.txt";
-% nameV = "optimization/" + name + "/valid.txt";
-nameF = name + "/func.txt";
-name_no_w_F = name + "/no_weight_func.txt";
-nameC = name + "/changes.txt";
-nameV = name + "/valid.txt";
-nfig = 0;
+nfig = 1;
 
-print_func = 1;
-print_changes = 1;
-print_no_weight_func = 1;
+comparison_square = Compare_Functs();
+comparison_rect = Compare_Functs();
 
-if (print_func == 1)
-    functional = readMat(nameF);
-    f0Init = functional(1,1);
-    f0Init_out_box = functional(1,2);
-    f0Init_parts = functional(1,3:end);
-    functional = functional(2:end, :);
-    func = functional(1:end,1);
-    func_out_box = functional(1:end,2);
-    func_alpha = functional(1:end,3);
-    func_grad  = functional(1:end,4);
-    func_vort  = functional(1:end,5);
-    func_p     = functional(1:end,6);
-    
-    valid = discardVec(nameV);
-    
-    % fid = fopen("optimization/" + name + "/latex.txt", 'wt');
-    % fid = fopen(name + "/latex.txt", 'wt');
-    % 
-    % for i = 1:length(func)
-    %     fprintf(fid, "(%d, %f) \n", i, func(i));
-    % end
-    % fclose(fid);
-    
-    it = 1:length(func);
-    nfig = nfig + 1;
-    figure(nfig);
-    hold on;
-    plot(it, func, "-", "Color", "#000000", "LineWidth", 2);
-    plot(it, func_out_box,"-", "Color", "#A2142F", "LineWidth", 2);
-    plot(it, func_alpha,"-", "Color", "#D95319", "LineWidth", 2);
-    plot(it, func_grad,"-", "Color", "#0072BD", "LineWidth", 2);
-    plot(it, func_vort,"-", "Color", "#77AC30", "LineWidth", 2);
-    plot(it, func_p, "-", "Color", "#EDB120", "LineWidth", 2);
-    for i = 1 : floor(length(func) / 20) : (lengtchangesh(func))
-        if valid(i) == 1
-            plot(it(i), func(i), 'bo', "LineWidth", 1.5);
-        else
-            plot(it(i), func(i), 'ro', "LineWidth", 1.5);
-        end
-    end
-    legend("Jtot", "Jout", "Jalpha", "Jgrad", "Jvort", "Jp");
-    title("FUNCTIONAL");
-    % xscale("log");
-    hold off;
-end
- 
+problemName = "bifuraction_L1.5_d10";
+test1 = "case1_Re[1]_B[1e4]_smooth";
+test2 = "case1_Re[1]_B[1e4]_smooth_convex";
+test3 = "case1_Re[1]_B[1e4]_smooth_concave";
+% test4 = "rect_Re[1]_B[100]";
+% test5 = "rect_Re[1]_B[10000]";
+% test6 = "rect_Re[1]_B[10000]_smooth";
+% % test7 = "rho[1]_mu[1]_U[100]_a[100e4]_L[1]_mma";
+% % test8 = "rho[1]_mu[1]_U[100]_a[100e4]_L[1]_goc";
 
-if (print_changes == 1)    
-    changes =  discardVec(nameC);
-    nfig = nfig + 1;
-    figure(nfig);
-    
-    plot(it, changes, "o-");
-    
-    title("CHANGES");
-end
+functional1 = Functional(problemName, test1, 1, "linear");
+functional2 = Functional(problemName, test2, 1, "convex");
+functional3 = Functional(problemName, test3, 1, "concave");
+% functional4 = Functional(problemName, test4, 1, "beta 1e2   ");
+% functional5 = Functional(problemName, test5, 1, "beta 1e4  ");
+% functional6 = Functional(problemName, test6, 1, "beta 1e4 (smooth) ");
+% % functional7 = Functional(problemName, test7, 1, "100 MMA");
+% % functional8 = Functional(problemName, test8, 1, "100 GOC");
 
-if (print_no_weight_func == 1)    
-    no_w_functional = readMat(name_no_w_F);
-    no_w_f_alpha = no_w_functional(:,1);
-    no_w_f_grad = no_w_functional(:,2);
-    no_w_f_vort = no_w_functional(:,3);
-    no_w_f_p = no_w_functional(:,4);
+comparison_square = comparison_square.add_functional(functional1);
+comparison_square = comparison_square.add_functional(functional2);
+comparison_square = comparison_square.add_functional(functional3);
+% comparison_rect = comparison_rect.add_functional(functional4);
+% comparison_rect = comparison_rect.add_functional(functional5);
+% comparison_rect = comparison_rect.add_functional(functional6);
+% comparison = comparison.add_functional(functional7);
+% comparison = comparison.add_functional(functional8);
 
-    nfig = nfig + 1;
-    figure(nfig);
-    hold on
-    plot(it, no_w_f_alpha,"-", "Color", "#D95319", "LineWidth", 2);
-    plot(it, no_w_f_grad,"-", "Color", "#0072BD", "LineWidth", 2);
-    plot(it, no_w_f_vort,"-", "Color", "#77AC30", "LineWidth", 2);
-    plot(it, no_w_f_p, "-", "Color", "#EDB120", "LineWidth", 2);
-    legend("Jalpha", "Jgrad", "Jvort", "Jp");
-    title("NO W FUNCTIONAL");
-    hold off;
-end
 
+colors = ["#00B050", "#C00000", "#00B0F0"];
+
+% comparison.compare_base_functionals(nfig, [-2,1], 0, "", "tot");
+nfig = comparison_square.compare_functionals(nfig, "tot", 0, 1, "", colors, 200);
+% comparison.compare_functionals_initial_values(nfig);
+% nfig = comparison.print(nfig, [1,0,0]);7
 
 
 
