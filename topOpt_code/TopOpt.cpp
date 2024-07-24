@@ -87,14 +87,32 @@ void TOP_OPT::importParameters(std::string inputFile)
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, physics.q);
     STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, physics.use_alpha_max_staircase);
+    STREAM::getValue(ParameterFile, line, iss, physics.use_smooth_alpha_max);
     STREAM::getLines(ParameterFile, line, 1);
     STREAM::getValue(ParameterFile, line, iss, physics.n_alpha_max_steps);
     STREAM::getLines(ParameterFile, line, 1);
-    MATRIX temp_alpha_staircase_mat(physics.n_alpha_max_steps, 2);
-    STREAM::getMatrix(ParameterFile, line, iss, temp_alpha_staircase_mat);
-    physics.set_alpha_max_staircase(temp_alpha_staircase_mat);
-
+    switch (physics.use_smooth_alpha_max)
+    {
+        case 1:
+        {
+            physics.smooth_alpha_mat.initialize(physics.n_alpha_max_steps, 2);
+            break;
+        }
+        case 2:
+        {
+            physics.smooth_alpha_mat.initialize(1, 3);
+            break;
+        }
+        default:
+        {
+            STREAM::getLines(ParameterFile, line, 1);
+            break;
+        }
+    }
+    STREAM::getMatrix(ParameterFile, line, iss, physics.smooth_alpha_mat); 
+    physics.set_alpha_max();
+    
+    
     // CONSTRAINTS
     CONSTRAINTS constraints;
     STREAM::getLines(ParameterFile, line, 3);
@@ -809,6 +827,7 @@ void TOP_OPT::print_for_matlab_interface(int &loop, prec &obj, prec &change, boo
     physics.fluid_energy.print((path + "/fluid_energy.txt").c_str());
     changes.print((path + "/changes.txt").c_str());
     valid.print((path + "/valid.txt").c_str());
+    physics.real_alpha_max_history.print((path + "/alpha_max.txt").c_str());
 }
 
 void TOP_OPT::print_mesh_for_postprocessing(VECTOR &gamma)

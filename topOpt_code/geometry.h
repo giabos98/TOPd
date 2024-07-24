@@ -30,8 +30,10 @@ class PHYSICS
 
     prec alpha_min;
     prec alpha_max;
-    int use_alpha_max_staircase = 0;
+    int use_smooth_alpha_max = 0;
+    MATRIX smooth_alpha_mat;
     int n_alpha_max_steps = 0;
+    VECTOR real_alpha_max_history;
     VECTOR real_alpha_max_vec;
     prec real_alpha_max;
     VECTOR_INT alpha_it;
@@ -122,7 +124,8 @@ class PHYSICS
     void parse_bounds();
 
     void set_alpha_min(VECTOR &alpha_min_vector);
-    void set_alpha_max_staircase(MATRIX &staircase_mat);
+    void set_alpha_max();
+    void set_alpha_max_staircase();
     void update_real_alpha_max();
     void update_alpha(VECTOR &gamma, VECTOR &alpha);
 

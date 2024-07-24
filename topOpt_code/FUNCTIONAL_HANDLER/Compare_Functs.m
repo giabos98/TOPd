@@ -168,6 +168,15 @@ classdef Compare_Functs
             hold off;
         end
         %-------------------------------------------
+
+        function new_nfig = compare_alpha_max(self, nfig)
+            new_nfig = nfig+1;
+            for ifunc=1:self.n_func
+                functional = self.functionals(ifunc);
+                functional.print_alpha_max(new_nfig);
+            end
+        end
+        %-------------------------------------------
     end
     % END PUBLIC METHODS
     %----------------------------------------------------------------------  

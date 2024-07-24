@@ -84,9 +84,12 @@ figure(nfig);
 hold on;
 it = [];
 beta = [];
-it = 10:0.1:100;
-beta(1:100) = 1e2 + (1e3-1e2)*(it(1:100)-10)/(20-10);
-beta(101:length(it)) = 1e3 + (1e4-1e3)*(it(101:end)-20)/(100-20);
+it = 1:0.1:100;
+beta_line(1:991) = 1e2 + (1e4-1e2)*(it(1:end)-1)/(it(end)-1);
+beta_convex(1:491) = 1e2 + (1e3-1e2)*(it(1:491)-1)/(50-1);
+beta_convex(492:991) = 1e3 + (1e4-1e3)*(it(492:end)-50)/(100-50);
+beta_concave(1:491) = 1e2 + (9.1e3-1e2)*(it(1:491)-1)/(50-1);
+beta_concave(492:991) = 9.1e3 + (1e4-9.1e3)*(it(492:end)-50)/(100-50);
 % plot(it, beta,"-k", "LineWidth", 5);
 z = zeros(size(it));
 green = hex2rgb(colors(1));
@@ -97,16 +100,16 @@ map = [];
 %     map = [map; green];
 % end
 
-delta_it = 101;
-for i=1:1:101
+delta_it = 491;
+for i=1:1:delta_it
     rel_it = (i-1)/delta_it;
     col = green*(1-rel_it) + yellow*rel_it;
     map = [map; col];
 end
 
-delta_it = length(it)-102;
-for i=102:1:length(it)
-    rel_it = (i-102)/delta_it;
+delta_it = length(it)-(delta_it+1);
+for i=delta_it+1:1:length(it)
+    rel_it = (i-(delta_it+1))/delta_it;
     col = yellow*(1-rel_it) + red*rel_it;
     map = [map; col];
 end
@@ -116,29 +119,34 @@ small_marker_size = 28;
 big_marker_size = 34;
 big_line_width = 24;
 small_line_width = 18;
-surf([it;it],[beta;beta],[z;z],[it;it],'facecol','no','edgecol','interp','linew', big_line_width);
-plot(1:0.1:9, ones(81,1)*1e2, "-", "Color", green, "LineWidth", small_line_width);
-plot(101:1:115, ones(15,1)*1e4, "-", "Color", red, "LineWidth", small_line_width);
-plot(116:1:130, ones(15,1)*1e4, ":", "Color", red, "LineWidth", small_line_width);
+surf([it;it],[beta_line;beta_line],[z;z],[it;it],'facecol','no','edgecol','interp','linew', big_line_width);
+surf([it;it],[beta_convex;beta_convex],[z;z],[it;it],'facecol','no','edgecol','interp','linew', big_line_width);
+surf([it;it],[beta_concave;beta_concave],[z;z],[it;it],'facecol','no','edgecol','interp','linew', big_line_width);
+% plot(1:0.1:9, ones(81,1)*1e2, "-", "Color", green, "LineWidth", small_line_width);
+plot(101:1:110, ones(10,1)*1e4, "-", "Color", red, "LineWidth", small_line_width);
+plot(111:1:130, ones(20,1)*1e4, ":", "Color", red, "LineWidth", small_line_width);
 plot(1, 1e2, 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor',green);
-plot(10, 1e2, 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor',green);
-plot(20, 1e3, 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor', yellow);
-k = find(it==40);
-plot(40, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
-k = find(it==60);
-plot(60, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
-k = find(it==80);
-plot(80, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
+% plot(10, 1e2, 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor',green);
+k_50 = find(it==50);
+plot(50, beta_line(k_50), 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor', yellow);
+plot(50, beta_convex(k_50), 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor', yellow);
+plot(50, beta_concave(k_50), 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor', yellow);
+% k = find(it==40);
+% plot(40, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
+% k = find(it==60);
+% plot(60, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
+% k = find(it==80);
+% plot(80, beta(k), 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', map(k,:));
 plot(100, 1e4, 'ko', "LineWidth", big_dot_line, "MarkerSize", big_marker_size, 'MarkerFaceColor', red);
-plot(115, 1e4, 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', red);
+% plot(115, 1e4, 'ko', "LineWidth", small_dot_line, "MarkerSize", small_marker_size, 'MarkerFaceColor', red);
 
 colormap(map);
 % colorbar;
 % xscale("log");
 % yscale("log");
-xticks([1 10 20 100]);
-yticks([1e2 1e3 1e4]);
-yticklabels(["10^2" "10^3" "10^4"]);
+xticks([1 10 50 100]);
+yticks([1e2 beta_convex(k_50) beta_line(k_50) beta_concave(k_50) 1e4]);
+yticklabels(["10^2" "10^3" "5x10^3" "9.1x10^3" "10^4"]);
 axis([-5 130 -600 1e4]);
 set(gca,'linewidth',small_dot_line);
 set(gca,'fontsize', 48, "FontName", "Times");

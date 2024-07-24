@@ -34,6 +34,7 @@ classdef Functional
         no_w_f_grad;
         no_w_f_vort;
         no_w_f_p;
+        alpha_max_history;
 
         % matrix functional values
         func_values;
@@ -139,9 +140,9 @@ classdef Functional
                 for i = 1 : (max_id+4)
                 % for i = 1 : (14)
                     if self.valid(i) == 1
-                        plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',[0.8 0.8 0.8]);
+                        plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor', [0.8 0.8 0.8]);
                     else
-                        plot(print_it(i), print_val(i), 'k^', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',[0.8 0.8 0.8]);
+                        plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',color);
                     end
                 end
             end
@@ -177,6 +178,18 @@ classdef Functional
             hold off;
         end
         %-------------------------------------------
+
+        %-------------------------------------------
+        % PLOT ALPHA MAX HISTORY
+        function print_alpha_max(self, nfig)
+            it = 1:self.n_it;
+            figure(nfig);
+            hold on;
+            plot(it, self.alpha_max_history, "o-"); 
+            title("ALPHA MAX");
+            hold off;
+        end
+        %-------------------------------------------
     end
     % END PUBLIC METHODS
     %----------------------------------------------------------------------  
@@ -192,6 +205,7 @@ classdef Functional
             name_no_w_F = self.name + "/no_weight_func.txt";
             nameC = self.name + "/changes.txt";
             nameV = self.name + "/valid.txt";
+            nameAlpha = self.name + "/alpha_max.txt";
 
             self.functional = readMat(nameF);
             self.f0Init = self.functional(1,1);
@@ -212,6 +226,7 @@ classdef Functional
             self.no_w_f_grad = self.no_w_functional(:,2);
             self.no_w_f_vort = self.no_w_functional(:,3);
             self.no_w_f_p = self.no_w_functional(:,4);
+            self.alpha_max_history = discardVec(nameAlpha);
 
             self.func_values(:,1) = self.func;
             self.func_values(:,2) = self.func_out_box;
