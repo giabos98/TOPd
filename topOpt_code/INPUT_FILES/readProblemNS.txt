@@ -1,5 +1,5 @@
 // PROBLEM NAME
-dp_inv_1_reg_d10
+dp_square_inv_1_reg_d10
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)

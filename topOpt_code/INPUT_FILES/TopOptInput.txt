@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
+pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -19,7 +19,7 @@ pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1.696e4
+1.131e4
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // use real a_max staircase (0: no staircase, 1: use staircase, 2: power law, 3: auto volume-based power law)
@@ -27,7 +27,7 @@ pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
 // 1: n_steps, 2: n_it
 100
 // 1: steps and values [iteration step, value], 2,3: [power, start_value, end_value]
-9 5.655e3 1.696e4
+6 3.77e3 1.131e4
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -52,7 +52,7 @@ pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
 // min iter
 10
 // maxIter
-100
+200
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -94,7 +94,7 @@ pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
 0
 
 // SOLUTION PERTURBATION (0: no, 1: yes)
-1
+0
 // maxIt increase (if no perturbation, skip next line)
 100
 
