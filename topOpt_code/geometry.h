@@ -115,6 +115,7 @@ class PHYSICS
     prec V0;
     prec Vol;
     prec vol_fract;
+    prec target_vol_fract;
 
     // Top. Opt. parameter filtering geometry
 

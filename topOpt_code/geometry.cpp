@@ -124,7 +124,33 @@ void PHYSICS::update_real_alpha_max()
             else
             {
                 real_alpha_max = alpha_max;
-            }    
+            }  
+            
+            // reset real_alpha_max in bounds if necessary
+            real_alpha_max = std::max(real_alpha_max, smooth_alpha_mat[0][1]);
+            real_alpha_max = std::min(real_alpha_max, smooth_alpha_mat[0][2]);
+
+            break;
+        }
+        case 3:
+        {
+            if (vol_fract > target_vol_fract)
+            {
+                prec power = smooth_alpha_mat[0][0];
+                prec start_value = smooth_alpha_mat[0][1];
+                prec end_value = smooth_alpha_mat[0][2];
+                prec volume_parameter = abs((1 - vol_fract) / (1 - target_vol_fract));
+                real_alpha_max = start_value + (end_value-start_value) * pow(volume_parameter, power);
+            }
+            else
+            {
+                real_alpha_max = alpha_max;
+            }  
+
+            // reset real_alpha_max in bounds if necessary
+            real_alpha_max = std::max(real_alpha_max, smooth_alpha_mat[0][1]);
+            real_alpha_max = std::min(real_alpha_max, smooth_alpha_mat[0][2]);
+
             break;
         }
         default:

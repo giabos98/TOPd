@@ -1,9 +1,9 @@
 // PROBLEM NAME
-dp_rect2x1_inv_1_reg_d10
+dp_inv_1_reg_d10
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-1
+0
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 0

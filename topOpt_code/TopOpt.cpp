@@ -103,6 +103,11 @@ void TOP_OPT::importParameters(std::string inputFile)
             physics.smooth_alpha_mat.initialize(1, 3);
             break;
         }
+        case 3:
+        {
+            physics.smooth_alpha_mat.initialize(1, 3);
+            break;
+        }
         default:
         {
             STREAM::getLines(ParameterFile, line, 1);
@@ -143,6 +148,8 @@ void TOP_OPT::importParameters(std::string inputFile)
     physics.Vol = V0;
     physics.vol_fract = 1.0;
     Vr = constraints.list[0].Vr;
+    physics.target_vol_fract = Vr;
+    
     // std::cout << "V0: " << V0 << "\n";
     
     // USELESS BASE FUNCTINONALS

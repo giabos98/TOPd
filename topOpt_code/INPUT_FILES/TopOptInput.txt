@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-aMax_6.75e3
+pow6_auto_a[3.78e3_1.134e4]_filter
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -19,15 +19,15 @@ aMax_6.75e3
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-6.75e3
+1.134e4
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
-// use real a_max staircase (0: no staircase, 1: use staircase, 2: power law)
-0
+// use real a_max staircase (0: no staircase, 1: use staircase, 2: power law, 3: auto volume-based power law)
+3
 // 1: n_steps, 2: n_it
 100
-// 1: steps and values [iteration step, value], 2: [power, start_value, end_value]
-**
+// 1: steps and values [iteration step, value], 2,3: [power, start_value, end_value]
+6 3.78e3 1.134e4
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -67,7 +67,7 @@ aMax_6.75e3
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-0
+2
 // beta MAX
 2
 //beta min
@@ -84,9 +84,9 @@ aMax_6.75e3
 1
 
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
-0
+1
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.01
+0.025
 // DIFFUSION FILTER WEIGHT
 0.5
 
@@ -106,7 +106,7 @@ aMax_6.75e3
 
 //--------------------------------- MMG OPTIMIZATION ---------------------------------------------------------------------
 // level set
-0.9
+0.5
 // custom mesh (0: default [hmin: max_box_side/10000; hmax: max_box_side/100], 1: custom [defined below])
 0
 // hmin (expressed as fraction of max_bound_box_side)
