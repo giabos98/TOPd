@@ -257,6 +257,27 @@ void TOP_OPT::importParameters(std::string inputFile)
     {
         throw_line("\nERROR: customFunc != 1\n");
     }
+
+    STREAM::getLines(ParameterFile, line, 2);
+    STREAM::getValue(ParameterFile, line, iss, perturb_solution);
+    
+    if (perturb_solution == 1)
+    {
+        STREAM::getLines(ParameterFile, line, 1);
+        STREAM::getValue(ParameterFile, line, iss, perturb_maxIt);
+    }
+    else
+    {
+        STREAM::getLines(ParameterFile, line, 2);
+    }
+
+    // if (perturb_maxIt > maxIt)
+    // {
+    //     perturb_maxIt = maxIt;
+    // }
+    complete_maxIt = maxIt + perturb_maxIt;
+
+
     
     //------------------------------
     // READ PRINT INFO
@@ -280,26 +301,35 @@ void TOP_OPT::importParameters(std::string inputFile)
     // READ MMG INFO
     //------------------------------
     STREAM::getLines(ParameterFile, line, 3);
-    STREAM::getValue(ParameterFile, line, iss, mmg_level_set);
-    STREAM::getLines(ParameterFile, line, 1);
-    STREAM::getValue(ParameterFile, line, iss, custom_opt_mesh_sizes);
-    prec min_frac;
-    prec max_frac;
-    if (custom_opt_mesh_sizes == 0)
+    STREAM::getValue(ParameterFile, line, iss, use_MMG_optimization);
+    if (use_MMG_optimization == 1)
     {
-        min_frac = 1.0e-4; // default value
-        max_frac = 1.0e-2; // default value
-        STREAM::getLines(ParameterFile, line, 4);
+        STREAM::getLines(ParameterFile, line, 1);
+        STREAM::getValue(ParameterFile, line, iss, mmg_level_set);
+        STREAM::getLines(ParameterFile, line, 1);
+        STREAM::getValue(ParameterFile, line, iss, custom_opt_mesh_sizes);
+        prec min_frac;
+        prec max_frac;
+        if (custom_opt_mesh_sizes == 0)
+        {
+            min_frac = 1.0e-4; // default value
+            max_frac = 1.0e-2; // default value
+            STREAM::getLines(ParameterFile, line, 4);
+        }
+        else
+        {
+            STREAM::getLines(ParameterFile, line, 1);
+            STREAM::getValue(ParameterFile, line, iss, min_frac);
+            STREAM::getLines(ParameterFile, line, 1);
+            STREAM::getValue(ParameterFile, line, iss, max_frac);
+        }
+        mmg_hmin = min_frac * max_opt_box_side;
+        mmg_hmax = max_frac * max_opt_box_side;
     }
     else
     {
-        STREAM::getLines(ParameterFile, line, 1);
-        STREAM::getValue(ParameterFile, line, iss, min_frac);
-        STREAM::getLines(ParameterFile, line, 1);
-        STREAM::getValue(ParameterFile, line, iss, max_frac);
+        STREAM::getLines(ParameterFile, line, 8);
     }
-    mmg_hmin = min_frac * max_opt_box_side;
-    mmg_hmax = max_frac * max_opt_box_side;
     
     //------------------------------
     // READ OPENMP INFO
@@ -331,11 +361,11 @@ void TOP_OPT::importParameters(std::string inputFile)
     std::string folderName = NS.name + "/" + name;
     if (write_on_velocity_mesh == 0)
     {
-        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes, (physics).nElem, deltaPrint, maxIt, binPrint);
+        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes, (physics).nElem, deltaPrint, complete_maxIt, binPrint);
     }
     else if (write_on_velocity_mesh == 1)
     {
-        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes_v, (physics).nElem_v, deltaPrint, maxIt, binPrint);
+        VTKWriter.initializeForTopOpt(folderName, (physics).dim, (physics).nNodes_v, (physics).nElem_v, deltaPrint, complete_maxIt, binPrint);
     }
     else
     {
@@ -630,7 +660,10 @@ void TOP_OPT::print_optimization_results(int &nNodes_v, int &dim, int &nNodes, i
 
     print_for_matlab_interface(loop, obj, change, feasible, funcValues, no_weights_funcValues, changes, valid);
 
-    print_mesh_for_postprocessing(gamma);
+    if (use_MMG_optimization)
+    {
+        print_mesh_for_postprocessing(gamma);
+    } 
 }
 
 void TOP_OPT::print_results_in_console(int &loop, prec &obj, prec &change)
@@ -1228,19 +1261,21 @@ void TOP_OPT::solve()
     MATRIX U(dim, nNodes_v);
     MATRIX Ua(dim, nNodes_v);
 
-    MATRIX funcValues(maxIt, (Optimizer.fWeights.length + 2));
-    MATRIX no_weights_funcValues(maxIt, (Optimizer.fWeights.length + 2));
+    MATRIX funcValues(complete_maxIt, (Optimizer.fWeights.length + 2));
+    MATRIX no_weights_funcValues(complete_maxIt, (Optimizer.fWeights.length + 2));
     VECTOR changes;
     VECTOR_INT valid;
 
     temp_fluid_energy.setZeros(2);
 
+    bool compute_solution = true;
+
     //UNTILL GAMMA CONVERGENCE DO:
-    while ((((change > change_toll) || (!(feasible))) || (loop < minIt)) && (loop < maxIt)) 
+    while (compute_solution) 
     {
         loop++;
         physics.curr_opt_it = loop;
-
+        
         //-------------------------------
         // UPDATE ALPHA GIVEN GAMMA
         //-------------------------------
@@ -1288,10 +1323,7 @@ void TOP_OPT::solve()
         save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
 
         change = (gamma-gammaNew).norm() / gamma.norm();
-        physics.gamma_change = change;
-        changes.append(change);
-        gamma = gammaNew;
-        gamma_print = (gamma-1.0)*(-1.0);
+        
         prec vol_fract = Vol / V0;
         if (vol_fract <= 1.001*Vr)
         {
@@ -1305,7 +1337,49 @@ void TOP_OPT::solve()
         }
         physics.Vol = Vol;
         physics.vol_fract = vol_fract;
+
+        bool converged_change = (change < change_toll) && (feasible);
+        bool converged_maxIt;
+        if (!already_perturbed)
+        {
+            converged_maxIt = (loop >= maxIt);
+        }
+        else
+        {
+            converged_maxIt = (loop >= complete_maxIt);
+        }
+        bool converged_minIt  = (loop >= minIt);
+        bool converged = (converged_change || converged_maxIt) && converged_minIt;
+        if (converged)
+        {
+            std::cout << "\nconverged\n";
+            if ((perturb_solution == 1) && (!already_perturbed))
+            {
+                std::cout << "\nperturbation\n";
+                perturb_gamma_solution(gammaOpt);
+                // maxIt += perturb_maxIt;
+                change = change_toll + 1;
+                already_perturbed = true;
+                compute_solution = true;
+            }
+            else
+            {
+                compute_solution = false;
+            }
+        }
+        else
+        {
+            compute_solution = true;
+        }
+
+        save_gammaOpt_in_gammaFull(gammaOpt, gammaNew);
+        change = (gamma-gammaNew).norm() / gamma.norm();
+        physics.gamma_change = change;
+        changes.append(change);
+        gamma = gammaNew;
+        gamma_print = (gamma-1.0)*(-1.0);
         physics.gamma_max = gamma.max();
+
 
         // if (enableDiffusionFilter > 0)
         // {
@@ -1328,8 +1402,7 @@ void TOP_OPT::solve()
         // std::cout << "feasible: " << (!(feasible)) << "\n";
         // std::cout << "max: " << (loop < maxIt) << "\n";
         // std::cout << "min: " << (loop < minIt) << "\n";
-    }
-
+    }    
 
     // -----------------------------------
     // EXPORT OPTIMIZAED GEOMETRY NODES
@@ -1344,6 +1417,20 @@ void TOP_OPT::solve()
     solution_time = endTime - startTime;    
 }
 //-------------------------
+
+void TOP_OPT::perturb_gamma_solution(VECTOR &gamma)
+{
+    prec vol_fract = physics.vol_fract;
+    prec vol_const = 0.2;
+    prec gamma_min = vol_fract / (1+vol_const*vol_fract);
+    prec gamma_max = (1+vol_const)*gamma_min;
+    for (int inod = 0; inod < gamma.length; inod++)
+    {
+        gamma[inod] = gamma_min + (gamma_max-gamma_min)*gamma[inod];
+    }
+    
+
+}
 
 
 

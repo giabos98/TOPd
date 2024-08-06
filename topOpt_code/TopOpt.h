@@ -22,16 +22,21 @@ public:
     std::string inputFile;
     TIME_PROFILER time_profiler;
     MESH_SCRAPER mesh_scraper;
+    int use_MMG_optimization;
     prec mmg_level_set = 0.5;
     int custom_opt_mesh_sizes = 0;
     prec mmg_hmin;
     prec mmg_hmax;
+    int perturb_solution;
+    bool already_perturbed = false;
+    int perturb_maxIt = 0;
 
     int funcId = 1;
     bool binPrint;
     int deltaPrint;
     int minIt;
     int maxIt;
+    int complete_maxIt;
     prec change_toll;
 
     prec V0;
@@ -148,5 +153,7 @@ public:
     void export_optimized_domain_mesh_with_mmg();
 
     void evaluate_total_energy();
+
+    void perturb_gamma_solution(VECTOR &gamma);
 
 };

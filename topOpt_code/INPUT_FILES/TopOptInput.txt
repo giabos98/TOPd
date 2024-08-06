@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-pow6_auto_a[3.78e3_1.134e4]_filter
+pow9_auto_a[5.655e3_1.696e4]_perturbed_0.2Vr_filter
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -19,7 +19,7 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1.134e4
+1.696e4
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // use real a_max staircase (0: no staircase, 1: use staircase, 2: power law, 3: auto volume-based power law)
@@ -27,7 +27,7 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 // 1: n_steps, 2: n_it
 100
 // 1: steps and values [iteration step, value], 2,3: [power, start_value, end_value]
-6 3.78e3 1.134e4
+9 5.655e3 1.696e4
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)
@@ -50,9 +50,9 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 
 // ITERATIONS
 // min iter
-100
+10
 // maxIter
-1000
+100
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -75,11 +75,11 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
 1
 // change max to turn on beta interpolation
-0.005
+0.01
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation
-0.0005
+0.001
 // crit beta to determine the q_beta for beta interpolation
 1
 
@@ -93,6 +93,11 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 // SMOOTHING BETWEEN ELEMENTS (0: no smooth, 1: smooth)
 0
 
+// SOLUTION PERTURBATION (0: no, 1: yes)
+1
+// maxIt increase (if no perturbation, skip next line)
+100
+
 //--------------------------------- PRINT ---------------------------------------------------------------------
 // BINARY PRINT (0: false, 1: true)
 0
@@ -105,6 +110,8 @@ pow6_auto_a[3.78e3_1.134e4]_filter
 1
 
 //--------------------------------- MMG OPTIMIZATION ---------------------------------------------------------------------
+// use MMG OPTIMIZATION
+0
 // level set
 0.5
 // custom mesh (0: default [hmin: max_box_side/10000; hmax: max_box_side/100], 1: custom [defined below])
