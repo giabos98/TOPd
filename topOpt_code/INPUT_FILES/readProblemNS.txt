@@ -1,9 +1,9 @@
 // PROBLEM NAME
-dp_square_inv_1_reg_d10
+rc_bypass_2D_extra_fine
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
-0
+1
 
 SAVE PDE SOLUTION (0: not save, 1: save)
 0
@@ -25,7 +25,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1 //  rho
+1050 //  rho
 1 //  mu
 
 //FORCING FUNCTIONS
@@ -53,9 +53,9 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // INNER WALLS
 //--------
 // # INNER
-4
+1
 // geomID
-8 10 14 18
+10 
 
 // SYMMETRY WALLS
 //--------
@@ -76,22 +76,21 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-2
+1
 //geomID
-0 3
-//funcID
-1*1.5*4/[1*1]*[y-1*1]*[2*1-y] 0
-1*1.5*4/[1*1]*[y-4*1]*[5*1-y] 0
+13
+//function
+0.16/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------
 // # NEUMANN
 2
 // geomID
-22 23
+0 3
 //functs
-0
-0
+13332
+13332
 
 // DIRICHLET - TIME DEPENDENT
 //--------

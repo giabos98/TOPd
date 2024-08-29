@@ -1,29 +1,29 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
+STAT_v[0.1]_P[13332]_[NS]_Re[105]_Vr[0.1]_[mma]_a[1e6]_b[1_1_0_0]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-5
+2
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0 1.0 1.0
+1.0 1.0 
 //n opt subdomains
 1
 // optimization subdomains
-2
+1
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
 0   0
 // αmax
-1.131e4
+1e6
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // use real a_max staircase (0: no staircase, 1: use staircase, 2: power law, 3: auto volume-based power law)
-3
+0
 // 1: n_steps, 2: n_it
 100
 // 1: steps and values [iteration step, value], 2,3: [power, start_value, end_value]
@@ -38,9 +38,9 @@ pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 // --| 2: max surface size fraction [bound_id, prescribed_surface_fraction]
 // --| 3: inhance discretization of solution [discretization_tollerance]
 // --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
-0
+0 1
 // parameters
-0.333
+0.1
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -52,7 +52,7 @@ pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 // min iter
 10
 // maxIter
-200
+1000
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -67,7 +67,7 @@ pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-2
+0
 // beta MAX
 2
 //beta min
@@ -84,7 +84,7 @@ pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 1
 
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
-1
+0
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
 0.025
 // DIFFUSION FILTER WEIGHT
@@ -117,9 +117,9 @@ pow6_auto_a[3.77e3_1.131e4]_0.2Vr_filter
 // custom mesh (0: default [hmin: max_box_side/10000; hmax: max_box_side/100], 1: custom [defined below])
 0
 // hmin (expressed as fraction of max_bound_box_side)
-0.0001
-// hmax (expressed as fraction of max_bound_box_side)
 0.01
+// hmax (expressed as fraction of max_bound_box_side)
+0.1
 
 //-------------------------------- OPENMP PARAMETERS --------------------------------
 // # threads (0: automatic criteria, -1: max for current machine)
