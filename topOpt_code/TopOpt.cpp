@@ -1042,15 +1042,23 @@ void TOP_OPT::handle_optimization_domain()
                 for (int iloc = 0; iloc < nodes_per_el; iloc++)
                 {
                     int iglob = physics.elem_v[iel][iloc];
-                    is_node_in_dom[iglob] = -1;
-                    if (not_opt_nodes_in_subdomains[iglob] == -1) 
+                    // at this point there are 2 options: 
+                    // A) set as non-opt nodes the nodes belonging to at least one non-opt elem, to do so just set: 
+                    // is_node_in_dom[iglob] = -1;
+                    // B) set as non-opt nodes the nodes belonging to at least one non-opt elem, to do so the following if condition is required;
+                    if (is_node_in_dom[iglob] < 0)
                     {
-                        not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id; // the sumdomain priority of common nodes for the not_opt subdomains is given by their numbering
+                        is_node_in_dom[iglob] = -1;
+                        if (not_opt_nodes_in_subdomains[iglob] == -1) 
+                        {
+                            not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id; // the sumdomain priority of common nodes for the not_opt subdomains is given by their numbering
+                        }
+                        else if (temp_elem_geo_id < not_opt_nodes_in_subdomains[iglob])
+                        {
+                            not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id;
+                        }
                     }
-                    else if (temp_elem_geo_id < not_opt_nodes_in_subdomains[iglob])
-                    {
-                        not_opt_nodes_in_subdomains[iglob] = temp_elem_geo_id;
-                    }
+                    
                 }
             }
             else //  is_elem_in_dom[iel] == 1
@@ -1059,15 +1067,18 @@ void TOP_OPT::handle_optimization_domain()
                 {
                     int iglob = physics.elem_v[iel][iloc];
                     int temp_node_geo_id = is_node_in_dom[iglob];
-                    if (temp_node_geo_id == -2)
+                    if (temp_node_geo_id < 0) // not yet passed node or passed from a non-opt domain element
+                    //A) temp_node_geo_id < -1: would set as non-opt nodes the nodes belonging to at least one non-opt elem
+                    //B) temp_node_geo_id < 0 : would set as opt nodes the nodes belonging to at least one opt elem
+                    // !! Option (B) seems to be required to the correct functioning of subdomains volume constraints !!
                     {
                         is_node_in_dom[iglob] = temp_elem_geo_id;
                     }
-                    else if (temp_node_geo_id != -1) //not yet passed node
+                    else if (temp_node_geo_id != -1) // already passed node
                     {
                         int temp_node_id_relevance;
                         opt_subdomains.hasIn(temp_node_geo_id, temp_node_id_relevance);
-                        if (temp_elem_id_relevance < temp_node_id_relevance) // in this way yhe order of relevance of the subdomains belonging is the one inserted by the user
+                        if (temp_elem_id_relevance > temp_node_id_relevance) // in this way the order of relevance of the subdomains belonging is the one inserted by the user
                         {
                             is_node_in_dom[iglob] = temp_elem_geo_id;
                         }
@@ -1075,8 +1086,8 @@ void TOP_OPT::handle_optimization_domain()
                 }
             } 
         }
-        int node_count = 0;
 
+        int node_count = 0;
         for (int inod = 0; inod < nNodes_v; inod++)
         {
             switch (is_node_in_dom[inod])

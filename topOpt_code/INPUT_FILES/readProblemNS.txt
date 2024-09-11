@@ -1,5 +1,5 @@
 // PROBLEM NAME
-rc_bypass_2D_extra_fine
+free_inlet_stenosis0.5_normal
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -13,12 +13,12 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // Time Settings
 // stationary flag (0:time_dependent, 1:stationary)
-1
+0
 // convergence scale factor
 0.8
 // Time Dependence (not relevant in stationay solution)
 // final time
-1
+1.0
 // time step
 0.1
 // minimum time step
@@ -26,7 +26,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // FLUID PROPERTIES
 1050 //  rho
-1 //  mu
+0.004 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -55,7 +55,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // # INNER
 1
 // geomID
-10 
+10
 
 // SYMMETRY WALLS
 //--------
@@ -79,8 +79,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 1
 //geomID
 13
-//function
-0.16/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+//functs
+0.36*[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------
