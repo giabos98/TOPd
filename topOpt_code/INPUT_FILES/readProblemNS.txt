@@ -1,12 +1,12 @@
 // PROBLEM NAME
-free_inlet_stenosis0.5_normal
+free_inlet_s0.9_extra_fine
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
 1
 
 SAVE PDE SOLUTION (0: not save, 1: save)
-0
+1
 
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
@@ -80,7 +80,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 //geomID
 13
 //functs
-0.36*[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------

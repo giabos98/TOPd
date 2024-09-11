@@ -77,7 +77,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 //geomID
 13
 //functs
-0.36*[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN
 //--------
