@@ -1,19 +1,19 @@
 // OPTIMIZATION PARAMETERS
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
+new_Vr[0.2]_mma_a1e6_time_t1.0_0.1_p2
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
 
 // DEFINE OPTIMIZATION REGIONS (specify subdomains, if n_subdomains = 1 = n_opt_subdomains consider the whole domain as optimization one [works also in the subdomains are not really only 1])
 // n subdomains
-5
+2
 // initial gamma values for each subdomain (0.0:full, 1.0: empty)
-1.0 1.0 1.0 1.0 1.0
+1.0 1.0
 //n opt subdomains
 1
 // optimization subdomains
-2
+1
 
 // BRINKMAN PENALIZATION DEFINITION
 // [αmin, h=half_domain_thickness] (h=0 stands for h=infinity) // domain thickness is only for 2D simulations. The alpha_min will be set to min(alpha_min, 5mu/2h) 
@@ -40,7 +40,7 @@ CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
 // --| 4: impose a critical WSS constraints at the boundaries of the optimal geometry [crit_WSS, constraint_sign] // constraint sign means if the time averaged WSS, weighted over the nodal gamma gradient norm, must be "less than" or "greater than" the critical value
 0
 // parameters
-0.333
+0.2
 
 // BASE FUNCTIONALS:
             | 0: alpha*||U||^2
@@ -50,9 +50,9 @@ CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
 
 // ITERATIONS
 // min iter
-1
+10
 // maxIter
-300
+2000
 
 // custom functional: 0 use funcID; 1 use following formulation
 1
@@ -61,13 +61,13 @@ CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
 0
 // INT_OMEGA{ beta1*alpha*||u||^2  +  beta2*1/2*mu*||grad(u)+grad(u)^T||^2  +  beta3*1/2*mu*||curl(u)||^2 }  +  beta4 * INT_GAMMA_in{p} +  // INT__OMEGA { beta5 * 1/2*rho * ||u||^2}
 // beta1    beta2    beta3    beta4 
-1 1 0 0
+1 1 2 0
 
 // GAMMA CHANGE TOLERANCE
 0.00001
 
 // USE GAMMA PROJECTOR ( 0: no; 1: p(gamma) = -2gamma^3 + 3*gamma^2; 2: p(gamma) = [tanh(beta*alpha) + tanh*beta*(gamma_node-alpha)] / [tanh(beta*alpha) + tanh(beta*(1-alpha))] )
-0
+2
 // beta MAX
 1
 //beta min
@@ -75,18 +75,18 @@ CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
 // activate beta interpolation procedure (0: beta fixed to beta_min for all iterations, 1: beta interpolated untill beta_max depending on gamma change)
 1
 // change max to turn on beta interpolation
-0.01
+0.001
 // change min to turn off beta interpolation
 0.00001
 // crit change to determine the q_beta for beta interpolation
-0.005
+0.0005
 // crit beta to determine the q_beta for beta interpolation
 0.5
 
 // USE DIFFUSIVE FILTER FOR THE TOP. OPT. PARAMETER (0: no filter, 1: artihmetic mean, 2: geometric mean)
 0
 // DIFFUSION RADIUS PERCENTAGE (relative to the smaller side of the Top. Opt. box)
-0.0075
+0.025
 // DIFFUSION FILTER WEIGHT
 0.5
 
@@ -117,7 +117,7 @@ CaseA_mu[10]_rho[10]_U[1]_D[1]_Re[1]_alpha[1e6]_beta[1e3]
 // custom mesh (0: default [hmin: max_box_side/10000; hmax: max_box_side/100], 1: custom [defined below])
 0
 // hmin (expressed as fraction of max_bound_box_side)
-0.04
+0.01
 // hmax (expressed as fraction of max_bound_box_side)
 0.1
 

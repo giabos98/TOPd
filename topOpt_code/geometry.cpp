@@ -21,7 +21,7 @@ void PHYSICS::initialize()
 void PHYSICS::set_alpha_min(VECTOR &alpha_min_vector) 
 {
     prec a_min = alpha_min_vector[0];
-    if (dim == 2) // for the 3D case it must be set equal to 0, tha tis the default value
+    if (dim == 2) // for the 3D case it must be set equal to 0, that is the default value
     {
         half_domain_thickness = alpha_min_vector[1];
     }
@@ -33,7 +33,7 @@ void PHYSICS::set_alpha_min(VECTOR &alpha_min_vector)
     }
     else
     {
-        if (h == 0)
+        if (h == 0) // 3D problems always fall on this case
         {
             alpha_min = a_min;
         }
