@@ -1,5 +1,5 @@
-// PROBLEM NAME
-free_inlet_s0.90_d20
+// PROBLEM NAME 
+free_inlet_s0.50_d10
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
@@ -18,15 +18,15 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.8
 // Time Dependence (not relevant in stationay solution)
 // final time
-1.0
+0.8
 // time step
-0.1
+0.016
 // minimum time step
 0.00001
 
 // FLUID PROPERTIES
 1050  //  rho
-0.004 //  mu
+0.004  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -76,31 +76,77 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 
 // DIRICHLET
 // # DIRICHLET
-1
+0
 //geomID
-13
-//functs
-0.36/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+**
 
 // NEUMANN
 //--------
 // # NEUMANN
-2
+0
 // geomID
-0 3
-//functs
-13332
-13332
+**
 
 // DIRICHLET - TIME DEPENDENT
 //--------
 // # DIRICHLET - TIME DEPENDENT
-0
+1
+
+//geomID
+13
+// nCases
+9
+// cases
+0 
+0.064
+0.08
+0.16
+0.32
+0.36
+0.40
+0.44
+0.56
+// functions
+[0.13-0.005*t/0.064]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.125+0.075*[t-0.064]/0.016]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.2+0.16*[t-0.08]/0.08]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.36-0.16*[t-0.16]/0.16]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.2-0.075*[t-0.32]/0.04]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.125+0.075*[t-0.36]/0.04]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.2+0.07*[t-0.40]/0.04]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.27-0.07*[t-0.44]/0.12]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
+[0.2-0.07*[t-0.56]/0.24]/[0.004/2*0.004/2]*[y+0.004]*[0-y] 0
 
 // NEUMANN - TIME DEPENDENT
 //--------
 // # NEUMANN - TIME DEPENDENT
+2
+
+//geomID
 0
+//nCases
+3
+//times
+0
+0.2
+0.425
+// functions
+11999-[t/0.2]*1333.22
+10665.8+1/[0.15*0.15]*[t-0.2]*[0.5-t]*5332.9
+11999+[1-[t-0.425]/0.375]*3999.67
+
+//geomID
+3
+//nCases
+3
+//times
+0
+0.2
+0.425
+// functions
+11999-[t/0.2]*1333.22
+10665.8+1/[0.15*0.15]*[t-0.2]*[0.5-t]*5332.9
+11999+[1-[t-0.425]/0.375]*3999.67
 
 // NORMAL VELOCITY OPEN BOUNDARY (velocity not zero only in the last component: 2D->y, 3D->z) and open boundary on it
 //--------
