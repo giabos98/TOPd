@@ -1,9 +1,12 @@
-// PROBLEM NAME and DIMENSION (2 or 3)
-free_inlet_stenosis0.5_normal
+// PROBLEM NAME // UPDATED 06/11/2024
+free_inlet_s0.50_d10
+// DIMENSION (2 or 3)
 2
+// PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
+1
 
 SAVE PDE SOLUTION (0: not save, 1: save)
-1
+0
 
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
@@ -17,13 +20,13 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // final time
 0.8
 // time step
-0.025
+0.016
 // minimum time step
 0.00001
 
 // FLUID PROPERTIES
 1050  //  rho
-0.0045  //  mu
+0.004  //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
@@ -128,7 +131,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.2
 0.425
 // functions
-11999-[t/0.2]*1333.22
+11999-[t/0.2]*1333.2
 10665.8+1/[0.15*0.15]*[t-0.2]*[0.5-t]*5332.9
 11999+[1-[t-0.425]/0.375]*3999.67
 
@@ -143,7 +146,7 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 // functions
 11999-[t/0.2]*1333.22
 10665.8+1/[0.15*0.15]*[t-0.2]*[0.5-t]*5332.9
-11999+[1-[t-0.425]/0.375]*3999.67
+11999+[1-[t-0.425]/0.375]*2666.475
 
 // NORMAL VELOCITY OPEN BOUNDARY (velocity not zero only in the last component: 2D->y, 3D->z) and open boundary on it
 //--------
