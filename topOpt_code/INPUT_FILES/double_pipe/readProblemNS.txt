@@ -1,5 +1,5 @@
 // PROBLEM NAME // UPDATED 06/11/2024
-inv_double_pipe_rect1.5_reg_d20
+inv_double_pipe_rect1.5_reg_d10
 // DIMENSION (2 or 3)
 2
 // PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)

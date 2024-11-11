@@ -1,6 +1,6 @@
 // OPTIMIZATION PARAMETERS // UPDATED 06/11/2024
 // TOP OPT NAME: vel[mean_inlet_vel]_n[nInlet]_P[max_inletP]_[S_or_NS]_Re[Re_value]_Vr[V_r]_[OPT METHOD]_a[alpha_max]_b[beta1_beta2_beta3_beta4]_t[stat_endTime_deltaT]_q[q_value]_[normalV]_[parabolicInlet]_df[diffisuveFilterCase_radius_weight]_p[projectionType_betaMax]_m[meshToPrint]_s[smooth_between_el]
-CaseB_amax_superlinear[pow0.2_1e2_1e4]
+CaseB_amax_linear[1e2_1e4]
 
 // optimization scheme (0:MMA, 1:GOC, 2:GCMMA(not working))
 0
@@ -23,11 +23,12 @@ CaseB_amax_superlinear[pow0.2_1e2_1e4]
 // q  α(γ) ≡ αmin + (αmax − αmin)*[q(1 − γ)]/(q + γ)
 1
 // use real a_max staircase (0: no staircase, 1: use staircase, 2: power law, 3: auto volume-based power law)
-2
+1
 // 1: n_steps, 2: n_it
-100
+2
 // 1: steps and values [iteration step, value], 2,3: [power, start_value, end_value]
-0.2 100 10000
+1 1e2
+100 1e4
 
 // CONSTRAINTS DEFINITION
 //number of CONSTRAINTS (minimum of 1, the first must be the volume constraint, always enabled)

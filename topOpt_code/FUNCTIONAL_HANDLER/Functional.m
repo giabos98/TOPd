@@ -142,7 +142,7 @@ classdef Functional
                     if self.valid(i) == 1
                         plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor', [0.8 0.8 0.8]);
                     else
-                        plot(print_it(i), print_val(i), 'ko', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor',color);
+                        plot(print_it(i), print_val(i), 'k^', "LineWidth", 1.5, "MarkerSize", 10, 'MarkerFaceColor', [0.8 0.8 0.8]);
                     end
                 end
             end

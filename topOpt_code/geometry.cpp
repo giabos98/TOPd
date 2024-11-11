@@ -118,8 +118,8 @@ void PHYSICS::update_real_alpha_max()
                 prec start_value = smooth_alpha_mat[0][1];
                 prec end_value = smooth_alpha_mat[0][2];
                 prec max_it = n_alpha_max_steps*1.0;
-                prec rel_it = (curr_opt_it*1.0 -1.0) / (max_it-1.0);
-                real_alpha_max = start_value + (end_value-start_value) * pow(rel_it, power);
+                prec rel_it = (curr_opt_it*1.0 -1.0) / (max_it*1.0-1.0);
+                real_alpha_max = start_value*1.0 + (end_value*1.0-start_value*1.0) * std::pow(rel_it*1.0, power*1.0);
             }
             else
             {
@@ -129,7 +129,6 @@ void PHYSICS::update_real_alpha_max()
             // reset real_alpha_max in bounds if necessary
             real_alpha_max = std::max(real_alpha_max, smooth_alpha_mat[0][1]);
             real_alpha_max = std::min(real_alpha_max, smooth_alpha_mat[0][2]);
-
             break;
         }
         case 3:
@@ -150,7 +149,6 @@ void PHYSICS::update_real_alpha_max()
             // reset real_alpha_max in bounds if necessary
             real_alpha_max = std::max(real_alpha_max, smooth_alpha_mat[0][1]);
             real_alpha_max = std::min(real_alpha_max, smooth_alpha_mat[0][2]);
-
             break;
         }
         default:
