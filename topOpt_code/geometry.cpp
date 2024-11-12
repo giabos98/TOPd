@@ -61,15 +61,10 @@ void PHYSICS::set_alpha_max()
             set_alpha_max_staircase();
             break;
         }
-        case 2:
-        {
-            break;
-        }
         default:
         {
             break;
-        }
-        
+        }   
     }
 }
 
