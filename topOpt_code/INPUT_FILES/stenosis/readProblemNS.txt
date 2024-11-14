@@ -1,9 +1,12 @@
-// PROBLEM NAME and DIMENSION (2 or 3)
-free_inlet_stenosis0.5_normal
+// PROBLEM NAME // UPDATED 14/11/2024
+free_inlet_s0.9_finer
+// DIMENSION (2 or 3)
 2
+// PHYSICS MODEL (0:Stokes; 1:Navier-Stokes)
+1
 
 SAVE PDE SOLUTION (0: not save, 1: save)
-1
+0
 
 CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 2
@@ -22,8 +25,8 @@ CONSOLE LOG (0: complete log, 1: efficient log, 2: no log)
 0.00001
 
 // FLUID PROPERTIES
-1050  //  rho
-0.0045  //  mu
+1050 //  rho
+0.004 //  mu
 
 //FORCING FUNCTIONS
 // flag Forcing: 0 constant, 1 time dependent
